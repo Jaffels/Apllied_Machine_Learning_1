@@ -2,24 +2,150 @@
 title: "Drug Consumption"
 author: "Nhat Bui, Johan Ferreira, Thilo Holstein"
 date: "2025-03-06"
-output: pdf_document
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introduction
+\newpage
+# Introduction
 
-Database contains records for 1885 respondents. For each respondent 12 attributes are known: Personality measurements which include NEO-FFI-R (neuroticism, extraversion, openness to experience, agreeableness, and conscientiousness), BIS-11 (impulsivity), and ImpSS (sensation seeking), level of education, age, gender, country of residence and ethnicity. All input attributes are originally categorical and are quantified. After quantification values of all input features can be considered as real-valued. In addition, participants were questioned concerning their use of 18 legal and illegal drugs (alcohol, amphetamines, amyl nitrite, benzodiazepine, cannabis, chocolate, cocaine, caffeine, crack, ecstasy, heroin, ketamine, legal highs, LSD, methadone, mushrooms, nicotine and volatile substance abuse and one fictitious drug (Semeron) which was introduced to identify over-claimers. For each drug they have to select one of the answers: never used the drug, used it over a decade ago, or in the last decade, year, month, week, or day.
-Database contains 18 classification problems. Each of independent label variables contains seven classes: "Never Used", "Used over a Decade Ago", "Used in Last Decade", "Used in Last Year", "Used in Last Month", "Used in Last Week", and "Used in Last Day".
+Drug use is a significant risk behavior with serious health consequences for individuals and society. Multiple factors contribute to initial drug use, including psychological, social, individual, environmental, and economic elements, as well as personality traits. While legal substances like sugar, alcohol, and tobacco cause more premature deaths, illegal recreational drugs still create substantial social and personal problems.
 
-A detailed description of the variables can be found in the Columnand Varaible Information text file.
+In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors, use machine learning methods to understand the complex relationships surrounding drug consumption, demonstrating how machine learning can reveal insights into behavioral patterns. While our findings won't directly inform interventions, this project showcases how data-driven approaches can enhance our understanding of complex social phenomena and provide valuable practice in applying machine learning to real-world datasets.
+
+The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
+
+# Cleaning and formatting the dataset
+
+```{r cache=TRUE}
+# Load required libraries
+library(dplyr)
+```
 
 ```{r}
 # Read the CSV file
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
-## Source
+The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
+
+```{r cache=TRUE}
+###############################################################################
+# Define mappings and column information
+###############################################################################
+
+# Column names for the dataset
+column_names <- c(
+  "Index", "ID", "Age", "Gender", "Education", "Country", "Ethnicity", 
+  "Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS", 
+  "Alcohol", "Amphet", "Amyl", "Benzos", "Caff", "Cannabis", "Choc", "Coke", 
+  "Crack", "Ecstasy", "Heroin", "Ketamine", "Legalh", "LSD", "Meth", 
+  "Mushrooms", "Nicotine", "Semer", "VSA"
+)
+
+# Drug column names
+drug_columns <- c(
+  "Alcohol", "Amphet", "Amyl", "Benzos", "Caff", "Cannabis", 
+  "Choc", "Coke", "Crack", "Ecstasy", "Heroin", "Ketamine", 
+  "Legalh", "LSD", "Meth", "Mushrooms", "Nicotine", "Semer", "VSA"
+)
+
+# Mapping of drug consumption classes to their meanings
+consumption_mapping <- c(
+  "CL0" = "Never Used",
+  "CL1" = "Used over a Decade Ago",
+  "CL2" = "Used in Last Decade", 
+  "CL3" = "Used in Last Year",
+  "CL4" = "Used in Last Month",
+  "CL5" = "Used in Last Week",
+  "CL6" = "Used in Last Day"
+)
+
+# Map Age values to their meaning
+age_mapping <- c(
+  "-0.95197" = "18-24",
+  "-0.07854" = "25-34",
+  "0.49788" = "35-44",
+  "1.09449" = "45-54",
+  "1.82213" = "55-64",
+  "2.59171" = "65+"
+)
+
+# Map Gender values to their meaning
+gender_mapping <- c(
+  "0.48246" = "Female",
+  "-0.48246" = "Male"
+)
+
+# Map Education values to their meaning
+education_mapping <- c(
+  "-2.43591" = "Left school before 16 years",
+  "-1.73790" = "Left school at 16 years",
+  "-1.43719" = "Left school at 17 years",
+  "-1.22751" = "Left school at 18 years",
+  "-0.61113" = "Some college or university, no certificate or degree",
+  "-0.05921" = "Professional certificate/diploma",
+  "0.45468" = "University degree",
+  "1.16365" = "Masters degree",
+  "1.98437" = "Doctorate degree"
+)
+
+# Map Country values to their meaning
+country_mapping <- c(
+  "-0.09765" = "Australia",
+  "0.24923" = "Canada",
+  "-0.46841" = "New Zealand",
+  "-0.28519" = "Other",
+  "0.21128" = "Republic of Ireland",
+  "0.96082" = "UK",
+  "-0.57009" = "USA"
+)
+
+# Map Ethnicity values to their meaning
+ethnicity_mapping <- c(
+  "-0.50212" = "Asian",
+  "-1.10702" = "Black",
+  "1.90725" = "Mixed-Black/Asian",
+  "0.12600" = "Mixed-White/Asian",
+  "-0.22166" = "Mixed-White/Black",
+  "0.11440" = "Other",
+  "-0.31685" = "White"
+)
+```
+
+```{r cache=TRUE}
+###############################################################################
+# Data Processing
+###############################################################################
+
+# Rename the columns 
+colnames(drug_data) <- column_names
+
+# Create a meaningful data frame with descriptive values
+meaningful_data <- drug_data
+
+# Convert demographic columns to descriptive values
+meaningful_data$Age <- age_mapping[as.character(meaningful_data$Age)]
+meaningful_data$Gender <- gender_mapping[as.character(meaningful_data$Gender)]
+meaningful_data$Education <- education_mapping[as.character(meaningful_data$Education)]
+meaningful_data$Country <- country_mapping[as.character(meaningful_data$Country)]
+meaningful_data$Ethnicity <- ethnicity_mapping[as.character(meaningful_data$Ethnicity)]
+
+# Convert all drug consumption columns to descriptive values
+for (col in drug_columns) {
+  meaningful_data[[col]] <- consumption_mapping[as.character(meaningful_data[[col]])]
+}
+
+
+```
+
+
+# Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
