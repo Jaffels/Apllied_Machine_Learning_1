@@ -50,6 +50,19 @@ gender_mapping <- c(
   "-0.48246" = "Male"
 )
 
+# Map Education to catogries
+edu_mapping <- c(
+  "-2.43591" = "1", # Left school before 16 years
+  "-1.73790" = "2", # Left school at 16 years
+  "-1.43719" = "3", # Left school at 17 years
+  "-1.22751" = "4", # Left school at 18 years
+  "-0.61113" = "5", # Some college or university, no certificate or degree
+  "-0.05921" = "6", # Professional certificate/ diploma
+  "0.45468" = "7",  # University degree
+  "1.16365" = "8",  # Masters degree
+  "1.98437" = "9"   # Doctorate degree
+)
+
 # Create a version with descriptive values for categorical variables
 drug_data_descriptive <- drug_data
 
@@ -70,6 +83,11 @@ drug_data_descriptive$Age <- factor(as.character(drug_data_descriptive$Age),
 drug_data_descriptive$Gender <- factor(as.character(drug_data_descriptive$Gender),
                                        levels = names(gender_mapping),
                                        labels = gender_mapping)
+
+# Convert Education to descriptive values
+drug_data_descriptive$Education <- factor(as.character(drug_data_descriptive$Education),
+                                       levels = names(edu_mapping),
+                                       labels = edu_mapping)
 
 # Display the first few rows with descriptive values
 print(head(drug_data_descriptive))

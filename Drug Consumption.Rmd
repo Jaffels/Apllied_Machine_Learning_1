@@ -16,8 +16,9 @@ Database contains 18 classification problems. Each of independent label variable
 
 A detailed description of the variables can be found in the Columnand Varaible Information text file.
 
-```{r cache=TRUE, echo=True}
-# Our code block settings
+```{r}
+# Read the CSV file
+drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
 ## Source

@@ -11,7 +11,7 @@
      Descriptive statistics
      Min      Max     Mean    Std.dev.
      -0.95197 2.59171 0.03461 0.87813
-
+     
 3. Gender (Real) is gender of participant:
      Value    Meaning Cases Fraction
       0.48246 Female  942   49.97%
