@@ -25,7 +25,7 @@ column_names <- c(
 
 # Drug column names
 drug_columns <- c(
-  "Alcohol", "Amphet", "Amy*l", "Benzos", "Caff", "Cannabis", 
+  "Alcohol", "Amphet", "Amyl", "Benzos", "Caff", "Cannabis", 
   "Choc", "Coke", "Crack", "Ecstasy", "Heroin", "Ketamine", 
   "Legalh", "LSD", "Meth", "Mushrooms", "Nicotine", "Semer", "VSA"
 )
@@ -121,9 +121,14 @@ drug_data <- drug_data[, -which(names(drug_data) == "ID")]
 # Check for NA values in each column
 na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
 cat("NA values by column:\n")
+
 # Print only columns with NA values
-print(na_by_column[na_by_column > 0])  
-cat("\n")
+cat("Number of missing values by columnn")
+print(na_by_column[na_by_column > 0]) 
+
+# Replace NA values with "Not Provided"
+drug_data$Education[is.na(drug_data$Education)] <- "Not Provided"
+drug_data$Ethnicity[is.na(drug_data$Ethnicity)] <- "Not Provided"
 
 ###############################################################################
 # Data Cleaning - Looking for outliers
@@ -165,11 +170,11 @@ for (col in numeric_cols) {
 }
 
 # Display summary of outliers
-outlier_summary <- outlier_summary[, c("variable", "min", "q1", "median", "mean", "q3", "max", 
-                                       "iqr", "lower_bound", "upper_bound", 
-                                       "n_outliers_below", "n_outliers_above", 
-                                       "total_outliers", "outlier_percentage")]
-print(outlier_summary)
+# outlier_summary <- outlier_summary[, c("variable", "min", "q1", "median", "mean", "q3", "max", 
+#                                        "iqr", "lower_bound", "upper_bound", 
+#                                        "n_outliers_below", "n_outliers_above", 
+#                                        "total_outliers", "outlier_percentage")]
+# print(outlier_summary)
 
 # Create a function to visualize outliers with boxplots
 plot_outliers <- function(drug_data, columns) {

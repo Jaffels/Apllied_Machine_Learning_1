@@ -24,9 +24,11 @@ The database contains records for 1,885 respondents with 12 attributes including
 
 # Cleaning and formatting the dataset
 
-```{r cache=TRUE}
+```{r}
 # Load required libraries
 library(dplyr)
+library(ggplot2)
+library(reshape2)
 ```
 
 ```{r}
@@ -34,9 +36,11 @@ library(dplyr)
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
+## Fomatting the dataset
+
 The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
 
-```{r cache=TRUE}
+```{r}
 ###############################################################################
 # Define mappings and column information
 ###############################################################################
@@ -120,7 +124,7 @@ ethnicity_mapping <- c(
 )
 ```
 
-```{r cache=TRUE}
+```{r}
 ###############################################################################
 # Data Processing
 ###############################################################################
@@ -141,6 +145,8 @@ for (col in drug_columns) {
 }
 ```
 
+## Investigating missing values
+
 ```{r}
 ###############################################################################
 # Data Cleaning - Missing values
@@ -152,12 +158,85 @@ drug_data <- drug_data[, -which(names(drug_data) == "ID")]
 # Check for NA values in each column
 na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
 cat("NA values by column:\n")
+
 # Print only columns with NA values
 print(na_by_column[na_by_column > 0])  
 cat("\n")
 ```
 
 Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
+
+```{r}
+# Replace NA values with "Not Provided"
+drug_data$Education[is.na(drug_data$Education)] <- "Not Provided"
+drug_data$Ethnicity[is.na(drug_data$Ethnicity)] <- "Not Provided"
+
+# Save the updated dataframe back to CSV
+write.csv(drug_data, "Data/cleaned.csv")
+```
+
+## Investigating outliers
+
+```{r}
+###############################################################################
+# Data Cleaning - Looking for outliers
+###############################################################################
+# Define numeric columns for outlier analysis
+numeric_cols <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+
+# Function to identify outliers using IQR method
+identify_outliers_iqr <- function(x) {
+  q1 <- quantile(x, 0.25, na.rm = TRUE)
+  q3 <- quantile(x, 0.75, na.rm = TRUE)
+  iqr <- q3 - q1
+  lower_bound <- q1 - 1.5 * iqr
+  upper_bound <- q3 + 1.5 * iqr
+  
+  return(data.frame(
+    min = min(x, na.rm = TRUE),
+    q1 = q1,
+    median = median(x, na.rm = TRUE),
+    mean = mean(x, na.rm = TRUE),
+    q3 = q3,
+    max = max(x, na.rm = TRUE),
+    iqr = iqr,
+    lower_bound = lower_bound,
+    upper_bound = upper_bound,
+    n_outliers_below = sum(x < lower_bound, na.rm = TRUE),
+    n_outliers_above = sum(x > upper_bound, na.rm = TRUE),
+    total_outliers = sum(x < lower_bound | x > upper_bound, na.rm = TRUE),
+    outlier_percentage = round(100 * sum(x < lower_bound | x > upper_bound, na.rm = TRUE) / length(x[!is.na(x)]), 2)
+  ))
+}
+
+# Apply outlier detection to all numeric columns
+outlier_summary <- data.frame()
+for (col in numeric_cols) {
+  result <- identify_outliers_iqr(drug_data[[col]])
+  result$variable <- col
+  outlier_summary <- rbind(outlier_summary, result)
+}
+
+# Create a function to visualize outliers with boxplots
+plot_outliers <- function(drug_data, columns) {
+  # Explicitly use reshape2::melt to avoid namespace issues
+  melted_data <- reshape2::melt(drug_data[, columns], id.vars = NULL)
+  
+  # Create boxplot
+  ggplot(melted_data, aes(x = variable, y = value)) +
+    geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 2) +
+    theme_minimal() +
+    labs(title = "Boxplots with Outliers Highlighted",
+         x = "Variable",
+         y = "Value") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+# Visualize outliers
+plot_outliers(drug_data, numeric_cols)
+```
+
+As can be seen from the box plots our data set has some values that are outside of the upper and lower bounds. All thought these values are technically outliers they are not extreme, still fall inside of the range of our expected values and conforms to a normal distribution.
 
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
