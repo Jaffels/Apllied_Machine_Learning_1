@@ -238,5 +238,48 @@ plot_outliers(drug_data, numeric_cols)
 
 As can be seen from the box plots our data set has some values that are outside of the upper and lower bounds. All thought these values are technically outliers they are not extreme, still fall inside of the range of our expected values and conforms to a normal distribution.
 
+# Exploratory Data Analysis
+
+## Correlation Between Behavioral Measures
+
+```{r}
+# Calculate the correlation matrix
+cor_matrix <- cor(drug_data[numeric_cols], use = "pairwise.complete.obs")
+
+# Convert the correlation matrix to a data frame for ggplot
+cor_df <- melt(cor_matrix)
+names(cor_df) <- c("Var1", "Var2", "Correlation")
+
+# Create a ggplot2 correlation heatmap
+ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 3) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  coord_fixed() +
+  labs(
+    title = "Correlation Matrix of Personality Traits and Behavioral Measures",
+    x = "",
+    y = ""
+  )
+```
+
+The correlation matrix shows that certain personality traits tend to cluster thougher for example SS (Sensation Seeking) has a positive correlation with Escore (Extraversion), Oscore (Openness) and Impulsive while they in turn also have positive correlations which other and a negative correlation to Cscore (Conscientiousness) and Ascore (Agreeableness) while they have a positive correlation with each other.
+
+
+
+
+
+
+
+
+
+
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified

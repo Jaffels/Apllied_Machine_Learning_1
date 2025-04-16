@@ -194,59 +194,71 @@ plot_outliers <- function(drug_data, columns) {
 # Visualize outliers
 plot_outliers(drug_data, numeric_cols)
 
-
-
 ###############################################################################
-# Generate Usage Counts (NOT INCLUDED)
+# Exploratory Data Analysis
 ###############################################################################
 
-# Define the categories to count
-categories <- unique(unlist(drug_data[drug_columns]))
+# Basic summary statistics for each numerical column
+# cat("\n=== Summary Statistics for Numerical Columns ===\n")
+# for (col in numeric_cols) {
+#   cat("\nStatistics for", col, ":\n")
+#   print(summary(drug_data[[col]]))
+#   cat("Standard Deviation:", sd(drug_data[[col]], na.rm = TRUE), "\n")
+#   cat("Variance:", var(drug_data[[col]], na.rm = TRUE), "\n")
+# }
 
-# Initialize a new dataframe to store the results
-results <- data.frame(ID = drug_data$ID)
-for (category in categories) {
-  results[[category]] <- 0
-}
+# Calculate the correlation matrix
+cor_matrix <- cor(drug_data[numeric_cols], use = "pairwise.complete.obs")
 
-# Count occurrences of each category for each person
-for (i in 1:nrow(drug_data)) {
-  for (category in categories) {
-    # Create a logical vector for matches
-    matches <- sapply(drug_columns, function(col) {
-      drug_data[i, col] == category
-    })
-    # Sum the matches
-    count <- sum(matches, na.rm = TRUE)
-    results[i, category] <- count
-  }
-}
+# Convert the correlation matrix to a data frame for ggplot
+cor_df <- melt(cor_matrix)
+names(cor_df) <- c("Var1", "Var2", "Correlation")
 
-# Merge the usage counts with the meaningful data
-merged_data <- merge(drug_data, results, by = "ID", all = TRUE)
-
-# Save the merged dataframe to a CSV file
-write.csv(merged_data, "Data/merged_drug_data.csv", row.names = FALSE)
-cat("Merged data saved to 'Data/merged_drug_data.csv'\n")
-###############################################################################
-# Generate Statistical Summaries
-###############################################################################
-
-# Drug usage counts
-drug_usage_counts <- list()
-for (i in 1:length(drug_columns)) {
-  col <- drug_columns[i]
-  usage_table <- table(drug_data[[col]])
-  drug_usage_counts[[i]] <- data.frame(
-    Drug = col,
-    Usage = names(usage_table),
-    Count = as.numeric(usage_table),
-    Percentage = round(100 * as.numeric(usage_table) / nrow(drug_data), 1)
+# Create a ggplot2 correlation heatmap
+ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black", size = 3) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  coord_fixed() +
+  labs(
+    title = "Correlation Matrix of Personality Traits and Behavioral Measures",
+    x = "",
+    y = ""
   )
-}
 
-# Combine all drug usage summaries
-usage_summary <- do.call(rbind, drug_usage_counts)
+# 6. Bonus: Analyze by demographic groups
+# For example, compare numerical values across age groups
+cat("\n=== Comparison of Means Across Age Groups ===\n")
+age_means <- drug_data %>%
+  group_by(Age) %>%
+  summarize(across(all_of(numeric_cols), ~mean(.x, na.rm = TRUE)))
+print(age_means)
+
+# Example of ANOVA test to check if differences are significant
+# (for the first numerical variable as an example)
+cat("\nANOVA Test for", numeric_cols[1], "across Age groups:\n")
+anova_result <- aov(formula(paste(numeric_cols[1], "~ Age")), data = drug_data)
+print(summary(anova_result))
+
+cat("\nAnalysis of numerical columns completed successfully!\n")
+
+
+
+
+
+
+
+
+
+
+
 
 # Print demographic distributions
 cat("Age distribution:\n")
