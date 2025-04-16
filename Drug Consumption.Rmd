@@ -128,24 +128,36 @@ ethnicity_mapping <- c(
 # Rename the columns 
 colnames(drug_data) <- column_names
 
-# Create a meaningful data frame with descriptive values
-meaningful_data <- drug_data
-
 # Convert demographic columns to descriptive values
-meaningful_data$Age <- age_mapping[as.character(meaningful_data$Age)]
-meaningful_data$Gender <- gender_mapping[as.character(meaningful_data$Gender)]
-meaningful_data$Education <- education_mapping[as.character(meaningful_data$Education)]
-meaningful_data$Country <- country_mapping[as.character(meaningful_data$Country)]
-meaningful_data$Ethnicity <- ethnicity_mapping[as.character(meaningful_data$Ethnicity)]
+drug_data$Age <- age_mapping[as.character(drug_data$Age)]
+drug_data$Gender <- gender_mapping[as.character(drug_data$Gender)]
+drug_data$Education <- education_mapping[as.character(drug_data$Education)]
+drug_data$Country <- country_mapping[as.character(drug_data$Country)]
+drug_data$Ethnicity <- ethnicity_mapping[as.character(drug_data$Ethnicity)]
 
 # Convert all drug consumption columns to descriptive values
 for (col in drug_columns) {
-  meaningful_data[[col]] <- consumption_mapping[as.character(meaningful_data[[col]])]
+  drug_data[[col]] <- consumption_mapping[as.character(drug_data[[col]])]
 }
-
-
 ```
 
+```{r}
+###############################################################################
+# Data Cleaning - Missing values
+###############################################################################
+
+# Remove unnecessary column
+drug_data <- drug_data[, -which(names(drug_data) == "ID")]
+
+# Check for NA values in each column
+na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
+cat("NA values by column:\n")
+# Print only columns with NA values
+print(na_by_column[na_by_column > 0])  
+cat("\n")
+```
+
+Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
 
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
