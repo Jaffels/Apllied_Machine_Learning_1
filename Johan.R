@@ -7,6 +7,7 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 
+
 # Read the CSV file
 drug_data <- read.csv("Data/drug_consumption.csv")
 
@@ -207,6 +208,10 @@ plot_outliers(drug_data, numeric_cols)
 #   cat("Variance:", var(drug_data[[col]], na.rm = TRUE), "\n")
 # }
 
+
+###############################################################################
+# Heatmap
+###############################################################################
 # Calculate the correlation matrix
 cor_matrix <- cor(drug_data[numeric_cols], use = "pairwise.complete.obs")
 
@@ -233,23 +238,75 @@ ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
     y = ""
   )
 
-# 6. Bonus: Analyze by demographic groups
-# For example, compare numerical values across age groups
-cat("\n=== Comparison of Means Across Age Groups ===\n")
-age_means <- drug_data %>%
-  group_by(Age) %>%
-  summarize(across(all_of(numeric_cols), ~mean(.x, na.rm = TRUE)))
-print(age_means)
-
-# Example of ANOVA test to check if differences are significant
-# (for the first numerical variable as an example)
-cat("\nANOVA Test for", numeric_cols[1], "across Age groups:\n")
-anova_result <- aov(formula(paste(numeric_cols[1], "~ Age")), data = drug_data)
-print(summary(anova_result))
-
-cat("\nAnalysis of numerical columns completed successfully!\n")
 
 
+
+
+###############################################################################
+# Gender comparison
+###############################################################################
+
+# Calculating the means of the behavioral scores
+gender_results <- data.frame(
+  Trait = character(),
+  Female_Mean = numeric(),
+  Male_Mean = numeric(),
+  stringsAsFactors = FALSE
+)
+
+for (col in numeric_cols) {
+  # Calculate means only
+  female_mean <- mean(drug_data[drug_data$Gender == "Female", col], na.rm = TRUE)
+  male_mean <- mean(drug_data[drug_data$Gender == "Male", col], na.rm = TRUE)
+  
+  # Add to results dataframe with only needed values
+  gender_results <- rbind(gender_results, data.frame(
+    Trait = col,
+    Female_Mean = female_mean,
+    Male_Mean = male_mean,
+    stringsAsFactors = FALSE
+  ))
+}
+
+# Create readable trait names
+gender_results$Trait_Name <- case_when(
+  gender_results$Trait == "Nscore" ~ "Neuroticism",
+  gender_results$Trait == "Escore" ~ "Extraversion",
+  gender_results$Trait == "Oscore" ~ "Openness",
+  gender_results$Trait == "Ascore" ~ "Agreeableness",
+  gender_results$Trait == "Cscore" ~ "Conscientiousness",
+  gender_results$Trait == "Impulsive" ~ "Impulsivity",
+  gender_results$Trait == "SS" ~ "Sensation Seeking",
+  TRUE ~ gender_results$Trait
+)
+
+# Create the plot with value labels
+ggplot(gender_results, aes(x = Trait_Name)) +
+  # Add bars
+  geom_bar(aes(y = Female_Mean, fill = "Female"), stat = "identity", position = "dodge", width = 0.7, alpha = 0.7) +
+  geom_bar(aes(y = Male_Mean, fill = "Male"), stat = "identity", position = position_dodge(width = 0.7), width = 0.7, alpha = 0.7) +
+  # Add value labels
+  geom_text(aes(y = Female_Mean, label = sprintf("%.2f", Female_Mean)),
+            position = position_dodge(width = 0.7), 
+            hjust = ifelse(gender_results$Female_Mean < 0, 1.3, -0.3),  # Adjust horizontal position based on value
+            size = 3) +
+  geom_text(aes(y = Male_Mean, label = sprintf("%.2f", Male_Mean)),
+            position = position_dodge(width = 0.7), 
+            hjust = ifelse(gender_results$Male_Mean < 0, 1.3, -0.3),  # Adjust horizontal position based on value
+            size = 3) +
+  # Colors and formatting
+  scale_fill_manual(values = c("Female" = "#FF9999", "Male" = "#6699CC"),
+                    name = "Gender") +
+  labs(title = "Gender Differences in Behavioral Measures",
+       x = "",
+       y = "Mean Score") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        plot.title = element_text(hjust = 0.5, size = 14),
+        legend.position = "top") +
+  # Fixed axis limits from -0.25 to 0.25
+  scale_y_continuous(limits = c(-0.25, 0.25)) +
+  coord_flip()
 
 
 
