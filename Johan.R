@@ -6,6 +6,8 @@
 library(dplyr)
 library(ggplot2)
 library(reshape2)
+library(kableExtra)
+library(gridExtra)
 
 
 # Read the CSV file
@@ -309,40 +311,376 @@ ggplot(gender_results, aes(x = Trait_Name)) +
   coord_flip()
 
 
+###############################################################################
+# Education comparison
+###############################################################################
+
+# Order education levels
+education_order <- c(
+  "Left school before 16 years",
+  "Left school at 16 years",
+  "Left school at 17 years",
+  "Left school at 18 years",
+  "Some college or university, no certificate or degree",
+  "Professional certificate/diploma",
+  "University degree",
+  "Masters degree",
+  "Doctorate degree",
+  "Not Provided"
+)
+
+# Calculate means by education level
+education_means <- drug_data %>%
+  group_by(Education) %>%
+  summarize(
+    n = n(),
+    across(all_of(numeric_cols), ~mean(.x, na.rm = TRUE))
+  ) %>%
+  arrange(match(Education, education_order))
+
+# Convert to long format for heatmap
+education_long <- education_means %>%
+  pivot_longer(
+    cols = all_of(numeric_cols),
+    names_to = "Trait",
+    values_to = "Mean"
+  ) %>%
+  mutate(
+    Trait_Name = case_when(
+      Trait == "Nscore" ~ "Neuroticism",
+      Trait == "Escore" ~ "Extraversion",
+      Trait == "Oscore" ~ "Openness",
+      Trait == "Ascore" ~ "Agreeableness",
+      Trait == "Cscore" ~ "Conscientiousness",
+      Trait == "Impulsive" ~ "Impulsivity",
+      Trait == "SS" ~ "Sensation Seeking",
+      TRUE ~ Trait
+    )
+  )
+
+# Create a clean table view of the data
+education_display <- education_means %>%
+  select(-n) %>%
+  rename(
+    "Neuroticism" = Nscore,
+    "Extraversion" = Escore,
+    "Openness" = Oscore,
+    "Agreeableness" = Ascore,
+    "Conscientiousness" = Cscore,
+    "Impulsivity" = Impulsive,
+    "Sensation Seeking" = SS
+  )
+
+# Display the table with formatted cells
+kableExtra::kable(education_display, 
+                  caption = "Personality Traits by Education Level",
+                  digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), 
+                font_size = 11,
+                full_width = TRUE) %>%
+  column_spec(1, bold = TRUE, width = "15em") %>%
+  row_spec(0, background = "#f5f5f5", bold = TRUE) %>%
+  footnote(general = "Values represent mean scores for each trait",
+           footnote_as_chunk = TRUE) %>%
+  scroll_box(width = "100%", height = "400px")
+
+
+
+###############################################################################
+# Seremon
+###############################################################################
+
+# 1. Separate users into groups
+separate_semeron_groups <- function(drug_data) {
+  # Separate users who report Semeron use vs those who don't
+  semeron_users <- drug_data[drug_data$Semer != "Never Used", ]
+  non_users <- drug_data[drug_data$Semer == "Never Used", ]
+  
+  return(list(
+    semeron_users = semeron_users,
+    non_users = non_users
+  ))
+}
+
+# 2. Analyze demographic differences
+analyze_demographics <- function(semeron_users, non_users) {
+  # Initialize comparison dataframe
+  demo_comparison <- data.frame(
+    Variable = character(),
+    Semeron_Users_Pct = numeric(),
+    Non_Users_Pct = numeric(),
+    Difference = numeric()
+  )
+  
+  # Add demographic comparisons
+  for (var in c("Age", "Gender", "Education", "Country", "Ethnicity")) {
+    var_users <- table(semeron_users[[var]]) / nrow(semeron_users) * 100
+    var_non_users <- table(non_users[[var]]) / nrow(non_users) * 100
+    
+    # Create comparison for each category
+    for (cat in unique(c(names(var_users), names(var_non_users)))) {
+      user_pct <- if(cat %in% names(var_users)) var_users[cat] else 0
+      non_user_pct <- if(cat %in% names(var_non_users)) var_non_users[cat] else 0
+      
+      demo_comparison <- rbind(demo_comparison, data.frame(
+        Variable = paste(var, "-", cat),
+        Semeron_Users_Pct = user_pct,
+        Non_Users_Pct = non_user_pct,
+        Difference = user_pct - non_user_pct
+      ))
+    }
+  }
+  
+  # Add absolute difference for sorting
+  demo_comparison$AbsDiff <- abs(demo_comparison$Difference)
+  
+  return(demo_comparison)
+}
+
+# 3. Analyze personality trait differences
+analyze_traits <- function(semeron_users, non_users) {
+  trait_comparison <- data.frame(
+    Trait = character(),
+    Semeron_Users_Mean = numeric(),
+    Non_Users_Mean = numeric(),
+    Difference = numeric(),
+    T_Test_P_Value = numeric()
+  )
+  
+  for (trait in c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")) {
+    # Calculate means
+    user_mean <- mean(semeron_users[[trait]], na.rm = TRUE)
+    non_user_mean <- mean(non_users[[trait]], na.rm = TRUE)
+    
+    # Perform t-test
+    t_test_result <- t.test(semeron_users[[trait]], non_users[[trait]])
+    
+    # Store results
+    trait_comparison <- rbind(trait_comparison, data.frame(
+      Trait = trait,
+      Semeron_Users_Mean = user_mean,
+      Non_Users_Mean = non_user_mean,
+      Difference = user_mean - non_user_mean,
+      T_Test_P_Value = t_test_result$p.value
+    ))
+  }
+  
+  # Add significance indicator
+  trait_comparison$Significance <- ifelse(trait_comparison$T_Test_P_Value < 0.05, "Significant", "Not Significant")
+  
+  return(trait_comparison)
+}
+
+# 4. Analyze drug usage patterns
+analyze_drug_usage <- function(semeron_users, non_users, drug_columns) {
+  drug_usage_comparison <- data.frame(
+    Drug = character(),
+    Usage_Category = character(),
+    Semeron_Users_Pct = numeric(),
+    Non_Users_Pct = numeric(),
+    Difference = numeric()
+  )
+  
+  # Exclude Semeron itself from the comparison
+  compare_drugs <- drug_columns[drug_columns != "Semer"]
+  
+  for (drug in compare_drugs) {
+    # Calculate usage distribution
+    drug_users <- table(semeron_users[[drug]]) / nrow(semeron_users) * 100
+    drug_non_users <- table(non_users[[drug]]) / nrow(non_users) * 100
+    
+    # Compare each usage category
+    for (cat in unique(c(names(drug_users), names(drug_non_users)))) {
+      user_pct <- if(cat %in% names(drug_users)) drug_users[cat] else 0
+      non_user_pct <- if(cat %in% names(drug_non_users)) drug_non_users[cat] else 0
+      
+      drug_usage_comparison <- rbind(drug_usage_comparison, data.frame(
+        Drug = drug,
+        Usage_Category = cat,
+        Semeron_Users_Pct = user_pct,
+        Non_Users_Pct = non_user_pct,
+        Difference = user_pct - non_user_pct
+      ))
+    }
+  }
+  
+  # Tag recent use categories
+  drug_usage_comparison$Recent <- ifelse(
+    drug_usage_comparison$Usage_Category %in% c("Used in Last Year", "Used in Last Month", "Used in Last Week", "Used in Last Day"),
+    TRUE, FALSE
+  )
+  
+  return(drug_usage_comparison)
+}
+
+# 5. Get Semeron usage distribution
+get_semeron_usage <- function(drug_data) {
+  semeron_usage <- data.frame(
+    Category = names(table(drug_data$Semer)),
+    Count = as.numeric(table(drug_data$Semer)),
+    Percentage = as.numeric(table(drug_data$Semer)) / nrow(drug_data) * 100
+  )
+  
+  return(semeron_usage)
+}
+
+# 6. Summarize recent drug usage
+summarize_recent_usage <- function(drug_usage_comparison) {
+  # Filter to only recent usage categories and summarize by drug
+  recent_usage <- drug_usage_comparison %>%
+    filter(Recent == TRUE) %>%
+    group_by(Drug) %>%
+    summarize(
+      Semeron_Users_Recent = sum(Semeron_Users_Pct),
+      Non_Users_Recent = sum(Non_Users_Pct),
+      Difference = Semeron_Users_Recent - Non_Users_Recent
+    ) %>%
+    arrange(desc(abs(Difference)))
+  
+  return(recent_usage)
+}
+
+# 7. Visualization functions
+
+# 7.1 Create demographic comparison plot
+plot_demographics <- function(demo_comparison, top_n = 15) {
+  # Get top differences
+  top_demo_diff <- demo_comparison[order(-demo_comparison$AbsDiff), ][1:top_n, ]
+  
+  # Create the plot
+  demo_plot <- ggplot(top_demo_diff, aes(x = reorder(Variable, Difference), y = Difference)) +
+    geom_bar(stat = "identity", aes(fill = Difference > 0)) +
+    scale_fill_manual(values = c("red", "blue"), 
+                      labels = c("Higher in Non-Users", "Higher in Semeron Users"),
+                      name = "") +
+    coord_flip() +
+    labs(title = "Top Demographic Differences Between Semeron Users and Non-Users",
+         subtitle = "Percentage point differences in demographic categories",
+         x = "",
+         y = "Percentage Point Difference") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  return(demo_plot)
+}
+
+# 7.2 Create personality trait plot
+plot_traits <- function(trait_comparison) {
+  trait_plot <- ggplot(trait_comparison, aes(x = reorder(Trait, Difference), y = Difference)) +
+    geom_bar(stat = "identity", aes(fill = Significance)) +
+    scale_fill_manual(values = c("gray", "darkgreen"), 
+                      name = "Statistical Significance") +
+    geom_text(aes(label = sprintf("p = %.3f", T_Test_P_Value)), 
+              vjust = ifelse(trait_comparison$Difference > 0, -0.5, 1.5)) +
+    labs(title = "Personality Trait Differences Between Semeron Users and Non-Users",
+         x = "",
+         y = "Mean Difference (Semeron Users - Non-Users)") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  return(trait_plot)
+}
+
+# 7.3 Create drug usage plot
+plot_drug_usage <- function(recent_usage) {
+  drug_plot <- ggplot(recent_usage, aes(x = reorder(Drug, Difference), y = Difference)) +
+    geom_bar(stat = "identity", aes(fill = Difference > 0)) +
+    scale_fill_manual(values = c("red4", "blue4"), 
+                      labels = c("Higher in Non-Users", "Higher in Semeron Users"),
+                      name = "") +
+    coord_flip() +
+    labs(title = "Differences in Recent Drug Use Between Semeron Users and Non-Users",
+         subtitle = "Percentage point differences in 'Used in Last Year/Month/Week/Day'",
+         x = "",
+         y = "Percentage Point Difference") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  return(drug_plot)
+}
+
+# 7.4 Create Semeron usage distribution plot
+plot_semeron_distribution <- function(semeron_usage) {
+  semeron_plot <- ggplot(semeron_usage, aes(x = reorder(Category, -Count), y = Percentage)) +
+    geom_bar(stat = "identity", fill = "darkblue") +
+    geom_text(aes(label = sprintf("%.1f%%", Percentage)), vjust = -0.5) +
+    labs(title = "Distribution of Semeron Usage",
+         x = "",
+         y = "Percentage of Respondents") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  return(semeron_plot)
+}
+
+# 8. Main analysis function that uses all the modular functions
+analyze_semeron_reporting <- function(drug_data, drug_columns) {
+  # Step 1: Separate users into groups
+  groups <- separate_semeron_groups(drug_data)
+  semeron_users <- groups$semeron_users
+  non_users <- groups$non_users
+  
+  # Step 2: Analyze demographics
+  demo_comparison <- analyze_demographics(semeron_users, non_users)
+  
+  # Step 3: Analyze personality traits
+  trait_comparison <- analyze_traits(semeron_users, non_users)
+  
+  # Step 4: Analyze drug usage patterns
+  drug_usage_comparison <- analyze_drug_usage(semeron_users, non_users, drug_columns)
+  
+  # Step 5: Get Semeron usage distribution
+  semeron_usage <- get_semeron_usage(drug_data)
+  
+  # Step 6: Summarize recent drug usage
+  recent_usage <- summarize_recent_usage(drug_usage_comparison)
+  
+  # Step 7: Create visualizations
+  demo_plot <- plot_demographics(demo_comparison)
+  trait_plot <- plot_traits(trait_comparison)
+  drug_plot <- plot_drug_usage(recent_usage)
+  semeron_plot <- plot_semeron_distribution(semeron_usage)
+  
+  # Return results as a list
+  return(list(
+    demographic_comparison = demo_comparison,
+    trait_comparison = trait_comparison,
+    drug_usage_comparison = drug_usage_comparison,
+    recent_usage_comparison = recent_usage,
+    semeron_usage = semeron_usage,
+    plots = list(
+      demographic_plot = demo_plot,
+      trait_plot = trait_plot,
+      drug_plot = drug_plot,
+      semeron_plot = semeron_plot
+    )
+  ))
+}
+
+# Function to display all plots from the analysis
+display_semeron_analysis_plots <- function(analysis_results) {
+  # Create a 2x2 plot grid
+  grid.arrange(
+    analysis_results$plots$demographic_plot,
+    analysis_results$plots$trait_plot,
+    analysis_results$plots$drug_plot,
+    analysis_results$plots$semeron_plot,
+    ncol = 2
+  )
+}
+
+
+# Run the analysis
+semeron_analysis <- analyze_semeron_reporting(drug_data, drug_columns)
+ 
+# Display all plots
+display_semeron_analysis_plots(semeron_analysis)
+
+# Or display individual plots
+semeron_analysis$plots$demographic_plot
 
 
 
 
 
 
-
-
-# Print demographic distributions
-cat("Age distribution:\n")
-age_table <- table(drug_data$Age)
-print(age_table)
-print(round(100 * prop.table(age_table), 1))
-
-cat("\nGender distribution:\n")
-gender_table <- table(drug_data$Gender)
-print(gender_table)
-print(round(100 * prop.table(gender_table), 1))
-
-cat("\nEducation distribution:\n")
-education_table <- table(drug_data$Education)
-print(education_table)
-print(round(100 * prop.table(education_table), 1))
-
-cat("\nCountry distribution:\n")
-country_table <- table(drug_data$Country)
-print(country_table)
-print(round(100 * prop.table(country_table), 1))
-
-cat("\nEthnicity distribution:\n")
-ethnicity_table <- table(drug_data$Ethnicity)
-print(ethnicity_table)
-print(round(100 * prop.table(ethnicity_table), 1))
-
-
-sample <- head(25)
-write.csv(drug_data, "Data/sample.csv", row.names = FALSE) 
