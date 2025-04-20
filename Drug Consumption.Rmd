@@ -24,14 +24,18 @@ The database contains records for 1,885 respondents with 12 attributes including
 
 # Cleaning and formatting the dataset
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 # Load required libraries
 library(dplyr)
 library(ggplot2)
 library(reshape2)
+library(kableExtra)
+library(knitr)
+library(gridExtra)
+library(tidyr)
 ```
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 # Read the CSV file
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
@@ -40,7 +44,7 @@ drug_data <- read.csv("Data/drug_consumption.csv")
 
 The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Define mappings and column information
 ###############################################################################
@@ -124,7 +128,7 @@ ethnicity_mapping <- c(
 )
 ```
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Data Processing
 ###############################################################################
@@ -147,7 +151,7 @@ for (col in drug_columns) {
 
 ## Investigating missing values
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Data Cleaning - Missing values
 ###############################################################################
@@ -157,16 +161,15 @@ drug_data <- drug_data[, -which(names(drug_data) == "ID")]
 
 # Check for NA values in each column
 na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
-cat("NA values by column:\n")
+cat("NA values by column:")
 
 # Print only columns with NA values
 print(na_by_column[na_by_column > 0])  
-cat("\n")
 ```
 
 Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 # Replace NA values with "Not Provided"
 drug_data$Education[is.na(drug_data$Education)] <- "Not Provided"
 drug_data$Ethnicity[is.na(drug_data$Ethnicity)] <- "Not Provided"
@@ -177,7 +180,7 @@ write.csv(drug_data, "Data/cleaned.csv")
 
 ## Investigating outliers
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Data Cleaning - Looking for outliers
 ###############################################################################
@@ -242,7 +245,7 @@ As can be seen from the box plots our data set has some values that are outside 
 
 ## Correlation Between Behavioral Measures
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Heatmap
 ###############################################################################
@@ -279,7 +282,7 @@ The correlation matrix shows that certain personality traits tend to cluster tho
 
 ## Comparing Behavioral Measure For Gender
 
-```{r}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Gender comparison
 ###############################################################################
@@ -341,11 +344,11 @@ The mean of all the Behavioral Measures is 0, the chart show the mean score brok
 
 ## Comparing Education Level with Behavioral Measures
 
-```{r}
+
+```{r, fig.width=7.5, fig.height=8.5, dev="pdf", echo=FALSE, cache=TRUE}
 ###############################################################################
 # Education comparison
 ###############################################################################
-
 # Order education levels
 education_order <- c(
   "Left school before 16 years",
@@ -382,21 +385,92 @@ education_display <- education_means %>%
     "Sensation Seeking" = SS
   )
 
-# Display the table with formatted cells
-kableExtra::kable(education_display, 
-                  caption = "Personality Traits by Education Level",
-                  digits = 2) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"), 
-                font_size = 11,
-                full_width = TRUE) %>%
-  column_spec(1, bold = TRUE, width = "15em") %>%
-  row_spec(0, background = "#f5f5f5", bold = TRUE) %>%
-  footnote(general = "Values represent mean scores for each trait",
-           footnote_as_chunk = TRUE) %>%
-  scroll_box(width = "100%", height = "400px")
-```
+# Create a data frame for plotting
+education_plot_data <- education_means %>%
+  select(-n)
 
+# Simplified visualization approach with more space for the title
+# Set up the plotting parameters
+par(mfrow = c(4, 2), mar = c(8, 4, 2, 1), oma = c(0, 0, 3, 0))
+
+# Define the trait columns and their display names
+trait_cols <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+trait_names <- c("Neuroticism", "Extraversion", "Openness", "Agreeableness", 
+                "Conscientiousness", "Impulsivity", "Sensation Seeking")
+
+# Plot each trait separately
+for (i in 1:length(trait_cols)) {
+  col <- trait_cols[i]
+  trait_name <- trait_names[i]
+  
+  # Create a simple barplot
+  bp <- barplot(education_plot_data[[col]], 
+          names.arg = rep("", nrow(education_plot_data)),
+          col = ifelse(education_plot_data[[col]] > 0, "salmon", "lightblue"),
+          main = trait_name,
+          border = NA,
+          las = 2,
+          ylim = c(min(education_plot_data[[col]]) - 0.05, 
+                  max(education_plot_data[[col]]) + 0.05),
+          cex.main = 0.9,
+          cex.axis = 0.8)
+  
+  # Add a reference line at y=0
+  abline(h = 0, lty = 2, col = "gray")
+  
+  # Add abbreviated education labels
+  edu_labels <- c("Before 16", "At 16", "At 17", "At 18", "Some college", 
+                 "Prof cert", "University", "Masters", "Doctorate", "Not Provided")
+  edu_labels <- edu_labels[1:length(bp)]  # Ensure we have the right number of labels
+  
+  # Add text labels at the bottom
+  text(bp, par("usr")[3] - 0.02, srt = 45, adj = 1, labels = edu_labels, 
+       xpd = TRUE, cex = 0.7)
+}
+
+# Add a title for the entire set of plots with more space
+mtext("Personality Traits by Education Level", side = 3, line = 1, 
+      outer = TRUE, cex = 1.2, font = 2)
+```
 It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking	is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.  
 
+## Analysis of Seremon Usage
+
+```{r dev="pdf", echo=FALSE, cache=TRUE}
+###############################################################################
+# Seremon
+###############################################################################
+
+# Count Semeron users vs non-users
+semeron_counts <- drug_data %>%
+  group_by(Semer) %>%
+  summarise(Count = n()) %>%
+  arrange(desc(Count))
+```
+
+```{r}
+# Create a nicely formatted table for the detailed counts
+semeron_table <- semeron_counts %>%
+  mutate(Percentage = paste0(round(Count / sum(Count) * 100, 2), "%")) %>%
+  rename(`Usage Category` = Semer) %>%
+  kable(caption = "Semeron Usage Categories", 
+        booktabs = TRUE, 
+        col.names = c("Usage Category", "Count", "Percentage"))
+
+# For PDF output, apply specific styling
+if(knitr::is_latex_output()) {
+  semeron_table <- semeron_table %>%
+    kable_styling(latex_options = c("striped", "hold_position"), 
+                  full_width = FALSE,
+                  position = "center") %>%
+    row_spec(0, bold = TRUE) %>%
+    column_spec(1, width = "5cm") %>%
+    column_spec(2, width = "2cm") %>%
+    column_spec(3, width = "2.5cm")
+}
+
+# Display the table
+semeron_table
+```
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
