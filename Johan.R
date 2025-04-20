@@ -10,7 +10,7 @@ library(kableExtra)
 library(knitr)
 library(gridExtra)
 library(tidyr)
-
+library(naniar)
 
 # Read the CSV file
 drug_data <- read.csv("Data/drug_consumption.csv")
@@ -125,11 +125,11 @@ drug_data <- drug_data[, -which(names(drug_data) == "ID")]
 
 # Check for NA values in each column
 na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
-cat("NA values by column:\n")
 
 # Print only columns with NA values
 cat("Number of missing values by columnn")
 print(na_by_column[na_by_column > 0]) 
+
 
 # Replace NA values with "Not Provided"
 drug_data$Education[is.na(drug_data$Education)] <- "Not Provided"
@@ -461,6 +461,7 @@ semeron_table <- semeron_counts %>%
 
 # Display the table
 print(semeron_table)
+
 
 
 

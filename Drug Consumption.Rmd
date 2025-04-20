@@ -24,7 +24,7 @@ The database contains records for 1,885 respondents with 12 attributes including
 
 # Cleaning and formatting the dataset
 
-```{r echo=FALSE, cache=TRUE}
+```{r include=FALSE, cache=FALSE}
 # Load required libraries
 library(dplyr)
 library(ggplot2)
@@ -436,7 +436,7 @@ It is not very clear at first glance but when you study the table closely it bec
 
 ## Analysis of Seremon Usage
 
-```{r dev="pdf", echo=FALSE, cache=TRUE}
+```{r echo=FALSE, cache=TRUE}
 ###############################################################################
 # Seremon
 ###############################################################################
@@ -448,7 +448,11 @@ semeron_counts <- drug_data %>%
   arrange(desc(Count))
 ```
 
-```{r}
+```{r problem_chuck, echo=FALSE, cache=TRUE}
+# Load pacakges again
+library(dplyr)
+library(kableExtra)
+
 # Create a nicely formatted table for the detailed counts
 semeron_table <- semeron_counts %>%
   mutate(Percentage = paste0(round(Count / sum(Count) * 100, 2), "%")) %>%
@@ -472,5 +476,15 @@ if(knitr::is_latex_output()) {
 # Display the table
 semeron_table
 ```
+
+Seremon is a non exsisting drug that was introduced to the questonaire. With only 0.42% of resopndents reporting usage of Semeron. This would indicate that the survey data is likely of good quality, with most respondents providing attentive and truthful answers regarding their substance use.
+
+
+
+
+
+
+
+
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
