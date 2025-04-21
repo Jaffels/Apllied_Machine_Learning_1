@@ -467,10 +467,15 @@ print(semeron_table)
 # Prep the data for modeling
 ################################################################################
 
-# This removes the index columns
-drug_data <- drug_data %>% 
-  select(-X, -Index)
+# Make a copy of the dataset
+model_data <- drug_data
 
+# This removes the index columns and
+# remove the fake drug Semeron
+model_data <- model_data %>% 
+  select(-c(X, Index, Semer))
+
+# Map drug levels
 consumption_levels <- c(
   "Never Used" = 0,
   "Used over a Decade Ago" = 1,
@@ -483,16 +488,15 @@ consumption_levels <- c(
 
 # Iterate through each specified drug column
 for (col_name in drug_columns) {
-  # Check if the column actually exists in the dataframe to prevent errors
-  if (col_name %in% names(drug_data)) {
-    column_values_as_char <- as.character(drug_data[[col_name]])
-    drug_data[[col_name]] <- unname(consumption_levels[column_values_as_char])
+  if (col_name %in% names(model_data)) {
+    column_values_as_char <- as.character(model_data[[col_name]])
+    model_data[[col_name]] <- unname(consumption_levels[column_values_as_char])
   } 
 }
 
 
 
 # Save the updated dataframe back to CSV
-write.csv(drug_data, "Data/model_data.csv")
+write.csv(model_data, "Data/model_data.csv")
 
 

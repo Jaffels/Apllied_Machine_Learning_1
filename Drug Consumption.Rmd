@@ -22,7 +22,7 @@ In this data science project, we aim to identify factors and patterns potentiall
 
 The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
 
-# Cleaning and formatting the dataset
+# Cleaning and Formatting the Dataset
 
 ```{r include=FALSE, cache=FALSE}
 # Load required libraries
@@ -40,7 +40,7 @@ library(tidyr)
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
-## Fomatting the dataset
+## Fomatting the Dataset
 
 The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
 
@@ -149,7 +149,7 @@ for (col in drug_columns) {
 }
 ```
 
-## Investigating missing values
+## Investigating Missing Values
 
 ```{r echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -178,7 +178,7 @@ drug_data$Ethnicity[is.na(drug_data$Ethnicity)] <- "Not Provided"
 write.csv(drug_data, "Data/cleaned.csv")
 ```
 
-## Investigating outliers
+## Investigating Outliers
 
 ```{r echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -243,7 +243,7 @@ As can be seen from the box plots our data set has some values that are outside 
 
 # Exploratory Data Analysis
 
-## Correlation Between Behavioral Measures
+## Correlation between Behavioral Measures
 
 ```{r echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -280,7 +280,7 @@ ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
 The correlation matrix shows that certain personality traits tend to cluster thougher for example SS (Sensation Seeking) has a positive correlation with Escore (Extraversion), Oscore (Openness) and Impulsive while they in turn also have positive correlations which other and a negative correlation to Cscore (Conscientiousness) and Ascore (Agreeableness) while they have a positive correlation with each other.
 
 
-## Comparing Behavioral Measure For Gender
+## Comparing Behavioral Measure for Gender
 
 ```{r echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -477,9 +477,83 @@ if(knitr::is_latex_output()) {
 semeron_table
 ```
 
-Seremon is a non exsisting drug that was introduced to the questonaire. With only 0.42% of resopndents reporting usage of Semeron. This would indicate that the survey data is likely of good quality, with most respondents providing attentive and truthful answers regarding their substance use.
+Semeron is a non exsisting drug that was introduced to the questonaire. With only 0.42% of resopndents reporting usage of Semeron. This would indicate that the survey data is likely of good quality, with most respondents providing attentive and truthful answers regarding their substance use.
 
+# Prepraring the Dataset for Machine Learning
 
+```{r echo=FALSE, cache=TRUE}
+################################################################################
+# Prep the data for modeling
+################################################################################
+
+# Make a copy of the dataset
+model_data <- drug_data
+
+# Remove the fake drug Semeron and index column
+model_data <- model_data %>% 
+  select(-c(Semer, Index))
+
+# Map drug levels
+consumption_levels <- c(
+  "Never Used" = 0,
+  "Used over a Decade Ago" = 1,
+  "Used in Last Decade" = 2,
+  "Used in Last Year" = 3,
+  "Used in Last Month" = 4,
+  "Used in Last Week" = 5,
+  "Used in Last Day" = 6
+)
+
+# Iterate through each specified drug column
+for (col_name in drug_columns) {
+  if (col_name %in% names(model_data)) {
+    column_values_as_char <- as.character(model_data[[col_name]])
+    model_data[[col_name]] <- unname(consumption_levels[column_values_as_char])
+  } 
+}
+
+# Convert gender to binary encoding
+model_data$Gender <- ifelse(model_data$Gender == "Male", 1, 0)
+
+# Change Age levels to ordinal
+age_levels <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
+model_data$Age <- as.integer(factor(model_data$Age, levels = age_levels))
+
+# Change Education levels to ordinal
+education_levels <- c(
+  "Not Provided",
+  "Left school before 16 years",
+  "Left school at 16 years",
+  "Left school at 17 years",
+  "Left school at 18 years",
+  "Some college or university, no certificate or degree",
+  "Professional certificate/diploma",
+  "University degree",
+  "Masters degree",
+  "Doctorate degree"
+)
+model_data$Education <- as.integer(factor(model_data$Education, levels = education_levels))
+
+# Country - One-hot Encoding
+country <- model.matrix(~ Country - 1, data = model_data)
+model_data <- cbind(model_data, country)
+
+# Ethnicity - One-hot Encoding
+ethnicity <- model.matrix(~ Ethnicity - 1, data = model_data)
+model_data <- cbind(model_data, ethnicity)
+
+# Remove the original columns
+model_data <- model_data %>% select(-c(Country, Ethnicity))
+
+# Save the updated dataframe to csv
+write.csv(model_data, "Data/model_data.csv")
+```
+
+Since the main focus of the project is implementing machine learning models we decided to prepare our data for this purpose. Just like we converted our original dataset to be more human readable for data exploration we have changed our dataset dataset to be more machine readable. The sex column was changed to binary data and for all the Drug columns, Education and Age we converted the data to ordinal data.
+
+For the Ethnicity and Country columns we used a technique called One-Hot Encoding, where we transforms a categorical variable with multiple possible values into multiple binary (0 or 1) columns. Each new column represents one possible category from the original variable, and for each observation, exactly one of these new columns will have the value 1 (hence "one-hot") while all others will be 0.
+
+It prevents the machine learning algorithm from assuming an arbitrary numerical relationship between categories. For example, if you simply encoded "USA"=1, "UK"=2, "Canada"=3, the algorithm might incorrectly assume that "Canada" is somehow "greater than" or "three times more important than" "USA".
 
 
 
