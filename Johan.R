@@ -463,9 +463,36 @@ semeron_table <- semeron_counts %>%
 print(semeron_table)
 
 
+################################################################################
+# Prep the data for modeling
+################################################################################
+
+# This removes the index columns
+drug_data <- drug_data %>% 
+  select(-X, -Index)
+
+consumption_levels <- c(
+  "Never Used" = 0,
+  "Used over a Decade Ago" = 1,
+  "Used in Last Decade" = 2,
+  "Used in Last Year" = 3,
+  "Used in Last Month" = 4,
+  "Used in Last Week" = 5,
+  "Used in Last Day" = 6
+)
+
+# Iterate through each specified drug column
+for (col_name in drug_columns) {
+  # Check if the column actually exists in the dataframe to prevent errors
+  if (col_name %in% names(drug_data)) {
+    column_values_as_char <- as.character(drug_data[[col_name]])
+    drug_data[[col_name]] <- unname(consumption_levels[column_values_as_char])
+  } 
+}
 
 
 
-
+# Save the updated dataframe back to CSV
+write.csv(drug_data, "Data/model_data.csv")
 
 

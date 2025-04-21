@@ -23,7 +23,7 @@ drug_columns <- c(
 )
 
 # Define personality traits columns
-trait_columns <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+trait_col <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
 
 # Convert drug consumption levels to numeric values for modeling
 consumption_levels <- c(
@@ -237,7 +237,7 @@ print(paste("Mean R-squared across all drug models:", round(mean_r_squared, 3)))
 print(paste("Median R-squared across all drug models:", round(median_r_squared, 3)))
 
 # Count occurrences of each trait as significant predictor
-trait_counts <- sapply(trait_columns, function(trait) {
+trait_counts <- sapply(trait_col, function(trait) {
   sum(grepl(trait, all_drug_models$Significant_Predictors))
 })
 
