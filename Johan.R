@@ -470,10 +470,9 @@ print(semeron_table)
 # Make a copy of the dataset
 model_data <- drug_data
 
-# This removes the index columns and
-# remove the fake drug Semeron
+# Remove the fake drug Semeron and index column
 model_data <- model_data %>% 
-  select(-c(X, Index, Semer))
+  select(-c(Semer, Index))
 
 # Map drug levels
 consumption_levels <- c(
@@ -494,7 +493,38 @@ for (col_name in drug_columns) {
   } 
 }
 
+# Convert gender to binary encoding
+model_data$Gender <- ifelse(model_data$Gender == "Male", 1, 0)
 
+# Change Age levels to ordinal
+age_levels <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
+model_data$Age <- as.integer(factor(model_data$Age, levels = age_levels))
+
+# Change Education levels to ordinal
+education_levels <- c(
+  "Not Provided",
+  "Left school before 16 years",
+  "Left school at 16 years",
+  "Left school at 17 years",
+  "Left school at 18 years",
+  "Some college or university, no certificate or degree",
+  "Professional certificate/diploma",
+  "University degree",
+  "Masters degree",
+  "Doctorate degree"
+)
+model_data$Education <- as.integer(factor(model_data$Education, levels = education_levels))
+
+# Country - One-hot Encoding
+country <- model.matrix(~ Country - 1, data = model_data)
+model_data <- cbind(model_data, country)
+
+# Ethnicity - One-hot Encoding
+ethnicity <- model.matrix(~ Ethnicity - 1, data = model_data)
+model_data <- cbind(model_data, ethnicity)
+
+# Remove the original columns
+model_data <- model_data %>% select(-c(Country, Ethnicity))
 
 # Save the updated dataframe back to CSV
 write.csv(model_data, "Data/model_data.csv")
