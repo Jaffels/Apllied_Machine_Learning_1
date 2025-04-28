@@ -1,17 +1,5 @@
-# Drug Consumption Linear Regression Analysis
-# Author: Claude
-# Date: April 25, 2025
-
-# Load required libraries
-library(dplyr)
-library(ggplot2)
-library(tidyr)
-library(reshape2)
-library(car)      # For VIF analysis
-library(broom)    # For tidy model output
-library(knitr)    # For tables
-library(kableExtra) # For enhanced tables
-library(gridExtra) # For arranging multiple plots
+# Suppresses all warnings
+options(warn = -1)
 
 # Read the processed dataset
 model_data <- read.csv("Data/model_data.csv")
@@ -208,7 +196,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
     geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
                        xmax = Estimate + 1.96 * StdError), 
                    height = 0.2, alpha = 0.7) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", size = 0.7) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
     scale_color_manual(values = sig_colors) +
     scale_size_continuous(range = c(2, 6), guide = "none") +
     labs(title = title,
@@ -292,7 +280,6 @@ results_list <- list()
 for (drug in drug_names) {
   # Check if the drug exists in the dataset
   if (drug %in% names(model_data)) {
-    cat("Running regression model for", drug, "\n")
     results_list[[drug]] <- run_drug_regression(model_data, drug)
   } else {
     cat("Warning: Drug", drug, "not found in dataset\n")
@@ -406,13 +393,13 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
       axis.title = element_text(size = 10),
       axis.text = element_text(size = 9),
       panel.grid.minor = element_blank(),
-      panel.border = element_rect(color = "gray80", fill = NA, size = 0.5)
+      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
     )
   
   # 1. Residuals vs Fitted with improved aesthetics
   p1 <- ggplot(model_data, aes(x = .fitted, y = .resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, size = 0.7) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, linewidth = 0.7) +
     geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess") +
     labs(title = "Residuals vs Fitted",
          subtitle = "Should show random scatter around the zero line",
@@ -423,7 +410,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
   # 2. Normal Q-Q plot with improved aesthetics
   p2 <- ggplot(model_data, aes(sample = .resid)) +
     stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
-    stat_qq_line(color = reference_color, size = 0.7) +
+    stat_qq_line(color = reference_color, linewidth = 0.7) +
     labs(title = "Normal Q-Q Plot",
          subtitle = "Points should follow the diagonal line",
          x = "Theoretical Quantiles",
@@ -437,7 +424,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
     labs(title = "Scale-Location",
          subtitle = "Should show homogeneous variance",
          x = "Fitted values",
-         y = "√|Standardized Residuals|") +
+         y = "sqrt|Standardized Residuals|") +
     diagnostic_theme
   
   # 4. Residuals vs Leverage with improved aesthetics
@@ -624,64 +611,6 @@ if ("Nicotine" %in% names(results_list)) {
   print(nicotine_coef_plot)
 }
 
-# Create a table of the most significant predictors for each drug
-get_significant_predictors <- function(model, drug_name) {
-  # Extract model coefficients
-  coefs <- summary(model)$coefficients
-  
-  # Filter to significant predictors (p < 0.05)
-  sig_coefs <- coefs[coefs[, "Pr(>|t|)"] < 0.05, ]
-  
-  # Skip intercept
-  sig_coefs <- sig_coefs[rownames(sig_coefs) != "(Intercept)", ]
-  
-  # Create data frame for results
-  if(nrow(sig_coefs) > 0) {
-    pred_df <- data.frame(
-      Drug = drug_name,
-      Predictor = rownames(sig_coefs),
-      Coefficient = sig_coefs[, "Estimate"],
-      StdError = sig_coefs[, "Std. Error"],
-      P_Value = sig_coefs[, "Pr(>|t|)"],
-      stringsAsFactors = FALSE
-    )
-    
-    # Order by absolute coefficient value
-    pred_df <- pred_df[order(abs(pred_df$Coefficient), decreasing = TRUE), ]
-    
-    return(pred_df)
-  } else {
-    return(NULL)
-  }
-}
-
-# Combine significant predictors for all drugs
-all_predictors_list <- lapply(names(results_list), function(drug) {
-  get_significant_predictors(results_list[[drug]]$model, drug)
-})
-
-# Filter out NULL results and combine
-non_null_predictors <- all_predictors_list[!sapply(all_predictors_list, is.null)]
-if (length(non_null_predictors) > 0) {
-  all_predictors <- do.call(rbind, non_null_predictors)
-  
-  # Display the top predictors table
-  if(!is.null(all_predictors) && nrow(all_predictors) > 0) {
-    # Format the data for nicer display
-    top_predictors_table <- all_predictors %>%
-      mutate(
-        Coefficient = round(Coefficient, 3),
-        StdError = round(StdError, 3),
-        P_Value = ifelse(P_Value < 0.001, "<0.001", round(P_Value, 3))
-      ) %>%
-      arrange(Drug, desc(abs(Coefficient)))
-    
-    # Print table
-    kable(top_predictors_table, caption = "Significant Predictors of Drug Usage") %>%
-      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-  }
-}
-
 # If we have diagnostic plots for Cannabis model
 if (exists("cannabis_model") && !is.null(cannabis_model)) {
   cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, "Cannabis Usage Model Diagnostics")
@@ -703,19 +632,30 @@ if (length(results_list) > 0) {
   cat("The best-fitting model was for", best_model, 
       "with Adjusted R² =", round(best_r2, 3), "\n")
   
-  # Print the key predictors across drugs
-  if (exists("all_predictors") && !is.null(all_predictors) && nrow(all_predictors) > 0) {
-    cat("\nKey personality traits predicting drug use:\n")
-    personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
-    for(trait in personality_traits) {
-      # Count how many drug models have this trait as significant
-      trait_count <- sum(grepl(trait, all_predictors$Predictor))
-      if(trait_count > 0) {
-        cat("- ", trait, ": significant predictor for", trait_count, "drugs\n")
+  # Print the personality traits that are significant
+  cat("\nKey personality traits predicting drug use:\n")
+  personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+  
+  for (drug in names(results_list)) {
+    cat("\nSignificant traits for", drug, "usage:\n")
+    model_summary <- summary(results_list[[drug]]$model)
+    coefs <- model_summary$coefficients
+    
+    for (trait in personality_traits) {
+      if (trait %in% rownames(coefs)) {
+        p_value <- coefs[trait, "Pr(>|t|)"]
+        estimate <- coefs[trait, "Estimate"]
+        
+        if (p_value < 0.05) {
+          direction <- ifelse(estimate > 0, "positive", "negative")
+          stars <- ifelse(p_value < 0.001, "***", 
+                          ifelse(p_value < 0.01, "**", "*"))
+          
+          cat("  - ", trait, ": ", direction, " effect (", 
+              round(estimate, 3), ") ", stars, "\n", sep = "")
+        }
       }
     }
-  } else {
-    cat("\nNo significant predictors found across drugs\n")
   }
 } else {
   cat("No valid drug models were created\n")

@@ -35,6 +35,9 @@ library(gridExtra)
 library(tidyr)
 library(car)
 library(broom)
+
+# Suppresses all warnings
+options(warn = -1)
 ```
 
 ```{r echo=FALSE, cache=TRUE}
@@ -563,7 +566,8 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 
 As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions. 
 
-```{r lm1, echo=FALSE, cache=TRUE}
+```{r echo=FALSE}
+
 # Read the processed dataset
 model_data <- read.csv("Data/model_data.csv")
 
@@ -693,8 +697,8 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
   
   # Add significance markers and categories
   coef_df$Significance <- ifelse(coef_df$PValue < 0.001, "p < 0.001", 
-                                 ifelse(coef_df$PValue < 0.01, "p < 0.01",
-                                        ifelse(coef_df$PValue < 0.05, "p < 0.05", "Not significant")))
+                               ifelse(coef_df$PValue < 0.01, "p < 0.01",
+                                    ifelse(coef_df$PValue < 0.05, "p < 0.05", "Not significant")))
   
   # Sort by absolute value of estimate
   coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
@@ -759,8 +763,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
     geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
                        xmax = Estimate + 1.96 * StdError), 
                    height = 0.2, alpha = 0.7) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", 
-               linewidth = 0.7) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
     scale_color_manual(values = sig_colors) +
     scale_size_continuous(range = c(2, 6), guide = "none") +
     labs(title = title,
@@ -799,7 +802,7 @@ run_drug_regression <- function(data, drug_name) {
   
   # Create formula with modified variables to avoid perfect multicollinearity
   formula_str <- paste(drug_name, "~ Age + Gender + Education + Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS + ", 
-                       paste(c(country_vars, ethnicity_vars), collapse = " + "))
+                     paste(c(country_vars, ethnicity_vars), collapse = " + "))
   
   formula <- as.formula(formula_str)
   
@@ -901,9 +904,9 @@ create_model_summary_table <- function(results_list) {
       Adj_R_squared = model_summary$adj.r.squared,
       F_statistic = model_summary$fstatistic[1],
       P_value = pf(model_summary$fstatistic[1], 
-                   model_summary$fstatistic[2], 
-                   model_summary$fstatistic[3], 
-                   lower.tail = FALSE),
+                 model_summary$fstatistic[2], 
+                 model_summary$fstatistic[3], 
+                 lower.tail = FALSE),
       Top_positive_predictor = top_pos,
       Top_negative_predictor = top_neg,
       stringsAsFactors = FALSE
@@ -966,7 +969,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
     geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
                linewidth = 0.7) +
     geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess") +
+                method = "loess", message = FALSE, warning = FALSE) +
     labs(title = "Residuals vs Fitted",
          subtitle = "Should show random scatter around the zero line",
          x = "Fitted values",
@@ -986,21 +989,24 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
   # 3. Scale-Location plot with improved aesthetics
   p3 <- ggplot(model_data, aes(x = .fitted, y = sqrt(abs(.resid)))) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess") +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", message = FALSE, warning = FALSE) +
     labs(title = "Scale-Location",
          subtitle = "Should show homogeneous variance",
          x = "Fitted values",
-         y = "√|Standardized Residuals|") +
+         y = "sqrt|Standardized Residuals|") +
     diagnostic_theme
   
   # 4. Residuals vs Leverage with improved aesthetics
   # Add Cook's distance contour lines
   p4 <- ggplot(model_data, aes(x = .hat, y = .resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess") +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", message = FALSE, warning = FALSE) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
     # Add Cook's distance contours
-    stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", linetype = "dashed") +
+    stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", 
+                 linetype = "dashed", na.rm = TRUE) +
     labs(title = "Residuals vs Leverage",
          subtitle = "Identifies influential cases",
          x = "Leverage",
@@ -1040,7 +1046,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
 create_model_coef_table <- function(model_list, drug_names) {
   # Extract key coefficients from each model
   key_vars <- c("Age", "Gender", "Education", "Nscore", "Escore", 
-                "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+               "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
   
   # Create data frame for results
   result_df <- data.frame(
@@ -1071,13 +1077,13 @@ create_model_coef_table <- function(model_list, drug_names) {
       
       # Add significance stars
       drug_sig <- ifelse(drug_p < 0.001, "***", 
-                         ifelse(drug_p < 0.01, "**", 
-                                ifelse(drug_p < 0.05, "*", "")))
+                       ifelse(drug_p < 0.01, "**", 
+                            ifelse(drug_p < 0.05, "*", "")))
       
       # Format coefficients with significance stars
       drug_coef_text <- ifelse(!is.na(drug_coefs), 
-                               paste0(sprintf("%.3f", round(drug_coefs, 3)), drug_sig), 
-                               "")
+                             paste0(sprintf("%.3f", round(drug_coefs, 3)), drug_sig), 
+                             "")
       
       # Add to result dataframe
       result_df[[drug]] <- drug_coef_text
@@ -1177,64 +1183,6 @@ if ("Nicotine" %in% names(results_list)) {
   print(nicotine_coef_plot)
 }
 
-# Create a table of the most significant predictors for each drug
-get_significant_predictors <- function(model, drug_name) {
-  # Extract model coefficients
-  coefs <- summary(model)$coefficients
-  
-  # Filter to significant predictors (p < 0.05)
-  sig_coefs <- coefs[coefs[, "Pr(>|t|)"] < 0.05, ]
-  
-  # Skip intercept
-  sig_coefs <- sig_coefs[rownames(sig_coefs) != "(Intercept)", ]
-  
-  # Create data frame for results
-  if(nrow(sig_coefs) > 0) {
-    pred_df <- data.frame(
-      Drug = drug_name,
-      Predictor = rownames(sig_coefs),
-      Coefficient = sig_coefs[, "Estimate"],
-      StdError = sig_coefs[, "Std. Error"],
-      P_Value = sig_coefs[, "Pr(>|t|)"],
-      stringsAsFactors = FALSE
-    )
-    
-    # Order by absolute coefficient value
-    pred_df <- pred_df[order(abs(pred_df$Coefficient), decreasing = TRUE), ]
-    
-    return(pred_df)
-  } else {
-    return(NULL)
-  }
-}
-
-# Combine significant predictors for all drugs
-all_predictors_list <- lapply(names(results_list), function(drug) {
-  get_significant_predictors(results_list[[drug]]$model, drug)
-})
-
-# Filter out NULL results and combine
-non_null_predictors <- all_predictors_list[!sapply(all_predictors_list, is.null)]
-if (length(non_null_predictors) > 0) {
-  all_predictors <- do.call(rbind, non_null_predictors)
-  
-  # Display the top predictors table
-  if(!is.null(all_predictors) && nrow(all_predictors) > 0) {
-    # Format the data for nicer display
-    top_predictors_table <- all_predictors %>%
-      mutate(
-        Coefficient = round(Coefficient, 3),
-        StdError = round(StdError, 3),
-        P_Value = ifelse(P_Value < 0.001, "<0.001", round(P_Value, 3))
-      ) %>%
-      arrange(Drug, desc(abs(Coefficient)))
-    
-    # Print table
-    kable(top_predictors_table, caption = "Significant Predictors of Drug Usage") %>%
-      kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE)
-  }
-}
-
 # If we have diagnostic plots for Cannabis model
 if (exists("cannabis_model") && !is.null(cannabis_model)) {
   cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, "Cannabis Usage Model Diagnostics")
@@ -1256,26 +1204,35 @@ if (length(results_list) > 0) {
   cat("The best-fitting model was for", best_model, 
       "with Adjusted R² =", round(best_r2, 3), "\n")
   
-  # Print the key predictors across drugs
-  if (exists("all_predictors") && !is.null(all_predictors) && nrow(all_predictors) > 0) {
-    cat("\nKey personality traits predicting drug use:\n")
-    personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
-    for(trait in personality_traits) {
-      # Count how many drug models have this trait as significant
-      trait_count <- sum(grepl(trait, all_predictors$Predictor))
-      if(trait_count > 0) {
-        cat("- ", trait, ": significant predictor for", trait_count, "drugs\n")
+  # Print the personality traits that are significant
+  cat("\nKey personality traits predicting drug use:\n")
+  personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+  
+  for (drug in names(results_list)) {
+    cat("\nSignificant traits for", drug, "usage:\n")
+    model_summary <- summary(results_list[[drug]]$model)
+    coefs <- model_summary$coefficients
+    
+    for (trait in personality_traits) {
+      if (trait %in% rownames(coefs)) {
+        p_value <- coefs[trait, "Pr(>|t|)"]
+        estimate <- coefs[trait, "Estimate"]
+        
+        if (p_value < 0.05) {
+          direction <- ifelse(estimate > 0, "positive", "negative")
+          stars <- ifelse(p_value < 0.001, "***", 
+                         ifelse(p_value < 0.01, "**", "*"))
+          
+          cat("  - ", trait, ": ", direction, " effect (", 
+              round(estimate, 3), ") ", stars, "\n", sep = "")
+        }
       }
     }
-  } else {
-    cat("\nNo significant predictors found across drugs\n")
   }
 } else {
   cat("No valid drug models were created\n")
 }
 ```
-
-
 
 # Source
 https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
