@@ -564,9 +564,9 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 
 ## Linear Model
 
-As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions. 
+As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions.         
 
-```{r echo=FALSE}
+```{r lr1, echo=FALSE, cache=TRUE}
 
 # Read the processed dataset
 model_data <- read.csv("Data/model_data.csv")
@@ -577,112 +577,159 @@ if(names(model_data)[1] == "X") {
 }
 
 #---------------------------------------------------------------
-# 1. Exploratory Analysis for Linear Regression
+# Linear Regression Modeling
 #---------------------------------------------------------------
-
-# Function to create a custom correlation plot with drug variables
-plot_drug_correlations <- function(data, drug_name) {
-  # Define better variable names for plotting
-  var_names <- c(
-    "Nscore" = "Neuroticism",
-    "Escore" = "Extraversion", 
-    "Oscore" = "Openness",
-    "Ascore" = "Agreeableness",
-    "Cscore" = "Conscientiousness",
-    "Impulsive" = "Impulsivity",
-    "SS" = "Sensation Seeking"
-  )
-  
-  # Select personality traits and the specified drug
-  vars <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS", drug_name)
-  cor_data <- data[, vars]
-  
-  # Calculate correlation matrix
-  cor_matrix <- cor(cor_data, use = "pairwise.complete.obs")
-  
-  # For a more visually appealing plot, let's use ggplot2 instead of corrplot
-  cor_df <- reshape2::melt(cor_matrix)
-  names(cor_df) <- c("Var1", "Var2", "Correlation")
-  
-  # Only keep correlations with the drug
-  cor_df_drug <- cor_df[cor_df$Var2 == drug_name & cor_df$Var1 != drug_name, ]
-  
-  # Replace variable names with more readable ones
-  cor_df_drug$Var1 <- factor(
-    var_names[as.character(cor_df_drug$Var1)], 
-    levels = var_names[c("SS", "Impulsive", "Oscore", "Escore", "Nscore", "Cscore", "Ascore")]
-  )
-  
-  # Create bar chart
-  ggplot(cor_df_drug, aes(x = Correlation, y = Var1, fill = Correlation)) +
-    geom_bar(stat = "identity") +
-    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "#377EB8", midpoint = 0) +
-    geom_text(aes(label = sprintf("%.2f", round(Correlation, 2))), 
-              hjust = ifelse(cor_df_drug$Correlation < 0, 1.1, -0.1),
-              color = "black", size = 3.5) +
-    labs(title = paste("Personality Traits Correlated with", drug_name, "Use"),
-         x = "Correlation Coefficient",
-         y = "") +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-      legend.position = "none",
-      panel.grid.major.y = element_blank(),
-      axis.text.y = element_text(size = 10)
-    ) +
-    xlim(min(cor_df_drug$Correlation) - 0.1, max(cor_df_drug$Correlation) + 0.1)
-}
 
 # Create clean names for drugs to analyze
 drug_names <- c("Cannabis", "Alcohol", "Nicotine", "Coke", "Ecstasy")
 
-# Factor importance visualization function
-plot_factor_importance <- function(model, title) {
-  # Extract model coefficients
-  coefs <- summary(model)$coefficients
+# Function to build and evaluate linear regression model
+run_drug_regression <- function(data, drug_name) {
+  # Formula creation - all features, but handle multicollinearity in categorical variables
   
-  # Filter out intercept and create data frame for plotting
-  coef_df <- data.frame(
-    Variable = rownames(coefs)[-1],  # Exclude intercept
-    Estimate = coefs[-1, "Estimate"],
-    StdError = coefs[-1, "Std. Error"],
-    PValue = coefs[-1, "Pr(>|t|)"]
-  )
+  # For country variables, exclude one as reference (USA)
+  country_vars <- grep("Country", names(data), value = TRUE)
+  country_vars <- country_vars[country_vars != "CountryUSA"] # Use USA as reference
   
-  # Add significance markers
-  coef_df$Significant <- ifelse(coef_df$PValue < 0.05, "Yes", "No")
+  # For ethnicity variables, exclude one as reference (White)
+  ethnicity_vars <- grep("Ethnicity", names(data), value = TRUE)
+  ethnicity_vars <- ethnicity_vars[ethnicity_vars != "EthnicityWhite"] # Use White as reference
   
-  # Sort by absolute value of estimate
-  coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
+  # Create formula with modified variables to avoid perfect multicollinearity
+  formula_str <- paste(drug_name, "~ Age + Gender + Education + Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS + ", 
+                     paste(c(country_vars, ethnicity_vars), collapse = " + "))
   
-  # Keep only top 15 predictors for visualization clarity
-  if(nrow(coef_df) > 15) {
-    coef_df <- coef_df[1:15, ]
+  formula <- as.formula(formula_str)
+  
+  # Fit model
+  model <- lm(formula, data = data)
+  
+  # Check VIF for multicollinearity
+  # First check if the model has aliased coefficients
+  alias_check <- alias(model)
+  has_aliased <- length(alias_check$Complete) > 0
+  
+  # Only run VIF if no aliased coefficients
+  if(!has_aliased) {
+    vif_values <- vif(model)
+    high_vif <- vif_values[vif_values > 5]
+  } else {
+    # If there are aliased coefficients, we can't calculate VIF
+    vif_values <- "Aliased coefficients detected"
+    high_vif <- "Aliased coefficients detected"
+    
+    # Get the names of the aliased coefficients
+    aliased_names <- rownames(alias_check$Complete)
+    cat("Aliased coefficients detected in model for", drug_name, ":", paste(aliased_names, collapse=", "), "\n")
   }
   
-  # Reorder factor levels for plotting
-  coef_df$Variable <- factor(coef_df$Variable, levels = coef_df$Variable)
+  # Optional: Step-wise selection for feature selection
+  # step_model <- step(model, direction = "both")
   
-  # Plot
-  ggplot(coef_df, aes(x = Estimate, y = Variable, color = Significant)) +
-    geom_point(size = 3) +
-    geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
-                       xmax = Estimate + 1.96 * StdError), 
-                   height = 0.2) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray") +
-    scale_color_manual(values = c("Yes" = "#1F78B4", "No" = "#999999")) +
-    theme_minimal() +
-    labs(title = title,
-         subtitle = "Estimated coefficients with 95% confidence intervals",
-         x = "Coefficient Estimate",
-         y = "",
-         color = "Statistically\nSignificant") +
-    theme(plot.title = element_text(face = "bold", size = 14),
-          plot.subtitle = element_text(size = 10, color = "darkgray"),
-          legend.position = "top")
+  # Return model and diagnostics
+  return(list(
+    model = model,
+    summary = summary(model),
+    vif = vif_values,
+    high_vif = high_vif
+  ))
 }
 
-# Function to create an even more visually appealing coefficient plot
+# Create a results container
+results_list <- list()
+
+# Run regression for selected drugs
+for (drug in drug_names) {
+  # Check if the drug exists in the dataset
+  if (drug %in% names(model_data)) {
+    results_list[[drug]] <- run_drug_regression(model_data, drug)
+  } else {
+    cat("Warning: Drug", drug, "not found in dataset\n")
+  }
+}
+```
+
+### Personality Traits as Predictors of Substance Use
+
+Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.  
+
+
+```{r lr2, echo=FALSE, cache=TRUE}
+#---------------------------------------------------------------
+# Model Comparison and Visualization
+#---------------------------------------------------------------
+
+# Function to create a summary table of model performance
+create_model_summary_table <- function(results_list) {
+  # Initialize empty data frame
+  summary_df <- data.frame(
+    Drug = character(),
+    R_squared = numeric(),
+    Adj_R_squared = numeric(),
+    F_statistic = numeric(),
+    P_value = numeric(),
+    Top_positive_predictor = character(),
+    Top_negative_predictor = character(),
+    stringsAsFactors = FALSE
+  )
+  
+  # Fill with results
+  for (drug in names(results_list)) {
+    model_summary <- results_list[[drug]]$summary
+    
+    # Get coefficients
+    coefs <- model_summary$coefficients
+    
+    # Find top predictors (excluding intercept)
+    coef_df <- data.frame(
+      Variable = rownames(coefs)[-1],
+      Estimate = coefs[-1, "Estimate"],
+      P_value = coefs[-1, "Pr(>|t|)"]
+    )
+    
+    # Get significant predictors only
+    sig_coefs <- coef_df[coef_df$P_value < 0.05, ]
+    
+    if(nrow(sig_coefs) > 0) {
+      # Get top positive and negative predictors
+      top_pos <- sig_coefs[which.max(sig_coefs$Estimate), "Variable"]
+      top_neg <- sig_coefs[which.min(sig_coefs$Estimate), "Variable"]
+    } else {
+      top_pos <- "None"
+      top_neg <- "None"
+    }
+    
+    # Add to summary
+    summary_df <- rbind(summary_df, data.frame(
+      Drug = drug,
+      R_squared = model_summary$r.squared,
+      Adj_R_squared = model_summary$adj.r.squared,
+      F_statistic = model_summary$fstatistic[1],
+      P_value = pf(model_summary$fstatistic[1], 
+                 model_summary$fstatistic[2], 
+                 model_summary$fstatistic[3], 
+                 lower.tail = FALSE),
+      Top_positive_predictor = top_pos,
+      Top_negative_predictor = top_neg,
+      stringsAsFactors = FALSE
+    ))
+  }
+  
+  return(summary_df)
+}
+
+# Create and format the summary table
+model_summary_table <- create_model_summary_table(results_list)
+```
+
+### A graphical analysis of Cannibis
+
+```{r lr3, echo=FALSE, cache=TRUE}
+#---------------------------------------------------------------
+# Linear Regression Plots
+#---------------------------------------------------------------
+
+# Function to create a visually appealing coefficient plot
 plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
   # Extract model coefficients
   coefs <- summary(model)$coefficients
@@ -784,150 +831,9 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
     )
 }
 
-#---------------------------------------------------------------
-# 2. Linear Regression Modeling
-#---------------------------------------------------------------
+```
 
-# Function to build and evaluate linear regression model
-run_drug_regression <- function(data, drug_name) {
-  # Formula creation - all features, but handle multicollinearity in categorical variables
-  
-  # For country variables, exclude one as reference (USA)
-  country_vars <- grep("Country", names(data), value = TRUE)
-  country_vars <- country_vars[country_vars != "CountryUSA"] # Use USA as reference
-  
-  # For ethnicity variables, exclude one as reference (White)
-  ethnicity_vars <- grep("Ethnicity", names(data), value = TRUE)
-  ethnicity_vars <- ethnicity_vars[ethnicity_vars != "EthnicityWhite"] # Use White as reference
-  
-  # Create formula with modified variables to avoid perfect multicollinearity
-  formula_str <- paste(drug_name, "~ Age + Gender + Education + Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS + ", 
-                     paste(c(country_vars, ethnicity_vars), collapse = " + "))
-  
-  formula <- as.formula(formula_str)
-  
-  # Fit model
-  model <- lm(formula, data = data)
-  
-  # Check VIF for multicollinearity
-  # First check if the model has aliased coefficients
-  alias_check <- alias(model)
-  has_aliased <- length(alias_check$Complete) > 0
-  
-  # Only run VIF if no aliased coefficients
-  if(!has_aliased) {
-    vif_values <- vif(model)
-    high_vif <- vif_values[vif_values > 5]
-  } else {
-    # If there are aliased coefficients, we can't calculate VIF
-    vif_values <- "Aliased coefficients detected"
-    high_vif <- "Aliased coefficients detected"
-    
-    # Get the names of the aliased coefficients
-    aliased_names <- rownames(alias_check$Complete)
-    cat("Aliased coefficients detected in model for", drug_name, ":", paste(aliased_names, collapse=", "), "\n")
-  }
-  
-  # Optional: Step-wise selection for feature selection
-  # step_model <- step(model, direction = "both")
-  
-  # Return model and diagnostics
-  return(list(
-    model = model,
-    summary = summary(model),
-    vif = vif_values,
-    high_vif = high_vif
-  ))
-}
-
-# Create a results container
-results_list <- list()
-
-# Run regression for selected drugs
-for (drug in drug_names) {
-  # Check if the drug exists in the dataset
-  if (drug %in% names(model_data)) {
-    results_list[[drug]] <- run_drug_regression(model_data, drug)
-  } else {
-    cat("Warning: Drug", drug, "not found in dataset\n")
-  }
-}
-
-#---------------------------------------------------------------
-# 3. Model Comparison and Visualization
-#---------------------------------------------------------------
-
-# Function to create a summary table of model performance
-create_model_summary_table <- function(results_list) {
-  # Initialize empty data frame
-  summary_df <- data.frame(
-    Drug = character(),
-    R_squared = numeric(),
-    Adj_R_squared = numeric(),
-    F_statistic = numeric(),
-    P_value = numeric(),
-    Top_positive_predictor = character(),
-    Top_negative_predictor = character(),
-    stringsAsFactors = FALSE
-  )
-  
-  # Fill with results
-  for (drug in names(results_list)) {
-    model_summary <- results_list[[drug]]$summary
-    
-    # Get coefficients
-    coefs <- model_summary$coefficients
-    
-    # Find top predictors (excluding intercept)
-    coef_df <- data.frame(
-      Variable = rownames(coefs)[-1],
-      Estimate = coefs[-1, "Estimate"],
-      P_value = coefs[-1, "Pr(>|t|)"]
-    )
-    
-    # Get significant predictors only
-    sig_coefs <- coef_df[coef_df$P_value < 0.05, ]
-    
-    if(nrow(sig_coefs) > 0) {
-      # Get top positive and negative predictors
-      top_pos <- sig_coefs[which.max(sig_coefs$Estimate), "Variable"]
-      top_neg <- sig_coefs[which.min(sig_coefs$Estimate), "Variable"]
-    } else {
-      top_pos <- "None"
-      top_neg <- "None"
-    }
-    
-    # Add to summary
-    summary_df <- rbind(summary_df, data.frame(
-      Drug = drug,
-      R_squared = model_summary$r.squared,
-      Adj_R_squared = model_summary$adj.r.squared,
-      F_statistic = model_summary$fstatistic[1],
-      P_value = pf(model_summary$fstatistic[1], 
-                 model_summary$fstatistic[2], 
-                 model_summary$fstatistic[3], 
-                 lower.tail = FALSE),
-      Top_positive_predictor = top_pos,
-      Top_negative_predictor = top_neg,
-      stringsAsFactors = FALSE
-    ))
-  }
-  
-  return(summary_df)
-}
-
-# Create and format the summary table
-model_summary_table <- create_model_summary_table(results_list)
-
-# Format the table for nice output
-formatted_summary <- model_summary_table %>%
-  mutate(
-    R_squared = round(R_squared, 3),
-    Adj_R_squared = round(Adj_R_squared, 3),
-    F_statistic = round(F_statistic, 2),
-    P_value = ifelse(P_value < 0.001, "<0.001", round(P_value, 3))
-  )
-
+```{r lr4, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
 # 4. Diagnostic Plots
 #---------------------------------------------------------------
@@ -1140,6 +1046,7 @@ create_model_coef_table <- function(model_list, drug_names) {
   return(final_df)
 }
 
+
 # Create the comparison table for the main drugs
 drug_names_for_table <- names(results_list)
 if (length(drug_names_for_table) > 0) {
@@ -1188,50 +1095,52 @@ if (exists("cannabis_model") && !is.null(cannabis_model)) {
   cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, "Cannabis Usage Model Diagnostics")
   print(cannabis_diagnostics)
 }
+```
 
+```{r echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
 # 6. Print summary findings to console
 #---------------------------------------------------------------
 
 # Print summary findings
-cat("\n======= SUMMARY OF DRUG CONSUMPTION ANALYSIS =======\n")
-cat("Linear regression models were fit for", length(results_list), "drugs\n")
-
-if (length(results_list) > 0) {
-  best_model <- model_summary_table$Drug[which.max(model_summary_table$Adj_R_squared)]
-  best_r2 <- max(model_summary_table$Adj_R_squared, na.rm = TRUE)
-  
-  cat("The best-fitting model was for", best_model, 
-      "with Adjusted R² =", round(best_r2, 3), "\n")
-  
-  # Print the personality traits that are significant
-  cat("\nKey personality traits predicting drug use:\n")
-  personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
-  
-  for (drug in names(results_list)) {
-    cat("\nSignificant traits for", drug, "usage:\n")
-    model_summary <- summary(results_list[[drug]]$model)
-    coefs <- model_summary$coefficients
-    
-    for (trait in personality_traits) {
-      if (trait %in% rownames(coefs)) {
-        p_value <- coefs[trait, "Pr(>|t|)"]
-        estimate <- coefs[trait, "Estimate"]
-        
-        if (p_value < 0.05) {
-          direction <- ifelse(estimate > 0, "positive", "negative")
-          stars <- ifelse(p_value < 0.001, "***", 
-                         ifelse(p_value < 0.01, "**", "*"))
-          
-          cat("  - ", trait, ": ", direction, " effect (", 
-              round(estimate, 3), ") ", stars, "\n", sep = "")
-        }
-      }
-    }
-  }
-} else {
-  cat("No valid drug models were created\n")
-}
+#cat("\n======= SUMMARY OF DRUG CONSUMPTION ANALYSIS =======\n")
+#cat("Linear regression models were fit for", length(results_list), "drugs\n")
+#
+#if (length(results_list) > 0) {
+#  best_model <- model_summary_table$Drug[which.max(model_summary_table$Adj_R_squared)]
+#  best_r2 <- max(model_summary_table$Adj_R_squared, na.rm = TRUE)
+#  
+#  cat("The best-fitting model was for", best_model, 
+#      "with Adjusted R² =", round(best_r2, 3), "\n")
+#  
+#  # Print the personality traits that are significant
+#  cat("\nKey personality traits predicting drug use:\n")
+#  personality_traits <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
+#  
+#  for (drug in names(results_list)) {
+#    cat("\nSignificant traits for", drug, "usage:\n")
+#    model_summary <- summary(results_list[[drug]]$model)
+#    coefs <- model_summary$coefficients
+#    
+#    for (trait in personality_traits) {
+#      if (trait %in% rownames(coefs)) {
+#        p_value <- coefs[trait, "Pr(>|t|)"]
+#        estimate <- coefs[trait, "Estimate"]
+#        
+#        if (p_value < 0.05) {
+#          direction <- ifelse(estimate > 0, "positive", "negative")
+#          stars <- ifelse(p_value < 0.001, "***", 
+#                         ifelse(p_value < 0.01, "**", "*"))
+#          
+#          cat("  - ", trait, ": ", direction, " effect (", 
+#              round(estimate, 3), ") ", stars, "\n", sep = "")
+#        }
+#      }
+#    }
+#  }
+#} else {
+#  cat("No valid drug models were created\n")
+#}
 ```
 
 # Source

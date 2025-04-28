@@ -1,5 +1,11 @@
-# Suppresses all warnings
-options(warn = -1)
+# Load necessary packages
+library(car)  # For VIF function
+library(ggplot2)  # Required for the plotting functions
+library(dplyr)  # Required for the pipe operator and data manipulation
+library(broom)  # For the augment function
+library(kableExtra)  # For table formatting
+library(reshape2)  # For reshaping data
+library(gridExtra)  # For arranging plots
 
 # Read the processed dataset
 model_data <- read.csv("Data/model_data.csv")
@@ -13,107 +19,8 @@ if(names(model_data)[1] == "X") {
 # 1. Exploratory Analysis for Linear Regression
 #---------------------------------------------------------------
 
-# Function to create a custom correlation plot with drug variables
-plot_drug_correlations <- function(data, drug_name) {
-  # Define better variable names for plotting
-  var_names <- c(
-    "Nscore" = "Neuroticism",
-    "Escore" = "Extraversion", 
-    "Oscore" = "Openness",
-    "Ascore" = "Agreeableness",
-    "Cscore" = "Conscientiousness",
-    "Impulsive" = "Impulsivity",
-    "SS" = "Sensation Seeking"
-  )
-  
-  # Select personality traits and the specified drug
-  vars <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS", drug_name)
-  cor_data <- data[, vars]
-  
-  # Calculate correlation matrix
-  cor_matrix <- cor(cor_data, use = "pairwise.complete.obs")
-  
-  # For a more visually appealing plot, let's use ggplot2 instead of corrplot
-  cor_df <- reshape2::melt(cor_matrix)
-  names(cor_df) <- c("Var1", "Var2", "Correlation")
-  
-  # Only keep correlations with the drug
-  cor_df_drug <- cor_df[cor_df$Var2 == drug_name & cor_df$Var1 != drug_name, ]
-  
-  # Replace variable names with more readable ones
-  cor_df_drug$Var1 <- factor(
-    var_names[as.character(cor_df_drug$Var1)], 
-    levels = var_names[c("SS", "Impulsive", "Oscore", "Escore", "Nscore", "Cscore", "Ascore")]
-  )
-  
-  # Create bar chart
-  ggplot(cor_df_drug, aes(x = Correlation, y = Var1, fill = Correlation)) +
-    geom_bar(stat = "identity") +
-    scale_fill_gradient2(low = "#E41A1C", mid = "white", high = "#377EB8", midpoint = 0) +
-    geom_text(aes(label = sprintf("%.2f", round(Correlation, 2))), 
-              hjust = ifelse(cor_df_drug$Correlation < 0, 1.1, -0.1),
-              color = "black", size = 3.5) +
-    labs(title = paste("Personality Traits Correlated with", drug_name, "Use"),
-         x = "Correlation Coefficient",
-         y = "") +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-      legend.position = "none",
-      panel.grid.major.y = element_blank(),
-      axis.text.y = element_text(size = 10)
-    ) +
-    xlim(min(cor_df_drug$Correlation) - 0.1, max(cor_df_drug$Correlation) + 0.1)
-}
-
 # Create clean names for drugs to analyze
 drug_names <- c("Cannabis", "Alcohol", "Nicotine", "Coke", "Ecstasy")
-
-# Factor importance visualization function
-plot_factor_importance <- function(model, title) {
-  # Extract model coefficients
-  coefs <- summary(model)$coefficients
-  
-  # Filter out intercept and create data frame for plotting
-  coef_df <- data.frame(
-    Variable = rownames(coefs)[-1],  # Exclude intercept
-    Estimate = coefs[-1, "Estimate"],
-    StdError = coefs[-1, "Std. Error"],
-    PValue = coefs[-1, "Pr(>|t|)"]
-  )
-  
-  # Add significance markers
-  coef_df$Significant <- ifelse(coef_df$PValue < 0.05, "Yes", "No")
-  
-  # Sort by absolute value of estimate
-  coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
-  
-  # Keep only top 15 predictors for visualization clarity
-  if(nrow(coef_df) > 15) {
-    coef_df <- coef_df[1:15, ]
-  }
-  
-  # Reorder factor levels for plotting
-  coef_df$Variable <- factor(coef_df$Variable, levels = coef_df$Variable)
-  
-  # Plot
-  ggplot(coef_df, aes(x = Estimate, y = Variable, color = Significant)) +
-    geom_point(size = 3) +
-    geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
-                       xmax = Estimate + 1.96 * StdError), 
-                   height = 0.2) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray") +
-    scale_color_manual(values = c("Yes" = "#1F78B4", "No" = "#999999")) +
-    theme_minimal() +
-    labs(title = title,
-         subtitle = "Estimated coefficients with 95% confidence intervals",
-         x = "Coefficient Estimate",
-         y = "",
-         color = "Statistically\nSignificant") +
-    theme(plot.title = element_text(face = "bold", size = 14),
-          plot.subtitle = element_text(size = 10, color = "darkgray"),
-          legend.position = "top")
-}
 
 # Function to create an even more visually appealing coefficient plot
 plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
@@ -351,15 +258,6 @@ create_model_summary_table <- function(results_list) {
 
 # Create and format the summary table
 model_summary_table <- create_model_summary_table(results_list)
-
-# Format the table for nice output
-formatted_summary <- model_summary_table %>%
-  mutate(
-    R_squared = round(R_squared, 3),
-    Adj_R_squared = round(Adj_R_squared, 3),
-    F_statistic = round(F_statistic, 2),
-    P_value = ifelse(P_value < 0.001, "<0.001", round(P_value, 3))
-  )
 
 #---------------------------------------------------------------
 # 4. Diagnostic Plots
