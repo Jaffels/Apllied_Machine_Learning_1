@@ -12,20 +12,6 @@ if(names(model_data)[1] == "X") {
   model_data <- model_data[,-1]
 }
 
-# Check structure of data
-str(model_data)
-
-# Distribution of Cannabis usage
-table(model_data$Cannabis)
-
-# Visualize Cannabis usage distribution
-ggplot(model_data, aes(x = factor(Cannabis))) +
-  geom_bar(fill = "steelblue") +
-  theme_minimal() +
-  labs(title = "Distribution of Cannabis Usage",
-       x = "Usage Level (0-6)",
-       y = "Count") 
-
 # Define the predictors to use in models
 predictors <- c("Age", "Gender", "Education", 
                 "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
@@ -423,10 +409,6 @@ cannabis_diagnostics <- create_diagnostic_plots(cannabis_model,
                                                 "Cannabis Usage Model Diagnostics")
 print(cannabis_diagnostics)
 
-# If you want to save these plots
-ggsave("cannabis_coefficient_plot.pdf", cannabis_coef_plot, width = 10, height = 8)
-ggsave("cannabis_diagnostics_plot.pdf", cannabis_diagnostics, width = 10, height = 8)
-
 # Check for multicollinearity
 car::vif(cannabis_model)
 
@@ -515,9 +497,3 @@ cannabis_model_interactions <- glm(
 
 # Compare models with and without interactions
 anova(cannabis_model, cannabis_model_interactions, test = "Chisq")
-
-# Save results if needed
-# write.csv(model_comparison, "poisson_glm_model_comparison.csv", row.names = FALSE)
-# for (drug in names(model_summaries)) {
-#   write.csv(model_summaries[[drug]], paste0(drug, "_poisson_model_summary.csv"), row.names = FALSE)
-# }
