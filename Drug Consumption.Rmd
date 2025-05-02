@@ -22,6 +22,20 @@ In this data science project, we aim to identify factors and patterns potentiall
 
 The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
 
+# Personality Traits Explanation
+
+To better understand the data set we need to have an understanding of what the personality traits are and what the represent, we will have short description of each trait and how to interpret them:
+
+- Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability, and mood swings. Lower scores suggest emotional stability and resilience to stress.
+- Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments, and more reserved behavior.
+- Oscore (Openness to Experience): Measures intellectual curiosity and creativity. Higher scores indicate imagination, appreciation for art/beauty, openness to new ideas, and unconventional thinking. Lower scores suggest preference for routine, practicality, and conventional approaches.
+- Ascore (Agreeableness): Measures concern for social harmony. Higher scores indicate empathy, cooperation, and consideration for others. Lower scores suggest competitive, skeptical, or challenging interpersonal styles.
+- Cscore (Conscientiousness): Measures organization and reliability. Higher scores indicate discipline, responsibility, planning, and detail orientation. Lower scores suggest spontaneity, flexibility, and potentially less structured approaches.
+- Impulsive (Impulsiveness): Measures tendency to act without thinking. Higher scores indicate spontaneous decision-making without considering consequences. Lower scores suggest thoughtful deliberation before actions.
+- SS (Sensation Seeking): Measures desire for novel experiences and willingness to take risks. Higher scores indicate thrill-seeking behavior and preference for excitement. Lower scores suggest preference for familiarity and safety.
+
+The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which would make sense given our dataset includes variables related to substance use.
+
 # Cleaning and Formatting the Dataset
 
 ```{r include=FALSE, cache=FALSE}
@@ -438,7 +452,7 @@ for (i in 1:length(trait_cols)) {
 mtext("Personality Traits by Education Level", side = 3, line = 1, 
       outer = TRUE, cex = 1.2, font = 2)
 ```
-It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking	is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.  
+The charts show the mean score for the behavioral traits broken down by educational level. It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking	is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.  
 
 ## Analysis of Seremon Usage
 

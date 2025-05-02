@@ -1,8 +1,7 @@
 # Load required libraries
 library(dplyr)
 library(ggplot2)
-library(MASS)  # For negative binomial models if needed
-library(car)   # For VIF analysis
+library(car)
 
 # Read the data
 model_data <- read.csv("Data/model_data.csv")
