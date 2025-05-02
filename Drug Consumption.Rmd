@@ -2,7 +2,7 @@
 title: "Drug Consumption"
 author: "Nhat Bui, Johan Ferreira, Thilo Holstein"
 date: "2025-03-06"
-output: 
+output:
   pdf_document:
     toc: true
     toc_depth: 2
@@ -40,7 +40,7 @@ The first five traits (Nscore through Cscore) are the "Big Five" personality tra
 
 ```{r include=FALSE, cache=FALSE}
 # Load required libraries
-library(dplyr)
+library(MASS)
 library(ggplot2)
 library(reshape2)
 library(kableExtra)
@@ -49,7 +49,7 @@ library(gridExtra)
 library(tidyr)
 library(car)
 library(broom)
-library(MASS)
+library(dplyr)
 
 # Suppresses all warnings
 options(warn = -1)
@@ -394,7 +394,7 @@ education_means <- drug_data %>%
 
 # Create a clean table view of the data
 education_display <- education_means %>%
-  select(-n) %>%
+  dplyr::select(-n) %>% # Corrected line: Now uses dplyr::select
   rename(
     "Neuroticism" = Nscore,
     "Extraversion" = Escore,
@@ -665,11 +665,6 @@ for (drug in drug_names) {
 }
 ```
 
-### Personality Traits as Predictors of Substance Use
-
-Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.  
-
-
 ```{r lr2, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
 # Model Comparison and Visualization
@@ -738,7 +733,6 @@ create_model_summary_table <- function(results_list) {
 model_summary_table <- create_model_summary_table(results_list)
 ```
 
-### A graphical analysis of Cannibis
 
 ```{r lr3, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
@@ -849,116 +843,11 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
 
 ```
 
-```{r lr4, echo=FALSE, cache=TRUE}
-#---------------------------------------------------------------
-# 4. Diagnostic Plots
-#---------------------------------------------------------------
+### Personality Traits as Predictors of Substance Use
 
-# Function to create diagnostic plots with enhanced aesthetics
-create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
-  # Extract residuals data
-  model_data <- augment(model)
-  
-  # Define color palette
-  if (color_scheme == "blue") {
-    point_color <- "#3182bd"
-    line_color <- "#08519c"
-    reference_color <- "#e41a1c"
-  } else if (color_scheme == "green") {
-    point_color <- "#31a354"
-    line_color <- "#006d2c"
-    reference_color <- "#d62728"
-  } else {
-    point_color <- "#756bb1"
-    line_color <- "#54278f"
-    reference_color <- "#e41a1c"
-  }
-  
-  # Common theme elements
-  diagnostic_theme <- theme_minimal() +
-    theme(
-      plot.title = element_text(face = "bold", size = 12),
-      plot.subtitle = element_text(size = 9, color = "gray50"),
-      axis.title = element_text(size = 10),
-      axis.text = element_text(size = 9),
-      panel.grid.minor = element_blank(),
-      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
-    )
-  
-  # 1. Residuals vs Fitted with improved aesthetics
-  p1 <- ggplot(model_data, aes(x = .fitted, y = .resid)) +
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
-               linewidth = 0.7) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", message = FALSE, warning = FALSE) +
-    labs(title = "Residuals vs Fitted",
-         subtitle = "Should show random scatter around the zero line",
-         x = "Fitted values",
-         y = "Residuals") +
-    diagnostic_theme
-  
-  # 2. Normal Q-Q plot with improved aesthetics
-  p2 <- ggplot(model_data, aes(sample = .resid)) +
-    stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
-    stat_qq_line(color = reference_color, linewidth = 0.7) +
-    labs(title = "Normal Q-Q Plot",
-         subtitle = "Points should follow the diagonal line",
-         x = "Theoretical Quantiles",
-         y = "Sample Quantiles") +
-    diagnostic_theme
-  
-  # 3. Scale-Location plot with improved aesthetics
-  p3 <- ggplot(model_data, aes(x = .fitted, y = sqrt(abs(.resid)))) +
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", message = FALSE, warning = FALSE) +
-    labs(title = "Scale-Location",
-         subtitle = "Should show homogeneous variance",
-         x = "Fitted values",
-         y = "sqrt|Standardized Residuals|") +
-    diagnostic_theme
-  
-  # 4. Residuals vs Leverage with improved aesthetics
-  # Add Cook's distance contour lines
-  p4 <- ggplot(model_data, aes(x = .hat, y = .resid)) +
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", message = FALSE, warning = FALSE) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-    # Add Cook's distance contours
-    stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", 
-                 linetype = "dashed", na.rm = TRUE) +
-    labs(title = "Residuals vs Leverage",
-         subtitle = "Identifies influential cases",
-         x = "Leverage",
-         y = "Standardized Residuals") +
-    diagnostic_theme
-  
-  # Combine plots with better layout
-  title_grob <- grid::textGrob(
-    title, 
-    gp = grid::gpar(fontsize = 16, fontface = "bold"),
-    just = "center"
-  )
-  subtitle_grob <- grid::textGrob(
-    "Diagnostic Plots for Linear Regression Model", 
-    gp = grid::gpar(fontsize = 12, col = "gray30"),
-    just = "center"
-  )
-  
-  # Arrange the title, subtitle, and plots
-  combined_plot <- gridExtra::grid.arrange(
-    gridExtra::arrangeGrob(title_grob, subtitle_grob, heights = c(1, 0.5), ncol = 1),
-    gridExtra::arrangeGrob(p1, p2, p3, p4, ncol = 2),
-    heights = c(1, 10)
-  )
-  
-  return(combined_plot)
-}
-
+```{r lr5, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
-# 5. Generate Beautiful Output
+# Generate Output
 #---------------------------------------------------------------
 
 # Create a publication-quality regression table using kable instead of stargazer
@@ -1073,10 +962,12 @@ if (length(drug_names_for_table) > 0) {
   
   # Display the table with kable for better formatting
   kable(model_comparison_table, 
-        caption = "Linear Regression Models for Drug Usage (Usage Level 0-6)",
-        align = c('l', rep('r', ncol(model_comparison_table) - 1))) %>%
+      caption = "Linear Regression Models for Drug Usage (Usage Level 0-6)",
+      align = c('l', rep('r', ncol(model_comparison_table) - 1)),
+      longtable = TRUE) %>%  # Add this parameter
     kable_styling(bootstrap_options = c("striped", "hover"), 
-                  full_width = FALSE) %>%
+                  full_width = FALSE,
+                  latex_options = c("hold_position")) %>%  # Add this parameter
     add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1)) %>%
     footnote(
       symbol = c("* p<0.05; ** p<0.01; *** p<0.001"),
@@ -1086,6 +977,14 @@ if (length(drug_names_for_table) > 0) {
 } else {
   cat("No valid drug models to display in table\n")
 }
+```
+
+Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.
+
+
+### A graphical analysis of Cannibis
+```{r lr6, echo=FALSE, cache=TRUE}
+par(mar = c(4, 4, 2, 2))
 
 # Properly define the individual models for plotting
 if ("Cannabis" %in% names(results_list)) {
@@ -1105,6 +1004,118 @@ if ("Nicotine" %in% names(results_list)) {
   nicotine_coef_plot <- plot_factor_importance_enhanced(nicotine_model, "Predictors of Nicotine Usage")
   print(nicotine_coef_plot)
 }
+```
+
+
+
+### Cannabis Usage Linear Regression Model: Diagnostic Analysis
+```{r lr7, echo=FALSE, cache=TRUE}
+#---------------------------------------------------------------
+# Diagnostic Plots
+#---------------------------------------------------------------
+
+# Function to create diagnostic plots with enhanced aesthetics
+create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
+  # Extract residuals data
+  model_data <- augment(model)
+  
+  # Define color palette
+  if (color_scheme == "blue") {
+    point_color <- "#3182bd"
+    line_color <- "#08519c"
+    reference_color <- "#e41a1c"
+  } else if (color_scheme == "green") {
+    point_color <- "#31a354"
+    line_color <- "#006d2c"
+    reference_color <- "#d62728"
+  } else {
+    point_color <- "#756bb1"
+    line_color <- "#54278f"
+    reference_color <- "#e41a1c"
+  }
+  
+  # Common theme elements
+  diagnostic_theme <- theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 12),
+      plot.subtitle = element_text(size = 9, color = "gray50"),
+      axis.title = element_text(size = 10),
+      axis.text = element_text(size = 9),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
+    )
+  
+  # 1. Residuals vs Fitted with improved aesthetics
+  p1 <- ggplot(model_data, aes(x = .fitted, y = .resid)) +
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
+               linewidth = 0.7) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", message = FALSE, warning = FALSE) +
+    labs(title = "Residuals vs Fitted",
+         subtitle = "Should show random scatter around the zero line",
+         x = "Fitted values",
+         y = "Residuals") +
+    diagnostic_theme
+  
+  # 2. Normal Q-Q plot with improved aesthetics
+  p2 <- ggplot(model_data, aes(sample = .resid)) +
+    stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
+    stat_qq_line(color = reference_color, linewidth = 0.7) +
+    labs(title = "Normal Q-Q Plot",
+         subtitle = "Points should follow the diagonal line",
+         x = "Theoretical Quantiles",
+         y = "Sample Quantiles") +
+    diagnostic_theme
+  
+  # 3. Scale-Location plot with improved aesthetics
+  p3 <- ggplot(model_data, aes(x = .fitted, y = sqrt(abs(.resid)))) +
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", message = FALSE, warning = FALSE) +
+    labs(title = "Scale-Location",
+         subtitle = "Should show homogeneous variance",
+         x = "Fitted values",
+         y = "sqrt|Standardized Residuals|") +
+    diagnostic_theme
+  
+  # 4. Residuals vs Leverage with improved aesthetics
+  # Add Cook's distance contour lines
+  p4 <- ggplot(model_data, aes(x = .hat, y = .resid)) +
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", message = FALSE, warning = FALSE) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+    # Add Cook's distance contours
+    stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", 
+                 linetype = "dashed", na.rm = TRUE) +
+    labs(title = "Residuals vs Leverage",
+         subtitle = "Identifies influential cases",
+         x = "Leverage",
+         y = "Standardized Residuals") +
+    diagnostic_theme
+  
+  # Combine plots with better layout
+  title_grob <- grid::textGrob(
+    title, 
+    gp = grid::gpar(fontsize = 16, fontface = "bold"),
+    just = "center"
+  )
+  subtitle_grob <- grid::textGrob(
+    "Diagnostic Plots for Linear Regression Model", 
+    gp = grid::gpar(fontsize = 12, col = "gray30"),
+    just = "center"
+  )
+  
+  # Arrange the title, subtitle, and plots
+  combined_plot <- gridExtra::grid.arrange(
+    gridExtra::arrangeGrob(title_grob, subtitle_grob, heights = c(1, 0.5), ncol = 1),
+    gridExtra::arrangeGrob(p1, p2, p3, p4, ncol = 2),
+    heights = c(1, 10)
+  )
+  
+  return(combined_plot)
+}
 
 # If we have diagnostic plots for Cannabis model
 if (exists("cannabis_model") && !is.null(cannabis_model)) {
@@ -1112,9 +1123,6 @@ if (exists("cannabis_model") && !is.null(cannabis_model)) {
   print(cannabis_diagnostics)
 }
 ```
-
-### Cannabis Usage Linear Regression Model: Diagnostic Analysis
-
 1. Residuals vs Fitted Plot Analysis
 
 The Residuals vs Fitted plot examines the relationship between model predictions and their errors. In an ideal linear regression model, residuals should display random scatter around the zero line with no discernible pattern. The Cannabis model exhibits some systematic patterning in the residual distribution rather than purely random dispersion. This non-random pattern suggests the presence of unexplained structure in the data that the current linear specification fails to capture. The deviation of the smoothed blue line from horizontal indicates potential non-linear relationships between predictors and cannabis usage that warrant further investigation. Such patterns may suggest the need for polynomial terms, interaction effects, or transformation of variables to improve model specification.
