@@ -50,6 +50,8 @@ library(tidyr)
 library(car)
 library(broom)
 library(dplyr)
+library(janitor)
+library(GGally)
 
 # Suppresses all warnings
 options(warn = -1)
@@ -1660,8 +1662,128 @@ cannabis_model_interactions <- glm(
 anova(cannabis_model, cannabis_model_interactions, test = "Chisq")
 ```
 
-## Generalised Linear Model with family set to Binomial
-Don't know if this will improve your model, but it might be worth your time to test the Negative Binomial Model
+## Generalised Linear Model with family set to Binomial (Nhat Bui)
+
+In this analysis, we employ a binomial‐family generalized linear model—commonly known as logistic regression—to quantify how individual differences in the five personality traits relate to the likelihood of ever having used marijuana. By coding marijuana use as a binary outcome (0 = never used, 1 = ever used) and entering Neuroticism, Extraversion, Openness, Agreeableness, and Conscientiousness scores as continuous predictors, the GLM estimates how each one-unit increase in a trait affects the log-odds (and thus the odds) of cannabis experimentation. 
+
+```{r glmbi_intro, echo=FALSE, cache=TRUE}
+
+# Load the dataset
+df <- read.csv("Data/model_data.csv")
+
+#Remove the first column index X
+df_cnb <- df[,-1]
+
+# Create a column to flag if ever used cannabis
+df_cnb <- df_cnb %>%
+  mutate(
+    cnb_use = if_else(Cannabis == 0, 0, 1)
+  )
+
+```
+```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
+# Boxplots by use status
+trait_labs <- c(
+  Nscore = "Neuroticism",
+  Escore = "Extraversion",
+  Oscore = "Openness",
+  Ascore = "Agreeableness",
+  Cscore = "Conscientiousness"
+)
+df_cnb %>%
+  gather(trait, score, Nscore:Cscore) %>%
+  ggplot(aes(x = factor(cnb_use), y = score)) +
+    geom_boxplot() +
+    facet_wrap(
+      ~ trait, 
+      scales = "free_y", 
+      ncol = 5, 
+      labeller = labeller(trait = trait_labs)) +
+    scale_x_discrete(labels = c("Never", "Ever")) +
+    labs(x = "Marijuana Use", y = "Trait Score",
+         title = "Personality Traits by Marijuana Use")
+```
+The boxplots show a clear pattern across several traits when comparing people who’ve never tried marijuana to those who have. Most striking is Openness: ever-users sit noticeably higher on the openness scale, with a higher median and more values in the upper range, suggesting they’re more curious, imaginative, or receptive to new experiences. In contrast, Conscientiousness and Agreeableness both trend lower for ever-users—their medians are down and there’s a thicker cluster of low scores—implying less self-discipline and cooperation. Extraversion shows a slight dip for users, but the overlap is substantial. Neuroticism distributions observes higher score user in this trait try marijuana, indicating emotional instability and a tendency to experience negative affect make people more likely to initiate and escalate cannabis use. Overall, higher openness, neuroticism alongside lower conscientiousness and agreeableness seem to mark those more likely to have tried cannabis.
+
+```{r glmbi_corrmatrix, echo=FALSE, cache=TRUE}
+# Correlation matrix
+df_cnb %>%
+  select(Nscore:Cscore, cnb_use) %>%
+  ggpairs(
+    columns = 1:5,
+    mapping = aes(color = factor(`cnb_use`), alpha = 0.7),
+    upper = list(
+      continuous = wrap("cor", size = 4, digits = 2)
+    ),
+    lower = list(
+      continuous = wrap("smooth", se = FALSE, size = 0.3)
+    ),
+    diag = list(
+      continuous = wrap("densityDiag", alpha = 0.5)
+    ),
+    axisLabels = "show"
+  ) +
+  scale_color_brewer(
+    type    = "qual",
+    palette = "Set1",
+    name    = "Cannabis\nUse"
+  ) +
+  labs(
+    title    = "Pairwise Relationships & Correlations of Personality Traits",
+    subtitle = "Colored by Cannabis-use indicator",
+    caption  = "Note: Correlation coefficients rounded to two decimals"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    legend.position   = "bottom",
+    legend.title.align= 0.5,
+    plot.title        = element_text(face = "bold", size = 16),
+    plot.subtitle     = element_text(size = 12),
+    strip.text        = element_text(face = "bold"),
+    panel.grid.minor  = element_blank()
+  )
+```
+```{r glmbi_model, echo=FALSE, cache=TRUE}
+# Fit the model 
+
+model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
+summary(model)
+
+cnb_model <- broom::tidy(model) %>%
+  mutate(
+    raw_p = p.value,
+    p.value = round(p.value, 3),
+    p.value = ifelse(p.value < 0.001, sprintf("%.2e", raw_p), p.value),
+    OR = round(exp(estimate), 2),
+    lower_CI = round(exp(estimate - 1.96 * std.error), 2),
+    upper_CI = round(exp(estimate + 1.96 * std.error), 2),
+        term     = recode(term,
+               `(Intercept)` = "Intc.",
+               Nscore        = "Neuroticism",
+               Escore        = "Extraversion",
+               Oscore        = "Openness",
+               Ascore        = "Agreeableness",
+               Cscore        = "Conscientiousness"
+             )
+  ) %>%
+  select(term, estimate, OR, lower_CI, upper_CI, p.value)
+
+kable(cnb_model, 
+      col.names = c("Term", "Estimate", "OR", "Lower 95%", "Upper 95%", "p-value"),
+      digits = c( NA, 3, 2, 2, 2, NA),
+      caption = "Logistic Regression (Binomial GLM) Results") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width        = FALSE,
+    position          = "center",
+    font_size         = 12
+  ) %>%
+  row_spec(0, bold = TRUE) %>%        
+  column_spec(1, width = "4cm") %>%   
+  column_spec(2:5, width = "2.5cm") %>%
+  column_spec(6, width = "3cm")      
+```
+The logistic regression shows that, of the five personality traits, Openness is by far the strongest predictor of having ever tried marijuana: each one-point increase in Openness more than doubles the odds of experimentation (OR = 2.51, 95% CI 2.18–2.89, p < 0.001). Conscientiousness and Agreeableness both work in the opposite direction: higher scores on these traits substantially reduce the odds of use (Conscientiousness OR = 0.57, 95% CI 0.49–0.66, p < 0.001; Agreeableness OR = 0.74, 95% CI 0.65–0.85, p < 0.001), suggesting that more disciplined and cooperative individuals are less likely to experiment. Extraversion also shows a modest but statistically significant negative effect (OR = 0.83, 95% CI 0.71–0.96, p = 0.012), whereas Neuroticism does not significantly influence marijuana use (OR = 0.92, 95% CI 0.80–1.07, p = 0.28). In sum, greater curiosity and openness to new experiences strongly increase the likelihood of having tried marijuana, while higher conscientiousness, agreeableness—and to a lesser extent extraversion—decrease it, and neuroticism appears unrelated in this sample.
 
 
 ## Generalised Additive Model
