@@ -1,0 +1,67 @@
+# Load libraries
+library(tidyverse)
+library(e1071)
+library(caret)
+
+# Load your dataset
+data <- read.csv("your_file.csv")  # replace with your actual file path
+
+# Convert drug usage to numeric (0–6)
+drug_cols <- c("Coke", "LSD", "Ecstasy", "Ketamine", "Cannabis", "Alcohol", "Amphet")
+data[drug_cols] <- lapply(data[drug_cols], as.numeric)
+
+# Step 1: Create PolyDrugUser label (binary)
+data <- data %>%
+  mutate(
+    drug_count = rowSums(select(., all_of(drug_cols)) >= 3),
+    PolyDrugUser = as.factor(ifelse(drug_count >= 3, "Yes", "No"))
+  )
+
+# Step 2: Create Multi-class label (Bonus)
+data <- data %>%
+  mutate(
+    PolyDrugClass = case_when(
+      drug_count == 0 ~ "None",
+      drug_count < 3 ~ "Moderate",
+      drug_count >= 3 ~ "Poly"
+    ) %>% factor(levels = c("None", "Moderate", "Poly"))
+  )
+
+# Step 3: Select predictors
+predictors <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore", "Impulsive", "SS",
+                "Age", "Gender", "Education", "Alcohol", "Cannabis")
+
+# Remove missing values if any
+data_clean <- data %>% drop_na(all_of(c(predictors, "PolyDrugUser", "PolyDrugClass")))
+
+# Step 4: Binary SVM (Yes/No)
+set.seed(123)
+split_index <- createDataPartition(data_clean$PolyDrugUser, p = 0.8, list = FALSE)
+train_bin <- data_clean[split_index, ]
+test_bin <- data_clean[-split_index, ]
+
+svm_bin <- svm(as.formula(paste("PolyDrugUser ~", paste(predictors, collapse = "+"))),
+               data = train_bin, kernel = "radial", cost = 1, scale = TRUE)
+
+pred_bin <- predict(svm_bin, test_bin)
+conf_matrix_bin <- confusionMatrix(pred_bin, test_bin$PolyDrugUser)
+print(conf_matrix_bin)
+
+# Step 5: Multiclass SVM (None / Moderate / Poly)
+set.seed(123)
+split_index_mc <- createDataPartition(data_clean$PolyDrugClass, p = 0.8, list = FALSE)
+train_mc <- data_clean[split_index_mc, ]
+test_mc <- data_clean[-split_index_mc, ]
+
+svm_mc <- svm(as.formula(paste("PolyDrugClass ~", paste(predictors, collapse = "+"))),
+              data = train_mc, kernel = "radial", cost = 1, scale = TRUE)
+
+pred_mc <- predict(svm_mc, test_mc)
+conf_matrix_mc <- confusionMatrix(pred_mc, test_mc$PolyDrugClass)
+print(conf_matrix_mc)
+
+# Optional: Variable importance (approximation)
+library(DALEX)
+explainer <- explain(svm_bin, data = train_bin[, predictors], y = train_bin$PolyDrugUser)
+vi <- model_parts(explainer)
+plot(vi)
