@@ -1945,8 +1945,68 @@ Communication Value: These enhanced visualizations transform complex statistical
 In summary, chunk pois12 provides a sophisticated visual synthesis of both what the cannabis model tells us (through the coefficient plot) and how much we should trust these findings (through the diagnostic plots). The visualizations confirm that while the model has the expected limitations for count data, its core findings about the relationships between personality traits, demographics, and cannabis usage represent meaningful and reliable patterns in the data.
 
 ```{R pois13, echo=FALSE, cache=TRUE}
-# Check for multicollinearity
-car::vif(cannabis_model)
+# Check for multicollinearity and format as a styled table
+vif_values <- car::vif(cannabis_model)
+
+# Convert VIF values to a data frame for better table formatting
+vif_df <- data.frame(
+  Variable = names(vif_values),
+  VIF = vif_values,
+  stringsAsFactors = FALSE
+)
+
+# Clean up variable names for display
+var_display_names <- c(
+  "Age" = "Age",
+  "Gender" = "Gender (Male=1)",
+  "Education" = "Education Level",
+  "Nscore" = "Neuroticism",
+  "Escore" = "Extraversion",
+  "Oscore" = "Openness",
+  "Ascore" = "Agreeableness",
+  "Cscore" = "Conscientiousness",
+  "Impulsive" = "Impulsivity",
+  "SS" = "Sensation Seeking"
+)
+
+# Update variable names where possible
+vif_df$Variable <- sapply(vif_df$Variable, function(x) {
+  if (x %in% names(var_display_names)) {
+    return(var_display_names[x])
+  }
+  return(x)
+})
+
+# Add interpretation column
+vif_df$Concern_Level <- cut(vif_df$VIF, 
+                          breaks = c(0, 1.5, 2.5, 5, 10, Inf),
+                          labels = c("Minimal", "Low", "Moderate", "High", "Very High"),
+                          right = FALSE)
+
+# Sort by VIF value in descending order
+vif_df <- vif_df[order(-vif_df$VIF), ]
+
+# Create a nicely formatted table with kable
+vif_table <- vif_df %>%
+  kable(caption = "Multicollinearity Assessment - Variance Inflation Factors", 
+        booktabs = TRUE,
+        col.names = c("Predictor", "VIF", "Concern Level"),
+        digits = 2,
+        align = c('l', 'r', 'c')) %>%
+  kable_styling(latex_options = c("striped", "hold_position"), 
+                full_width = FALSE,
+                position = "center") %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(3, color = ifelse(vif_df$Concern_Level %in% c("High", "Very High"), "red",
+                              ifelse(vif_df$Concern_Level == "Moderate", "orange", "blue"))) %>%
+  footnote(
+    general = "VIF < 1.5: Minimal correlation; 1.5-2.5: Low correlation; 2.5-5: Moderate correlation; 5-10: High correlation; >10: Very high correlation indicating problematic multicollinearity.",
+    footnote_as_chunk = TRUE
+  )
+
+# Display the table
+vif_table
 ```
 
 #### Analysis of Multicollinearity Diagnostics for Cannabis Model
@@ -2147,20 +2207,56 @@ Most importantly, the function's ordering of significant predictors by effect si
 The suggested model improvements provide a roadmap for further refinement, particularly through exploring interaction effects that might reveal how personality and demographic factors work together to influence cannabis consumption patterns. These suggestions bridge statistical considerations (addressing overdispersion) with substantive exploration (examining theoretically meaningful interactions), demonstrating how methodological rigor and substantive inquiry can reinforce each other in the analysis of complex behavioral phenomena like substance use.
 
 ```{R pois15, echo=FALSE, cache=TRUE}
-# Run detailed analysis for Cannabis model
-analyze_cannabis_model(cannabis_model)
-
-# If requested, fit models with interaction terms
-cannabis_model_interactions <- glm(
-  Cannabis ~ Age + Gender + Education + 
-    Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS +
-    Age:Education + Gender:SS,
-  data = model_data, 
-  family = poisson(link = "log")
+# Compare model fit statistics with kable formatting
+model_comparison <- data.frame(
+  Drug = character(),
+  AIC = numeric(),
+  BIC = numeric(),
+  LogLik = numeric(),
+  Deviance = numeric(),
+  PseudoR2 = numeric(),
+  stringsAsFactors = FALSE
 )
 
-# Compare models with and without interactions
-anova(cannabis_model, cannabis_model_interactions, test = "Chisq")
+for (drug in names(models)) {
+  model <- models[[drug]]
+
+  # Calculate McFadden's Pseudo R²
+  null_model <- glm(as.formula(paste(drug, "~ 1")), 
+                    data = model_data, 
+                    family = poisson(link = "log"))
+  pseudo_r2 <- 1 - (logLik(model) / logLik(null_model))
+
+  model_comparison <- rbind(model_comparison, data.frame(
+    Drug = drug,
+    AIC = AIC(model),
+    BIC = BIC(model),
+    LogLik = as.numeric(logLik(model)),
+    Deviance = model$deviance,
+    PseudoR2 = as.numeric(pseudo_r2),
+    stringsAsFactors = FALSE
+  ))
+}
+
+# Create the nicely formatted comparison table with kable
+comparison_table <- model_comparison %>%
+  kable(caption = "Poisson Model Comparison for Different Substances", 
+        booktabs = TRUE,
+        col.names = c("Substance", "AIC", "BIC", "Log-Likelihood", "Deviance", "Pseudo R²"),
+        digits = c(0, 2, 2, 2, 2, 4),
+        align = c('l', 'r', 'r', 'r', 'r', 'r')) %>%
+  kable_styling(latex_options = c("striped", "hold_position"), 
+                full_width = FALSE,
+                position = "center") %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  footnote(
+    general = "Lower AIC/BIC values indicate better model fit. Higher Pseudo R² values indicate better explanatory power.",
+    footnote_as_chunk = TRUE
+  )
+
+# Display the table
+comparison_table
 ```
 
 #### Analysis of Cannabis Model Extensions and Comparisons
