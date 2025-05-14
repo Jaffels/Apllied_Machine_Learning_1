@@ -1,0 +1,65 @@
+# Load libraries
+library(tidyverse)
+library(neuralnet)
+library(caret)
+
+# Load your data
+data <- read.csv("your_file.csv")  # Replace with actual file path
+
+# Convert key drugs to binary (used in last year or more recently = 1, else 0)
+data <- data %>%
+  mutate(
+    LSD_bin = as.integer(LSD %in% c(3, 4, 5, 6)),
+    Ecstasy_bin = as.integer(Ecstasy %in% c(3, 4, 5, 6)),
+    Coke_bin = as.integer(Coke %in% c(3, 4, 5, 6)),
+    Cannabis_user = Cannabis %in% c(3, 4, 5, 6)
+  ) %>%
+  filter(Cannabis_user)  # Focus only on Cannabis users
+
+# Scale numeric predictors (important for NN training)
+data_scaled <- data %>%
+  mutate(across(c(Oscore, Age, Impulsive, SS), scale)) %>%
+  mutate(Gender = as.numeric(Gender),
+         Education = as.numeric(Education))
+
+# Prepare formula for multi-output NN
+formula <- LSD_bin + Ecstasy_bin + Coke_bin ~ Oscore + Age + Gender + Education + Impulsive + SS
+
+# Train-test split
+set.seed(123)
+indices <- createDataPartition(data_scaled$LSD_bin, p = 0.8, list = FALSE)
+train <- data_scaled[indices, ]
+test <- data_scaled[-indices, ]
+
+# Train neural network
+set.seed(123)
+drug_net <- neuralnet(formula,
+                      data = train,
+                      hidden = c(4, 3),
+                      linear.output = FALSE,
+                      threshold = 0.01,
+                      stepmax = 1e5)
+
+# Visualize network
+plot(drug_net)
+
+# Make predictions
+pred_results <- compute(drug_net, test %>% select(Oscore, Age, Gender, Education, Impulsive, SS))
+probs <- as.data.frame(pred_results$net.result)
+colnames(probs) <- c("LSD_prob", "Ecstasy_prob", "Coke_prob")
+
+# Add predicted class (1 if prob > 0.5)
+pred_classes <- probs > 0.5
+
+# Compare with true labels
+actual <- test %>% select(LSD_bin, Ecstasy_bin, Coke_bin)
+
+# Evaluation (confusion matrix per drug)
+conf_matrix_lsd <- confusionMatrix(as.factor(pred_classes$LSD_prob), as.factor(actual$LSD_bin))
+conf_matrix_ecstasy <- confusionMatrix(as.factor(pred_classes$Ecstasy_prob), as.factor(actual$Ecstasy_bin))
+conf_matrix_coke <- confusionMatrix(as.factor(pred_classes$Coke_prob), as.factor(actual$Coke_bin))
+
+# Show results
+print(conf_matrix_lsd)
+print(conf_matrix_ecstasy)
+print(conf_matrix_coke)
