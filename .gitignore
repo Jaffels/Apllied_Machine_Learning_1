@@ -9,5 +9,5 @@ Machine_Learning_1.Rproj
 Drug-Consumption_cache/
 Data/.DS_Store
 Drug-Consumption_files/
-.pdf
-.tex
+*.pdf
+*.tex
