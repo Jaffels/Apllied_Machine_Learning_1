@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 \newpage
+
 # Introduction
 
 Drug use is a significant risk behavior with serious health consequences for individuals and society. Multiple factors contribute to initial drug use, including psychological, social, individual, environmental, and economic elements, as well as personality traits. While legal substances like sugar, alcohol, and tobacco cause more premature deaths, illegal recreational drugs still create substantial social and personal problems.
@@ -30,13 +31,13 @@ The database contains records for 1,885 respondents with 12 attributes including
 
 To better understand the data set we need to have an understanding of what the personality traits are and what the represent, we will have short description of each trait and how to interpret them:
 
-- Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability, and mood swings. Lower scores suggest emotional stability and resilience to stress.
-- Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments, and more reserved behavior.
-- Oscore (Openness to Experience): Measures intellectual curiosity and creativity. Higher scores indicate imagination, appreciation for art/beauty, openness to new ideas, and unconventional thinking. Lower scores suggest preference for routine, practicality, and conventional approaches.
-- Ascore (Agreeableness): Measures concern for social harmony. Higher scores indicate empathy, cooperation, and consideration for others. Lower scores suggest competitive, skeptical, or challenging interpersonal styles.
-- Cscore (Conscientiousness): Measures organization and reliability. Higher scores indicate discipline, responsibility, planning, and detail orientation. Lower scores suggest spontaneity, flexibility, and potentially less structured approaches.
-- Impulsive (Impulsiveness): Measures tendency to act without thinking. Higher scores indicate spontaneous decision-making without considering consequences. Lower scores suggest thoughtful deliberation before actions.
-- SS (Sensation Seeking): Measures desire for novel experiences and willingness to take risks. Higher scores indicate thrill-seeking behavior and preference for excitement. Lower scores suggest preference for familiarity and safety.
+-   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability, and mood swings. Lower scores suggest emotional stability and resilience to stress.
+-   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments, and more reserved behavior.
+-   Oscore (Openness to Experience): Measures intellectual curiosity and creativity. Higher scores indicate imagination, appreciation for art/beauty, openness to new ideas, and unconventional thinking. Lower scores suggest preference for routine, practicality, and conventional approaches.
+-   Ascore (Agreeableness): Measures concern for social harmony. Higher scores indicate empathy, cooperation, and consideration for others. Lower scores suggest competitive, skeptical, or challenging interpersonal styles.
+-   Cscore (Conscientiousness): Measures organization and reliability. Higher scores indicate discipline, responsibility, planning, and detail orientation. Lower scores suggest spontaneity, flexibility, and potentially less structured approaches.
+-   Impulsive (Impulsiveness): Measures tendency to act without thinking. Higher scores indicate spontaneous decision-making without considering consequences. Lower scores suggest thoughtful deliberation before actions.
+-   SS (Sensation Seeking): Measures desire for novel experiences and willingness to take risks. Higher scores indicate thrill-seeking behavior and preference for excitement. Lower scores suggest preference for familiarity and safety.
 
 The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which would make sense given our dataset includes variables related to substance use.
 
@@ -303,7 +304,6 @@ ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
 
 The correlation matrix shows that certain personality traits tend to cluster thougher for example SS (Sensation Seeking) has a positive correlation with Escore (Extraversion), Oscore (Openness) and Impulsive while they in turn also have positive correlations which other and a negative correlation to Cscore (Conscientiousness) and Ascore (Agreeableness) while they have a positive correlation with each other.
 
-
 ## Comparing Behavioral Measure for Gender
 
 ```{r echo=FALSE, cache=TRUE}
@@ -363,11 +363,9 @@ ggplot(gender_results, aes(x = Trait_Name)) +
   coord_flip()
 ```
 
-
 The mean of all the Behavioral Measures is 0, the chart show the mean score broken down by gender for each Behavioral Measures. That chart shows that males tend to be more sensation seeking and impulsive but also more open, where females tend to be more impulsive but also more agreeable and conscientious.
 
 ## Comparing Education Level with Behavioral Measures
-
 
 ```{r, fig.width=7.5, fig.height=8.5, dev="pdf", echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -456,7 +454,8 @@ for (i in 1:length(trait_cols)) {
 mtext("Personality Traits by Education Level", side = 3, line = 1, 
       outer = TRUE, cex = 1.2, font = 2)
 ```
-The charts show the mean score for the behavioral traits broken down by educational level. It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking	is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.  
+
+The charts show the mean score for the behavioral traits broken down by educational level. It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.
 
 ## Analysis of Seremon Usage
 
@@ -582,9 +581,10 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 # Machine Learning Models
 
 ## Linear Model
+
 (Johan Ferreira)
 
-As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions.         
+As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions.
 
 ```{r lr1, echo=FALSE, cache=TRUE}
 
@@ -736,7 +736,6 @@ create_model_summary_table <- function(results_list) {
 # Create and format the summary table
 model_summary_table <- create_model_summary_table(results_list)
 ```
-
 
 ```{r lr3, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
@@ -986,6 +985,7 @@ if (length(drug_names_for_table) > 0) {
 Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.
 
 ### Analysis of Personality Traits as Predictors of Substance Use
+
 ```{r lr6, echo=FALSE, cache=TRUE}
 
 # Properly define the individual models for plotting
@@ -1008,18 +1008,20 @@ if ("Nicotine" %in% names(results_list)) {
 }
 ```
 
-#### Cannabis Usage Predictors  
+#### Cannabis Usage Predictors
+
 The first plot presents the predictors of cannabis usage, showing estimated coefficients with 95% confidence intervals. Several key observations emerge:
 
-Sensation Seeking (SS) stands out as the strongest positive predictor of cannabis use with high statistical significance (p < 0.001). This indicates that individuals with higher sensation-seeking tendencies are substantially more likely to use cannabis.
+Sensation Seeking (SS) stands out as the strongest positive predictor of cannabis use with high statistical significance (p \< 0.001). This indicates that individuals with higher sensation-seeking tendencies are substantially more likely to use cannabis.
 
-Age shows a strong negative association (p < 0.001), indicating that cannabis use decreases significantly with advancing age, which aligns with established patterns of drug use being more prevalent among younger populations.
+Age shows a strong negative association (p \< 0.001), indicating that cannabis use decreases significantly with advancing age, which aligns with established patterns of drug use being more prevalent among younger populations.
 
-Openness (Oscore) also emerges as a significant positive predictor (p < 0.001), suggesting that individuals who are more intellectually curious and open to new experiences are more likely to use cannabis.
+Openness (Oscore) also emerges as a significant positive predictor (p \< 0.001), suggesting that individuals who are more intellectually curious and open to new experiences are more likely to use cannabis.
 
 Neuroticism (Nscore) shows a modest positive association, while Conscientiousness (Cscore) demonstrates a negative relationship - people who are more organized and reliable tend to use cannabis less.
 
-#### Alcohol Usage Predictors  
+#### Alcohol Usage Predictors
+
 The second plot reveals different personality dynamics for alcohol consumption:
 
 Sensation Seeking remains significant, though with a smaller coefficient than for cannabis, suggesting that thrill-seeking behavior correlates with alcohol use but less strongly than with cannabis use.
@@ -1030,7 +1032,8 @@ Age shows a much weaker negative association compared to cannabis, which reflect
 
 Extraversion (Escore) demonstrates a positive relationship with alcohol consumption, suggesting that more socially outgoing individuals may consume more alcohol, possibly due to its role in social interactions.
 
-#### Nicotine Usage Predictors  
+#### Nicotine Usage Predictors
+
 The third plot for nicotine usage shows distinctive patterns:
 
 Conscientious (Cscore) exhibits a strong negative association with nicotine use, suggesting that more disciplined, organized individuals are significantly less likely to use nicotine products.
@@ -1041,16 +1044,17 @@ Certain country variables show stronger associations with nicotine use than they
 
 The gender variable shows a positive coefficient, indicating that males (coded as 1) are more likely to use nicotine than females (coded as 0) when controlling for other factors.
 
-#### Cross-Substance Comparison  
+#### Cross-Substance Comparison
+
 Across all three substances, several consistent patterns emerge:
 
-1. Sensation Seeking consistently appears as a significant positive predictor across all substances, reinforcing its role as a key personality trait associated with various forms of substance use.
+1.  Sensation Seeking consistently appears as a significant positive predictor across all substances, reinforcing its role as a key personality trait associated with various forms of substance use.
 
-2. Conscientiousness consistently shows negative associations with substance use, highlighting how personal organization and self-discipline may serve as protective factors.
+2.  Conscientiousness consistently shows negative associations with substance use, highlighting how personal organization and self-discipline may serve as protective factors.
 
-3. The strength and significance of demographic factors (age, gender, education) vary across substances, reflecting different usage patterns and societal attitudes.
+3.  The strength and significance of demographic factors (age, gender, education) vary across substances, reflecting different usage patterns and societal attitudes.
 
-4. The confidence intervals (error bars) reveal varying levels of certainty in these predictions, with some relationships being more precisely estimated than others.
+4.  The confidence intervals (error bars) reveal varying levels of certainty in these predictions, with some relationships being more precisely estimated than others.
 
 These visualizations effectively illustrate how different personality traits and demographic factors relate to substance use patterns, with some traits (particularly Sensation Seeking and Conscientiousness) showing consistent relationships across multiple substances, while others exhibit substance-specific patterns.
 
@@ -1170,29 +1174,31 @@ if (exists("cannabis_model") && !is.null(cannabis_model)) {
   print(cannabis_diagnostics)
 }
 ```
-1. Residuals vs Fitted Plot Analysis
+
+1.  Residuals vs Fitted Plot Analysis
 
 The Residuals vs Fitted plot examines the relationship between model predictions and their errors. In an ideal linear regression model, residuals should display random scatter around the zero line with no discernible pattern. The Cannabis model exhibits some systematic patterning in the residual distribution rather than purely random dispersion. This non-random pattern suggests the presence of unexplained structure in the data that the current linear specification fails to capture. The deviation of the smoothed blue line from horizontal indicates potential non-linear relationships between predictors and cannabis usage that warrant further investigation. Such patterns may suggest the need for polynomial terms, interaction effects, or transformation of variables to improve model specification.
 
-2. Normal Q-Q Plot Analysis
+2.  Normal Q-Q Plot Analysis
 
 The Normal Q-Q plot evaluates whether model residuals conform to a normal distribution, a key assumption in linear regression. Points should ideally follow the diagonal reference line throughout the distribution. The Cannabis model shows reasonable conformity in the central region but notable departures at both extremes of the distribution. These deviations, particularly visible in the tails, indicate that the residuals exhibit heavier tails than expected under normality. This pattern suggests that the model may produce less reliable predictions for individuals with very high or very low cannabis usage levels. The non-normality could affect the validity of confidence intervals and hypothesis tests, though the regression coefficients themselves remain unbiased estimators.
 
-3. Scale-Location Plot Analysis
+3.  Scale-Location Plot Analysis
 
 The Scale-Location plot assesses homoscedasticity—whether residual variance remains constant across all fitted values. The square root transformation of absolute standardized residuals helps visualize variance patterns. In the Cannabis model, the non-horizontal trend in the smoothed line indicates heteroscedasticity, with residual variance appearing to change across the range of predicted values. This uneven spread suggests that model precision varies depending on the level of cannabis use being predicted. The presence of heteroscedasticity does not bias coefficient estimates but may affect their efficiency and the validity of standard errors. Potential remedies include robust standard errors, weighted least squares, or variable transformations to stabilize variance.
 
-4. Residuals vs Leverage Plot Analysis
+4.  Residuals vs Leverage Plot Analysis
 
 The Residuals vs Leverage plot identifies observations that disproportionately influence model parameters. Points with both high leverage (ability to influence) and large residuals (poor fit) warrant careful examination. Cook's distance contours (red dashed lines) demarcate thresholds for highly influential points. The Cannabis model demonstrates relatively favorable characteristics in this regard, with most observations exhibiting moderate leverage and no extreme outliers beyond the Cook's distance boundaries. This indicates that the regression results are not unduly influenced by a small number of anomalous data points, enhancing confidence in the overall stability of the model findings.
 
 Conclusion
 
-The diagnostic analysis reveals several limitations in the linear regression model for cannabis usage. The presence of non-random residual patterns, departures from normality, and heteroscedasticity suggest that while the model provides valuable insights into factors associated with cannabis consumption, it does not capture all relevant structures in the data. These limitations should be considered when interpreting the model's findings.
-Despite these limitations, the model maintains utility for its primary purpose—identifying significant predictors and their relative importance. The diagnostic results do not invalidate the substantive findings but rather contextualize their interpretation and highlight opportunities for model refinement. Future modeling efforts might benefit from exploring non-linear specifications, variable transformations, or alternative estimation methods to address the issues identified in this diagnostic assessment.
+The diagnostic analysis reveals several limitations in the linear regression model for cannabis usage. The presence of non-random residual patterns, departures from normality, and heteroscedasticity suggest that while the model provides valuable insights into factors associated with cannabis consumption, it does not capture all relevant structures in the data. These limitations should be considered when interpreting the model's findings. Despite these limitations, the model maintains utility for its primary purpose—identifying significant predictors and their relative importance. The diagnostic results do not invalidate the substantive findings but rather contextualize their interpretation and highlight opportunities for model refinement. Future modeling efforts might benefit from exploring non-linear specifications, variable transformations, or alternative estimation methods to address the issues identified in this diagnostic assessment.
 
 ## Generalised Linear Model with family set to Poisson
+
 (Johan Ferreira)
+
 ```{r pos1, echo=FALSE, cache=TRUE}
 # Read the data
 model_data <- read.csv("Data/model_data.csv")
@@ -1704,8 +1710,8 @@ anova(cannabis_model, cannabis_model_interactions, test = "Chisq")
 ```
 
 ## Generalised Linear Model with family set to Binomial
-Don't know if this will improve your model, but it might be worth your time to test the Negative Binomial Model
 
+Don't know if this will improve your model, but it might be worth your time to test the Negative Binomial Model
 
 ## Generalised Additive Model
 
@@ -1715,13 +1721,12 @@ Don't know if this will improve your model, but it might be worth your time to t
 
 # How we used Generative AI in our project
 
-– how you used generative AI in redacting the group work (code-related questions,
-generate text, explain concepts…)  
-– what was easy/hard/impossible to do with generative AI  
-– what you had to pay attention to/be critical about when using the results obtained
-through the use of generative AI  
+– how you used generative AI in redacting the group work (code-related questions, generate text, explain concepts…)\
+– what was easy/hard/impossible to do with generative AI\
+– what you had to pay attention to/be critical about when using the results obtained through the use of generative AI
 
 # Conclusion
 
 # Source
-https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified
+
+<https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified>
