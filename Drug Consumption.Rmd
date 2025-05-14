@@ -7,6 +7,10 @@ output:
     toc: true
     toc_depth: 2
     number_sections: true
+    fig_width: 6
+    fig_height: 4
+    fig_caption: true
+    keep_tex: true
 ---
 
 ```{r setup, include=FALSE}
@@ -1608,10 +1612,6 @@ print(cannabis_coef_plot)
 cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, 
                                                 "Cannabis Usage Model Diagnostics")
 print(cannabis_diagnostics)
-
-# If you want to save these plots
-ggsave("cannabis_coefficient_plot.pdf", cannabis_coef_plot, width = 10, height = 8)
-ggsave("cannabis_diagnostics_plot.pdf", cannabis_diagnostics, width = 10, height = 8)
 
 # Check for multicollinearity
 car::vif(cannabis_model)
