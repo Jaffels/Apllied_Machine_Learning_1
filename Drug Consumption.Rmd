@@ -29,23 +29,23 @@ knitr::opts_chunk$set(
 
 Drug use is a significant risk behavior with serious health consequences for individuals and society. Multiple factors contribute to initial drug use, including psychological, social, individual, environmental, and economic elements, as well as personality traits. While legal substances like sugar, alcohol, and tobacco cause more premature deaths, illegal recreational drugs still create substantial social and personal problems.
 
-In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors, use machine learning methods to understand the complex relationships surrounding drug consumption, demonstrating how machine learning can reveal insights into behavioral patterns. While our findings won't directly inform interventions, this project showcases how data-driven approaches can enhance our understanding of complex social phenomena and provide valuable practice in applying machine learning to real-world datasets.
+In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors using machine learning methods to understand the complex relationships surrounding drug consumption.
 
 The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
 
 # Personality Traits Explanation
 
-To better understand the data set we need to have an understanding of what the personality traits are and what the represent, we will have short description of each trait and how to interpret them:
+To better understand the data set we need to have an understanding of what the personality traits are and what they represent, below we have short description of each trait and how to interpret them:
 
--   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability, and mood swings. Lower scores suggest emotional stability and resilience to stress.
--   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments, and more reserved behavior.
+-   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability and mood swings. Lower scores suggest emotional stability and resilience to stress.
+-   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments and more reserved behavior.
 -   Oscore (Openness to Experience): Measures intellectual curiosity and creativity. Higher scores indicate imagination, appreciation for art/beauty, openness to new ideas, and unconventional thinking. Lower scores suggest preference for routine, practicality, and conventional approaches.
 -   Ascore (Agreeableness): Measures concern for social harmony. Higher scores indicate empathy, cooperation, and consideration for others. Lower scores suggest competitive, skeptical, or challenging interpersonal styles.
 -   Cscore (Conscientiousness): Measures organization and reliability. Higher scores indicate discipline, responsibility, planning, and detail orientation. Lower scores suggest spontaneity, flexibility, and potentially less structured approaches.
 -   Impulsive (Impulsiveness): Measures tendency to act without thinking. Higher scores indicate spontaneous decision-making without considering consequences. Lower scores suggest thoughtful deliberation before actions.
 -   SS (Sensation Seeking): Measures desire for novel experiences and willingness to take risks. Higher scores indicate thrill-seeking behavior and preference for excitement. Lower scores suggest preference for familiarity and safety.
 
-The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which would make sense given our dataset includes variables related to substance use.
+The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which makes sense given our dataset includes variables related to substance use.
 
 # Cleaning and Formatting the Dataset
 
@@ -73,9 +73,9 @@ options(warn = -1)
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
-## Fomatting the Dataset
+## Data Formatting
 
-The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
+In its original state, the dataset represented most categorical variables with random floating-point numbers. We believe this was a measure to mitigate bias within the dataset. However, as our project's objectives differ from the dataset's initial purpose, we needed to revert these encoded values back to their original categorical representations. This step was essential to perform the analyses required for our project. This was the first step in cleaning our dataset.
 
 ```{r fom1, echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -222,7 +222,7 @@ na_table <- na_df %>%
 na_table
 ```
 
-Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
+In the second step, we addressed missing values. We found that only two columns contained missing data, affecting approximately 5% of the 1885 observations. Considering the nature of these variables and the completeness of the remaining data, we inferred that participants likely withheld this information deliberately in most instances. Consequently, we replaced these missing values with the label "Not Provided," enabling us to treat these cases as a distinct category in our analysis.
 
 ```{r fom4, echo=FALSE, cache=TRUE}
 # Replace NA values with "Not Provided"
@@ -235,7 +235,7 @@ write.csv(drug_data, "Data/cleaned.csv")
 
 ## Investigating Outliers
 
-```{r fom5, echo=FALSE, cache=TRUE}
+```{r fom5, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 ###############################################################################
 # Data Cleaning - Looking for outliers
 ###############################################################################
@@ -294,7 +294,9 @@ plot_outliers <- function(drug_data, columns) {
 plot_outliers(drug_data, numeric_cols)
 ```
 
-As can be seen from the box plots our data set has some values that are outside of the upper and lower bounds. All thought these values are technically outliers they are not extreme, still fall inside of the range of our expected values and conforms to a normal distribution.
+The box plots reveal some data points outside the upper and lower bounds. Although these values are technically outliers, they are not extreme, fall within the expected range, and conform to a normal distribution.
+
+The dataset was considerably cleaner than anticipated, which suggests it was likely pre-processed or cleaned before we accessed it.
 
 # Exploratory Data Analysis
 
