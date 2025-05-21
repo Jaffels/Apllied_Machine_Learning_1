@@ -5,16 +5,22 @@ date: "2025-03-06"
 output:
   pdf_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     number_sections: true
-    fig_width: 6
-    fig_height: 4
+    fig_width: 7
+    fig_height: 5
     fig_caption: true
-    keep_tex: true
+    highlight: tango
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE,
+  fig.align = "center"
+)
 ```
 
 \newpage
@@ -188,10 +194,32 @@ drug_data <- drug_data[, -which(names(drug_data) == "ID")]
 
 # Check for NA values in each column
 na_by_column <- sapply(drug_data, function(x) sum(is.na(x)))
-cat("NA values by column:")
 
-# Print only columns with NA values
-print(na_by_column[na_by_column > 0])  
+# Create a data frame for better table formatting
+na_df <- data.frame(
+  Column = names(na_by_column)[na_by_column > 0],
+  NA_Count = na_by_column[na_by_column > 0],
+  Percentage = round(na_by_column[na_by_column > 0] / nrow(drug_data) * 100, 2)
+)
+
+# Create a nicely formatted table with kable
+na_table <- na_df %>%
+  kable(caption = "Missing Values by Column",
+        booktabs = TRUE,
+        col.names = c("Column", "Missing Values", "Percentage (%)"),
+        digits = c(0, 0, 2),
+        align = c('l', 'r', 'r')) %>%
+  kable_styling(latex_options = c("striped", "hold_position"),
+                full_width = FALSE,
+                position = "center") %>%
+  row_spec(0, bold = TRUE) %>%
+  footnote(
+    general = "Only columns with missing values are shown.",
+    footnote_as_chunk = TRUE
+  )
+
+# Display the table
+na_table
 ```
 
 Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
@@ -1491,12 +1519,36 @@ if (requireNamespace("MASS", quietly = TRUE)) {
   nb_model <- MASS::glm.nb(Cannabis ~ Age + Gender + Education + 
                              Nscore + Escore + Oscore + Ascore + Cscore + 
                              Impulsive + SS, data = model_data)
-
-  # Compare AIC between Poisson and negative binomial
-  cat("\nModel comparison - Cannabis:\n")
-  cat("Poisson AIC:", AIC(cannabis_model), "\n")
-  cat("Negative Binomial AIC:", AIC(nb_model), "\n")
-  cat("Theta value in NB model:", nb_model$theta, "\n")
+  
+  # Create a data frame for comparison
+  model_comparison_df <- data.frame(
+    Model = c("Poisson", "Negative Binomial"),
+    AIC = c(AIC(cannabis_model), AIC(nb_model)),
+    LogLikelihood = c(logLik(cannabis_model), logLik(nb_model)),
+    Theta = c(NA, nb_model$theta),
+    Dispersion = c(sum(residuals(cannabis_model, type = "pearson")^2) / cannabis_model$df.residual, NA),
+    stringsAsFactors = FALSE
+  )
+  
+  # Create the nicely formatted comparison table with kable
+  model_comparison_table <- model_comparison_df %>%
+    kable(caption = "Comparison of Poisson and Negative Binomial Models for Cannabis Use", 
+          booktabs = TRUE,
+          col.names = c("Model", "AIC", "Log-Likelihood", "Theta", "Dispersion"),
+          digits = c(0, 2, 2, 3, 3),
+          align = c('l', 'r', 'r', 'r', 'r')) %>%
+    kable_styling(latex_options = c("striped", "hold_position"), 
+                  full_width = FALSE,
+                  position = "center") %>%
+    row_spec(0, bold = TRUE) %>%
+    column_spec(1, bold = TRUE) %>%
+    footnote(
+      general = "Lower AIC values indicate better model fit.",
+      footnote_as_chunk = TRUE
+    )
+  
+  # Display the table
+  model_comparison_table
 }
 ```
 #### Negative Binomial Comparison
