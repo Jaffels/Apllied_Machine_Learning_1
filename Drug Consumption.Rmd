@@ -29,23 +29,23 @@ knitr::opts_chunk$set(
 
 Drug use is a significant risk behavior with serious health consequences for individuals and society. Multiple factors contribute to initial drug use, including psychological, social, individual, environmental, and economic elements, as well as personality traits. While legal substances like sugar, alcohol, and tobacco cause more premature deaths, illegal recreational drugs still create substantial social and personal problems.
 
-In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors, use machine learning methods to understand the complex relationships surrounding drug consumption, demonstrating how machine learning can reveal insights into behavioral patterns. While our findings won't directly inform interventions, this project showcases how data-driven approaches can enhance our understanding of complex social phenomena and provide valuable practice in applying machine learning to real-world datasets.
+In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors using machine learning methods to understand the complex relationships surrounding drug consumption.
 
 The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
 
 # Personality Traits Explanation
 
-To better understand the data set we need to have an understanding of what the personality traits are and what the represent, we will have short description of each trait and how to interpret them:
+To better understand the data set we need to have an understanding of what the personality traits are and what they represent, below we have short description of each trait and how to interpret them:
 
--   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability, and mood swings. Lower scores suggest emotional stability and resilience to stress.
--   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments, and more reserved behavior.
+-   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability and mood swings. Lower scores suggest emotional stability and resilience to stress.
+-   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments and more reserved behavior.
 -   Oscore (Openness to Experience): Measures intellectual curiosity and creativity. Higher scores indicate imagination, appreciation for art/beauty, openness to new ideas, and unconventional thinking. Lower scores suggest preference for routine, practicality, and conventional approaches.
 -   Ascore (Agreeableness): Measures concern for social harmony. Higher scores indicate empathy, cooperation, and consideration for others. Lower scores suggest competitive, skeptical, or challenging interpersonal styles.
 -   Cscore (Conscientiousness): Measures organization and reliability. Higher scores indicate discipline, responsibility, planning, and detail orientation. Lower scores suggest spontaneity, flexibility, and potentially less structured approaches.
 -   Impulsive (Impulsiveness): Measures tendency to act without thinking. Higher scores indicate spontaneous decision-making without considering consequences. Lower scores suggest thoughtful deliberation before actions.
 -   SS (Sensation Seeking): Measures desire for novel experiences and willingness to take risks. Higher scores indicate thrill-seeking behavior and preference for excitement. Lower scores suggest preference for familiarity and safety.
 
-The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which would make sense given our dataset includes variables related to substance use.
+The first five traits (Nscore through Cscore) are the "Big Five" personality traits, which are widely used in psychological research. The Impulsive and SS measures are additional traits that are often studied in relation to risk-taking behaviors, which makes sense given our dataset includes variables related to substance use.
 
 # Cleaning and Formatting the Dataset
 
@@ -73,9 +73,9 @@ options(warn = -1)
 drug_data <- read.csv("Data/drug_consumption.csv")
 ```
 
-## Fomatting the Dataset
+## Data Formatting
 
-The original data set had all the values for most of the variables set to a random floating number representing a specific categorical value, we believe this was done in order to remove bias from the dataset. As the requirements of this project is different form the data set's original intention we had to replace these values with the original values in order to complete all the required steps for our project.
+In its original state, the dataset represented most categorical variables with random floating-point numbers. We believe this was a measure to mitigate bias within the dataset. However, as our project's objectives differ from the dataset's initial purpose, we needed to revert these encoded values back to their original categorical representations. This step was essential to perform the analyses required for our project. This was the first step in cleaning our dataset.
 
 ```{r fom1, echo=FALSE, cache=TRUE}
 ###############################################################################
@@ -222,7 +222,7 @@ na_table <- na_df %>%
 na_table
 ```
 
-Only two columns contain missing values, affecting approximately 5% of the 1885 observations. Given the nature of these variables and the completeness of the rest of the data, we assume participants deliberately withheld this information. Therefore, we replaced the missing values with "Not Provided", allowing us to treat these instances as a distinct category.
+In the second step, we addressed missing values. We found that only two columns contained missing data, affecting approximately 5% of the 1885 observations. Considering the nature of these variables and the completeness of the remaining data, we inferred that participants likely withheld this information deliberately in most instances. Consequently, we replaced these missing values with the label "Not Provided," enabling us to treat these cases as a distinct category in our analysis.
 
 ```{r fom4, echo=FALSE, cache=TRUE}
 # Replace NA values with "Not Provided"
@@ -235,7 +235,7 @@ write.csv(drug_data, "Data/cleaned.csv")
 
 ## Investigating Outliers
 
-```{r fom5, echo=FALSE, cache=TRUE}
+```{r fom5, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 ###############################################################################
 # Data Cleaning - Looking for outliers
 ###############################################################################
@@ -294,13 +294,15 @@ plot_outliers <- function(drug_data, columns) {
 plot_outliers(drug_data, numeric_cols)
 ```
 
-As can be seen from the box plots our data set has some values that are outside of the upper and lower bounds. All thought these values are technically outliers they are not extreme, still fall inside of the range of our expected values and conforms to a normal distribution.
+The box plots reveal some data points outside the upper and lower bounds. Although these values are technically outliers, they are not extreme, fall within the expected range, and conform to a normal distribution.
+
+The dataset was considerably cleaner than anticipated, which suggests it was likely pre-processed or cleaned before we accessed it.
 
 # Exploratory Data Analysis
 
 ## Correlation between Behavioral Measures
 
-```{r da1, echo=FALSE, cache=TRUE}
+```{r da1, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 ###############################################################################
 # Heatmap
 ###############################################################################
@@ -332,11 +334,11 @@ ggplot(data = cor_df, aes(x = Var1, y = Var2, fill = Correlation)) +
   )
 ```
 
-The correlation matrix shows that certain personality traits tend to cluster thougher for example SS (Sensation Seeking) has a positive correlation with Escore (Extraversion), Oscore (Openness) and Impulsive while they in turn also have positive correlations which other and a negative correlation to Cscore (Conscientiousness) and Ascore (Agreeableness) while they have a positive correlation with each other.
+The correlation matrix reveals that certain personality traits tend to cluster. For instance, Sensation Seeking (SS) shows a positive correlation with Extraversion (Escore), Openness (Oscore), and Impulsiveness. These three traits (Extraversion, Openness, and Impulsiveness) are also positively correlated with each other. Conversely, Sensation Seeking (along with Extraversion, Openness, and Impulsiveness) exhibits a negative correlation with Conscientiousness (Cscore) and Agreeableness (Ascore). Finally, Conscientiousness and Agreeableness demonstrate a positive correlation with each other.
 
 ## Comparing Behavioral Measure for Gender
 
-```{r da2, echo=FALSE, cache=TRUE}
+```{r da2, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 ###############################################################################
 # Gender comparison
 ###############################################################################
@@ -393,11 +395,11 @@ ggplot(gender_results, aes(x = Trait_Name)) +
   coord_flip()
 ```
 
-The mean of all the Behavioral Measures is 0, the chart show the mean score broken down by gender for each Behavioral Measures. That chart shows that males tend to be more sensation seeking and impulsive but also more open, where females tend to be more impulsive but also more agreeable and conscientious.
+The chart illustrates standardized behavioral traits, categorized by gender. The data suggest that males, on average, score higher in sensation-seeking, impulsivity, and openness. Conversely, females tend to demonstrate higher levels of impulsivity, as well as agreeableness and conscientiousness.
 
 ## Comparing Education Level with Behavioral Measures
 
-```{r da3, fig.width=7.5, fig.height=8.5, dev="pdf", echo=FALSE, cache=TRUE}
+```{r da3, fig.width=5, fig.height=8.5, dev="pdf", echo=FALSE, cache=TRUE}
 ###############################################################################
 # Education comparison
 ###############################################################################
@@ -485,7 +487,7 @@ mtext("Personality Traits by Education Level", side = 3, line = 1,
       outer = TRUE, cex = 1.2, font = 2)
 ```
 
-The charts show the mean score for the behavioral traits broken down by educational level. It is not very clear at first glance but when you study the table closely it becomes clear that traits that can be precived as bad like Neuroticism, Impulsivity and Sensation Seeking is more prevelent with lower education levels inccluding Not Provided and steadily decrease as the level of education increases.
+The charts which compare education levels with behavioral measures, reveal an inverse relationship between the level of education and the prevalence of certain personality traits. While not immediately obvious from the charts alone, a closer examination of the data indicates that traits often perceived as negative specifically Neuroticism, Impulsivity, and Sensation Seeking are more pronounced in individuals with lower education levels, this includes respondents who selected "Not Provided" for their educational background. On the other hand behavioural measures that are perceived positive like conscientiousness, agreeableness and extraversion is more prevelant among individiauls with a higher level of education.
 
 ## Analysis of Seremon Usage
 
@@ -526,7 +528,7 @@ if(knitr::is_latex_output()) {
 semeron_table
 ```
 
-Semeron is a non exsisting drug that was introduced to the questonaire. With only 0.42% of resopndents reporting usage of Semeron. This would indicate that the survey data is likely of good quality, with most respondents providing attentive and truthful answers regarding their substance use.
+The questionnaire included Semeron a fictitious drug. The fact that only a very small fraction of participants, 0.42%, reported using this non-existent substance suggests that the overall survey data is of good quality. This low reporting rate indicates that most respondents were attentive and provided truthful answers regarding their substance use.
 
 # Prepraring the Dataset for Machine Learning
 
@@ -874,7 +876,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
 
 ### Personality Traits as Predictors of Substance Use
 
-```{r lr5, echo=FALSE, cache=TRUE}
+```{r lr5, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 #---------------------------------------------------------------
 # Generate Output
 #---------------------------------------------------------------
@@ -885,25 +887,25 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
 # Function to create clean model coefficient table
 create_model_coef_table <- function(model_list, drug_names) {
   # Extract key coefficients from each model
-  key_vars <- c("Age", "Gender", "Education", "Nscore", "Escore", 
+  key_vars <- c("Age", "Gender", "Education", "Nscore", "Escore",
                "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
-  
+
   # Create data frame for results
   result_df <- data.frame(
     Variable = c("(Intercept)", key_vars),
     stringsAsFactors = FALSE
   )
-  
+
   # Add each model's coefficients and significance
   for (drug in drug_names) {
     if (drug %in% names(model_list)) {
       model <- model_list[[drug]]$model
       coefs <- summary(model)$coefficients
-      
+
       # Extract coefficients and p-values
       drug_coefs <- numeric(length(result_df$Variable))
       drug_p <- numeric(length(result_df$Variable))
-      
+
       for (i in 1:length(result_df$Variable)) {
         var_name <- result_df$Variable[i]
         if (var_name %in% rownames(coefs)) {
@@ -914,28 +916,28 @@ create_model_coef_table <- function(model_list, drug_names) {
           drug_p[i] <- NA
         }
       }
-      
+
       # Add significance stars
-      drug_sig <- ifelse(drug_p < 0.001, "***", 
-                       ifelse(drug_p < 0.01, "**", 
+      drug_sig <- ifelse(drug_p < 0.001, "***",
+                       ifelse(drug_p < 0.01, "**",
                             ifelse(drug_p < 0.05, "*", "")))
-      
+
       # Format coefficients with significance stars
-      drug_coef_text <- ifelse(!is.na(drug_coefs), 
-                             paste0(sprintf("%.3f", round(drug_coefs, 3)), drug_sig), 
+      drug_coef_text <- ifelse(!is.na(drug_coefs),
+                             paste0(sprintf("%.3f", round(drug_coefs, 3)), drug_sig),
                              "")
-      
+
       # Add to result dataframe
       result_df[[drug]] <- drug_coef_text
     }
   }
-  
+
   # Add model metrics
   metrics_rows <- data.frame(
     Variable = c("N", "R²", "Adjusted R²", "F-statistic"),
     stringsAsFactors = FALSE
   )
-  
+
   for (drug in drug_names) {
     if (drug %in% names(model_list)) {
       model_summary <- summary(model_list[[drug]]$model)
@@ -943,7 +945,7 @@ create_model_coef_table <- function(model_list, drug_names) {
       r2 <- model_summary$r.squared
       adj_r2 <- model_summary$adj.r.squared
       f_stat <- model_summary$fstatistic[1]
-      
+
       metrics_rows[[drug]] <- c(
         as.character(n),
         sprintf("%.3f", round(r2, 3)),
@@ -952,10 +954,10 @@ create_model_coef_table <- function(model_list, drug_names) {
       )
     }
   }
-  
+
   # Combine results and metrics
   final_df <- rbind(result_df, metrics_rows)
-  
+
   # Clean variable names for display
   var_display_names <- c(
     "(Intercept)" = "Intercept",
@@ -974,9 +976,9 @@ create_model_coef_table <- function(model_list, drug_names) {
     "Adjusted R²" = "Adjusted R²",
     "F-statistic" = "F-statistic"
   )
-  
+
   final_df$Variable <- var_display_names[final_df$Variable]
-  
+
   return(final_df)
 }
 
@@ -985,18 +987,22 @@ create_model_coef_table <- function(model_list, drug_names) {
 drug_names_for_table <- names(results_list)
 if (length(drug_names_for_table) > 0) {
   model_comparison_table <- create_model_coef_table(
-    results_list, 
+    results_list,
     drug_names_for_table
   )
-  
+
   # Display the table with kable for better formatting
-  kable(model_comparison_table, 
+  kable(model_comparison_table,
       caption = "Linear Regression Models for Drug Usage (Usage Level 0-6)",
       align = c('l', rep('r', ncol(model_comparison_table) - 1)),
-      longtable = TRUE) %>%  # Add this parameter
-    kable_styling(bootstrap_options = c("striped", "hover"), 
-                  full_width = FALSE,
-                  latex_options = c("hold_position")) %>%  # Add this parameter
+      longtable = TRUE) %>%
+    kable_styling(
+      latex_options = c("striped", "hold_position"), # Made consistent with other PDF tables
+      full_width = FALSE,
+      position = "center"                             # Added for centering, consistent with others
+    ) %>%
+    row_spec(0, bold = TRUE) %>%                      # Added to bold the header row
+    column_spec(1, bold = TRUE) %>%                   # Added to bold the first column (Variable names)
     add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1)) %>%
     footnote(
       symbol = c("* p<0.05; ** p<0.01; *** p<0.001"),
@@ -1011,8 +1017,9 @@ if (length(drug_names_for_table) > 0) {
 Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.
 
 ### Analysis of Personality Traits as Predictors of Substance Use
+#### Cannabis Usage Predictors
 
-```{r lr6, echo=FALSE, cache=TRUE}
+```{r lr6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 
 # Properly define the individual models for plotting
 if ("Cannabis" %in% names(results_list)) {
@@ -1020,21 +1027,7 @@ if ("Cannabis" %in% names(results_list)) {
   cannabis_coef_plot <- plot_factor_importance_enhanced(cannabis_model, "Predictors of Cannabis Usage")
   print(cannabis_coef_plot)
 }
-
-if ("Alcohol" %in% names(results_list)) {
-  alcohol_model <- results_list[["Alcohol"]]$model
-  alcohol_coef_plot <- plot_factor_importance_enhanced(alcohol_model, "Predictors of Alcohol Usage")
-  print(alcohol_coef_plot)
-}
-
-if ("Nicotine" %in% names(results_list)) {
-  nicotine_model <- results_list[["Nicotine"]]$model
-  nicotine_coef_plot <- plot_factor_importance_enhanced(nicotine_model, "Predictors of Nicotine Usage")
-  print(nicotine_coef_plot)
-}
 ```
-
-#### Cannabis Usage Predictors
 
 The first plot presents the predictors of cannabis usage, showing estimated coefficients with 95% confidence intervals. Several key observations emerge:
 
@@ -1048,6 +1041,14 @@ Neuroticism (Nscore) shows a modest positive association, while Conscientiousnes
 
 #### Alcohol Usage Predictors
 
+```{r lr7, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+if ("Alcohol" %in% names(results_list)) {
+  alcohol_model <- results_list[["Alcohol"]]$model
+  alcohol_coef_plot <- plot_factor_importance_enhanced(alcohol_model, "Predictors of Alcohol Usage")
+  print(alcohol_coef_plot)
+}
+```
+
 The second plot reveals different personality dynamics for alcohol consumption:
 
 Sensation Seeking remains significant, though with a smaller coefficient than for cannabis, suggesting that thrill-seeking behavior correlates with alcohol use but less strongly than with cannabis use.
@@ -1059,6 +1060,14 @@ Age shows a much weaker negative association compared to cannabis, which reflect
 Extraversion (Escore) demonstrates a positive relationship with alcohol consumption, suggesting that more socially outgoing individuals may consume more alcohol, possibly due to its role in social interactions.
 
 #### Nicotine Usage Predictors
+
+```{r lr8, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+if ("Nicotine" %in% names(results_list)) {
+  nicotine_model <- results_list[["Nicotine"]]$model
+  nicotine_coef_plot <- plot_factor_importance_enhanced(nicotine_model, "Predictors of Nicotine Usage")
+  print(nicotine_coef_plot)
+}
+```
 
 The third plot for nicotine usage shows distinctive patterns:
 
@@ -1086,7 +1095,7 @@ These visualizations effectively illustrate how different personality traits and
 
 ### Cannabis Usage Linear Regression Model: Diagnostic Analysis
 
-```{r lr7, echo=FALSE, cache=TRUE}
+```{r lr9, echo=FALSE, cache=TRUE}
 #---------------------------------------------------------------
 # Diagnostic Plots
 #---------------------------------------------------------------
