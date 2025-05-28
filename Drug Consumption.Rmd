@@ -2224,6 +2224,7 @@ df_cnb <- df_cnb %>%
   )
 
 ```
+
 ```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
 # Boxplots by use status
 trait_labs <- c(
