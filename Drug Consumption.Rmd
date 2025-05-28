@@ -996,9 +996,13 @@ if (length(drug_names_for_table) > 0) {
       caption = "Linear Regression Models for Drug Usage (Usage Level 0-6)",
       align = c('l', rep('r', ncol(model_comparison_table) - 1)),
       longtable = TRUE) %>%
-    kable_styling(bootstrap_options = c("striped", "hover"),
-                  full_width = FALSE,
-                  latex_options = c("hold_position")) %>%
+    kable_styling(
+      latex_options = c("striped", "hold_position"), # Made consistent with other PDF tables
+      full_width = FALSE,
+      position = "center"                             # Added for centering, consistent with others
+    ) %>%
+    row_spec(0, bold = TRUE) %>%                      # Added to bold the header row
+    column_spec(1, bold = TRUE) %>%                   # Added to bold the first column (Variable names)
     add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1)) %>%
     footnote(
       symbol = c("* p<0.05; ** p<0.01; *** p<0.001"),
