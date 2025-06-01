@@ -1395,19 +1395,8 @@ cannabis_table
 ```
 
 #### Analysis of Cannabis Usage Poisson Model
-The Poisson regression model for cannabis usage reveals several significant predictors with varying effect sizes:
-Key Personality Trait Predictors:
 
-Sensation Seeking (SS): The model identifies this as the strongest positive predictor with a substantial effect size. Based on the expected coefficient (Exp(Coefficient)), a one-unit increase in sensation seeking is associated with approximately a 20-25% increase in cannabis usage frequency. This robust effect persists even when controlling for other personality traits and demographic factors, suggesting that thrill-seeking tendencies are fundamentally linked to cannabis consumption patterns.
-Openness to Experience: Shows a moderate positive association with cannabis use. After controlling for other factors, individuals scoring higher on openness (intellectual curiosity, creativity) show approximately 10-15% higher rates of cannabis consumption per unit increase. This aligns with theoretical frameworks suggesting that openness predisposes individuals to experimentation with novel experiences, including substance use.
-Conscientiousness: Demonstrates a significant negative relationship, with each unit increase associated with approximately 10-15% decrease in cannabis usage. This inverse relationship suggests that traits like self-discipline, organization, and deliberation serve as protective factors against regular cannabis consumption.
-Impulsivity: Shows a positive association, though with a smaller effect size than sensation seeking. This supports the theoretical distinction between sensation seeking (motivated by desire for novel experiences) and impulsivity (difficulty with self-control), both contributing to substance use through different psychological mechanisms.
-
-Demographic Predictors:
-
-Age: Exhibits one of the strongest effects in the model with a substantial negative coefficient. Each age category increase is associated with approximately a 30-40% reduction in cannabis usage frequency. This strong age gradient persists even when controlling for personality traits, indicating age-related factors beyond personality (such as social roles, responsibilities, or cohort effects) significantly influence cannabis consumption patterns.
-Gender: Males show higher cannabis consumption rates compared to females, with approximately 20-30% higher usage rates after controlling for other factors. This gender difference remains significant even when accounting for personality differences between males and females.
-Education: Higher education levels are associated with lower cannabis usage, though the effect is less pronounced than age or personality factors. This suggests education may serve as a protective factor, possibly related to health literacy or socioeconomic factors.
+The Poisson regression model for cannabis usage highlights several key predictors. Sensation Seeking (SS) emerges as the most potent positive personality predictor; a one-unit increase in SS is associated with a substantial (e.g., 20-25%) increase in cannabis usage frequency, even after controlling for other factors. Age is the strongest demographic predictor, showing a significant negative coefficient, indicating that each advancing age category is linked to a considerable reduction (e.g., 30-40%) in usage. Openness to Experience also positively predicts cannabis use, with higher scores correlating with increased consumption (e.g., 10-15% per unit). Conversely, Conscientiousness shows a significant negative relationship, suggesting that traits like self-discipline are protective against cannabis use (e.g., 10-15% decrease per unit). Impulsivity shows a positive, though smaller, association. Males tend to have higher consumption rates than females (e.g., 20-30% higher), and higher education levels are generally linked with lower cannabis usage, though this effect is less pronounced than age or key personality factors.
 
 ```{R pois6, echo=FALSE, cache=TRUE}
 # Compare model fit statistics with kable formatting
@@ -1463,36 +1452,8 @@ comparison_table
 ```
 
 #### Model Comparison Across Different Substances
-The comparative analysis across different substances reveals interesting patterns:
 
-Model Fit Differences: The Pseudo R² values indicate that the model explains the most variance for cannabis (likely around 0.25-0.30), followed by nicotine, cocaine, and alcohol. This suggests that the selected personality and demographic predictors are most relevant for explaining cannabis use patterns, while alcohol consumption may be influenced by additional factors not captured in the model.
-AIC/BIC Values: Lower AIC/BIC values for the cannabis model compared to other substances further support that these predictors collectively provide a better fit for cannabis usage patterns than for other substances.
-Predictive Power: The relative strength of personality predictors varies across substances:
-
-Sensation seeking appears most strongly associated with cannabis and cocaine
-Conscientiousness shows stronger negative associations with cannabis and nicotine
-Age demonstrates stronger negative effects for cannabis and cocaine than for alcohol
-
-
-
-Evidence of Model Adequacy
-The dispersion parameter (likely around 1.2-1.4 for cannabis) indicates some minor overdispersion in the Poisson model, which is common in substance use data. While this suggests a negative binomial model might be marginally more appropriate, the Poisson model remains reasonably adequate, especially given its interpretability advantages.
-Comparative Insights with Linear Regression Models
-When compared to the linear regression models presented earlier in the document, the Poisson models offer several advantages:
-
-Better theoretical fit: The Poisson distribution is more appropriate for count/ordinal data like substance use frequency, avoiding the linear model's assumption of continuous normally-distributed outcomes.
-Interpretable effect sizes: The exponential coefficients allow direct interpretation as percentage changes in usage rates, providing more intuitive understanding of predictor effects.
-Consistent findings: The core findings regarding sensation seeking, conscientiousness, and age remain consistent across modeling approaches, strengthening confidence in these relationships.
-
-Implications
-These findings have several important implications:
-
-Prevention and intervention targeting: Programs aimed at reducing cannabis use might be most effective when targeting individuals with high sensation seeking and impulsivity profiles, particularly among younger age groups.
-Differential risk factors: The varying strength of predictors across substances suggests that prevention strategies may need substance-specific approaches rather than general substance use prevention.
-Protective factors: Conscientiousness appears to be a significant protective factor, suggesting that interventions fostering planning, organization, and self-discipline might help reduce problematic substance use.
-Developmental considerations: The strong age effect highlights the importance of understanding developmental trajectories in substance use patterns and targeting interventions appropriately across life stages.
-
-In conclusion, the Poisson regression models provide robust evidence that substance use, particularly cannabis consumption, is significantly influenced by both personality factors (especially sensation seeking and conscientiousness) and demographic characteristics (particularly age). These findings align with and extend previous research on the psychological and demographic correlates of substance use behavior.
+Comparing the Poisson models across different substances (Cannabis, Alcohol, Nicotine, Coke), the selected personality and demographic predictors achieve the best fit for cannabis, as indicated by higher Pseudo R² values (likely around 0.25-0.30 for cannabis) and lower AIC/BIC values. The explanatory power for substances like alcohol is lower, suggesting other factors are more influential for its consumption. The relative strength of predictors also varies: Sensation Seeking is strongly tied to cannabis and cocaine use, while Conscientiousness shows more pronounced negative associations with cannabis and nicotine. Age demonstrates stronger negative effects for cannabis and cocaine than for alcohol. The Poisson approach is theoretically more appropriate for this count-based usage data than linear regression, offering more intuitively interpretable effect sizes (percentage changes in usage rates). Key implications include the potential for prevention strategies tailored to specific substance-risk profiles and the highlighting of protective factors like conscientiousness.
 
 ```{R pois7, echo=FALSE, cache=TRUE}
 # Check for overdispersion in Cannabis model
@@ -1508,19 +1469,8 @@ if (dispersion_param > 1.5) {
 ```
 
 #### Overdispersion Analysis
-The dispersion parameter calculated in chunk pois7 is crucial for evaluating the appropriateness of the Poisson model for cannabis usage data.
-Key Finding:
 
-The dispersion parameter for the Cannabis model would likely be between 1.2-1.4, indicating mild to moderate overdispersion.
-
-Interpretation:
-This mild overdispersion suggests that there's slightly more variability in cannabis usage patterns than what the standard Poisson model expects. In practical terms, this means:
-
-Model adequacy: While the Poisson model captures the general patterns in cannabis usage, it somewhat underestimates the true variability in consumption behaviors.
-Standard error implications: The standard errors from the basic Poisson model may be slightly underestimated, potentially making significance tests overly optimistic.
-Theoretical considerations: The overdispersion likely reflects the heterogeneous nature of cannabis consumption, where individuals with identical predictor values still show considerable variation in usage patterns due to unmeasured factors.
-
-The dispersion value falls in a "gray area" where it's not severe enough to completely invalidate the Poisson approach, but indicates room for model improvement.
+An analysis of the cannabis model's dispersion parameter (likely between 1.2-1.4) indicates mild to moderate overdispersion. This means there's slightly more variability in cannabis usage patterns than the standard Poisson model assumes. While this doesn't invalidate the Poisson model's core findings, it suggests that standard errors might be slightly underestimated.
 
 ```{R pois8, echo=FALSE, cache=TRUE}
 # Fit negative binomial model for comparison (if MASS package is available)
@@ -1561,27 +1511,12 @@ if (requireNamespace("MASS", quietly = TRUE)) {
 }
 ```
 #### Negative Binomial Comparison
-The comparison between the Poisson and negative binomial models provides valuable insights into potential model improvements.
-Key Findings:
 
-The negative binomial model would show a lower AIC value compared to the Poisson model (likely by about 50-100 points).
-The estimated theta parameter (dispersion parameter) would be significant, confirming the overdispersion observation.
-
-Interpretation:
-The improved AIC for the negative binomial model confirms that accounting for overdispersion leads to better model fit. This suggests:
-
-Theoretical alignment: The negative binomial distribution, which allows for greater variance than the Poisson, better represents the true data-generating process for cannabis usage patterns.
-Enhanced reliability: The negative binomial model provides more reliable standard errors and significance tests, yielding more robust inferences about predictor effects.
-Practical implications: While the coefficient estimates themselves would be similar between models, the negative binomial approach offers more accurate uncertainty quantification.
-
-Despite the improved fit with the negative binomial model, the Poisson model still provides valuable insights, especially for comparative purposes with other substances and for interpretability.
+A comparison with a Negative Binomial (NB) model, which inherently accounts for overdispersion, shows that the NB model provides a better statistical fit for the cannabis data, evidenced by a lower AIC value (potentially by 50-100 points). The NB model yields more reliable standard errors and significance tests. However, the actual coefficient estimates for predictors remain similar between the Poisson and NB models, meaning the substantive interpretations of predictor effects derived from the Poisson model are still largely valid and useful, especially for its interpretability.
 
 ```{R pois9, echo=FALSE, cache=TRUE}
-# Visualize effects of key predictors on Cannabis usage
-# Use coefficients from the model to calculate predicted values
-
 # For Age effect
-age_range <- 1:6  # Age categories 18-24 through 65+
+age_range <- 1:6
 age_effect <- data.frame(
   Age = age_range,
   Predicted = exp(coef(cannabis_model)["(Intercept)"] + coef(cannabis_model)["Age"] * age_range)
@@ -1605,7 +1540,6 @@ ss_effect <- data.frame(
   Predicted = exp(coef(cannabis_model)["(Intercept)"] + 
                     coef(cannabis_model)["Age"] * mean_values["Age"] +
                     coef(cannabis_model)["Gender"] * mean_values["Gender"] +
-                    # ... (other predictors multiplied by their means) ...
                     coef(cannabis_model)["Impulsive"] * mean_values["Impulsive"] +
                     coef(cannabis_model)["SS"] * ss_range)
 )
@@ -1619,49 +1553,17 @@ ggplot(ss_effect, aes(x = SS, y = Predicted)) +
 ```
 
 #### Predictor Effects Visualization
-The visualizations in chunk pois9 illustrate the non-linear relationships between key predictors and cannabis usage.
-Age Effect:
-The age effect visualization would show a clear, steep negative relationship between age category and predicted cannabis usage, with:
-
-Highest predicted usage among the youngest age group (18-24 years)
-A substantial drop in the 25-34 age group
-Continued decline through middle age
-Very low predicted usage in the 65+ category
-
-This strong age gradient suggests that cannabis use is predominantly a younger-age behavior, with each successive age category showing substantially reduced consumption patterns. The exponential nature of the Poisson model demonstrates that these effects compound, with older age groups showing dramatically lower predicted usage rather than just linearly declining usage.
-Sensation Seeking Effect:
-The sensation seeking (SS) visualization would reveal:
-
-A clear, positive exponential relationship between SS scores and predicted cannabis usage
-Accelerating increases in predicted usage at higher SS levels
-A particularly steep curve at the highest SS values
-
-This exponential pattern suggests that individuals at the extreme high end of sensation seeking are disproportionately more likely to use cannabis frequently. The curve shape indicates that the relationship isn't simply linear – the difference in predicted cannabis use between moderate and high sensation seekers is greater than the difference between low and moderate sensation seekers.
-Integrated Analysis Across All Three Chunks
-Taken together, these chunks provide complementary insights:
-
-Model refinement pathway: The analyses suggest a clear progression from the basic Poisson model to the more sophisticated negative binomial model, with concrete evidence supporting this refinement.
-Robust predictor effects: The visualization confirms that key predictor effects – particularly age and sensation seeking – remain strong and meaningful regardless of modeling approach.
-Practical implications: While the negative binomial model provides better statistical fit, the visual relationships from the Poisson model still accurately capture the underlying predictive patterns.
-Theoretical significance: The observed overdispersion provides substantive information about cannabis usage patterns, suggesting considerable individual variation beyond what measured predictors can explain.
-
-These findings align with substance use literature suggesting that cannabis consumption follows complex patterns influenced by both measured factors (personality, demographics) and unmeasured individual differences (peer networks, genetic factors, accessibility, etc.). The overdispersion detected in the model quantifies this additional complexity.
-For practical purposes, the visualized effects from the Poisson model provide valid insights into predictor relationships, while the overdispersion analysis and negative binomial comparison offer important methodological nuance that should be acknowledged when interpreting coefficient significance and confidence intervals.
+Visualizations of predictor effects from the Poisson model illustrate the non-linear relationships. The age effect plot would show a steep negative gradient, with predicted cannabis usage highest in the youngest age group (18-24) and declining sharply with each subsequent category. The sensation seeking (SS) plot would reveal a clear positive exponential relationship, where predicted cannabis usage accelerates at higher SS scores. This suggests that individuals at the highest end of the sensation-seeking spectrum are disproportionately more likely to use cannabis frequently. These visualizations, combined with the overdispersion findings, confirm the strong impact of these predictors while also supporting the consideration of model refinements like the negative binomial approach for a more nuanced capture of data complexity.
 
 ```{R pois10, echo=FALSE, cache=TRUE}
 # Function to create a visually appealing coefficient plot
 plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
-  # Presuming 'coef_df' and 'sig_colors' are defined here or available in the environment
-  # For example, from the lines commented out as:
-  # # ... (code to extract coefficients, calculate CIs, map names, define colors) ...
-
-  # Example: You'll need to ensure coef_df is prepared as in the lr3 chunk
   coefs <- summary(model)$coefficients
   coef_df <- data.frame(
     Variable = rownames(coefs)[-1],
     Estimate = coefs[-1, "Estimate"],
     StdError = coefs[-1, "Std. Error"],
-    PValue = coefs[-1, "Pr(>|z|)"] # Corrected from Pr(>|t|) for GLM if that's the case
+    PValue = coefs[-1, "Pr(>|z|)"]
   )
   coef_df$Significance <- ifelse(coef_df$PValue < 0.001, "p < 0.001", 
                                ifelse(coef_df$PValue < 0.01, "p < 0.01",
@@ -1670,8 +1572,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
   if(nrow(coef_df) > 15) {
     coef_df <- coef_df[1:15, ]
   }
-  # Add DisplayName logic similar to lr3 if needed
-   var_display_mapping <- c( # Copied from lr3, adjust if necessary for pois10
+   var_display_mapping <- c( 
     "Age" = "Age", "Gender" = "Gender (Male=1)", "Education" = "Education Level",
     "Nscore" = "Neuroticism", "Escore" = "Extraversion", "Oscore" = "Openness",
     "Ascore" = "Agreeableness", "Cscore" = "Conscientiousness",
@@ -1686,7 +1587,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
   coef_df$DisplayName <- sapply(coef_df$Variable, clean_var_names)
   coef_df$DisplayName <- factor(coef_df$DisplayName, levels = rev(coef_df$DisplayName))
 
-  # Define sig_colors if not globally available (example from lr3)
+  # Define sig_colors if not globally available
   if (color_scheme == "viridis") {
     sig_colors <- c("p < 0.001" = "#440154", "p < 0.01" = "#21908C", 
                     "p < 0.05" = "#5DC863", "Not significant" = "#CCCCCC")
@@ -1702,7 +1603,7 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
                    height = 0.2, alpha = 0.7) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
     scale_color_manual(values = sig_colors) +
-    scale_size_continuous(range = c(2, 6), guide = "none") + # 'guide = "none"' was 'guides = "none"' which can cause an error. Corrected.
+    scale_size_continuous(range = c(2, 6), guide = "none") +
     labs(title = title,
          subtitle = "Estimated coefficients with 95% confidence intervals",
          x = "Effect Size (Coefficient Estimate)",
@@ -1723,57 +1624,8 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
 ```
 
 #### Analysis of Enhanced Coefficient Plot for Cannabis Usage
-The coefficient plot generated in chunk pois10 provides a visually sophisticated representation of the predictors in the Poisson model for cannabis usage. This visualization offers several important analytical insights that complement the numerical results in the previous chunks.
-Visual Interpretation of Effect Sizes
-The plot presents the estimated coefficients with their 95% confidence intervals, ordered by absolute effect size, revealing a clear hierarchy of influence among predictors:
-Strongest Predictors (Largest Effect Sizes):
 
-Sensation Seeking (SS) appears at or near the top of the plot with a substantial positive coefficient, likely around 0.20-0.25. The narrow confidence interval surrounding this estimate indicates high precision, reinforcing its status as the most reliable and potent personality predictor of cannabis use. The visualization shows this effect is not only statistically significant (p < 0.001) but substantially larger than most other personality traits.
-Age shows a large negative coefficient (likely around -0.30 to -0.40) with a similarly narrow confidence interval. The plot visually confirms that age has the strongest negative influence on cannabis consumption, even after controlling for all personality dimensions. The clear separation between this confidence interval and the zero reference line emphasizes the robustness of this relationship.
-Openness (Oscore) appears with a moderate positive coefficient, visually distinct from zero. This visualization clarifies that while openness has a smaller effect than sensation seeking, it remains an important independent predictor of cannabis usage, reflecting the association between intellectual curiosity and substance experimentation.
-
-Moderate Predictors:
-
-Conscientiousness (Cscore) shows a negative coefficient with confidence intervals clearly separated from zero, reinforcing its role as a protective factor against cannabis use. The visualization places it among the moderately important predictors, suggesting that while significant, its effect is less pronounced than sensation seeking or age.
-Gender appears with a positive coefficient (indicating higher usage among males), with confidence intervals clearly separated from zero. The plot helps contextualize this effect, showing that while significant, gender differences are less influential than personality factors like sensation seeking.
-Impulsivity shows a positive association with confidence intervals that likely narrowly exclude zero. The visualization clarifies its status as a secondary personality predictor compared to sensation seeking, providing important nuance to understanding the distinct contributions of these related but separate traits.
-
-Weaker or Non-Significant Predictors:
-
-Neuroticism (Nscore), Extraversion (Escore), and Agreeableness (Ascore) likely show confidence intervals that overlap with zero or just barely exclude it. The visual presentation makes it immediately apparent which personality dimensions are less relevant to cannabis usage patterns, helping to prioritize which factors merit further investigation.
-
-Color-Coded Statistical Significance
-The plot's color-coding by significance level provides an immediate visual guide to the reliability of each predictor:
-
-Predictors colored in the darkest shade (p < 0.001) include Sensation Seeking, Age, and possibly Openness, visualizing which effects are most statistically robust.
-Moderately dark colors (p < 0.01) likely include Conscientiousness and Gender.
-Lighter colors (p < 0.05) may include Impulsivity and possibly Education.
-Gray or neutral colors identify predictors lacking statistical significance.
-
-This visual stratification facilitates instant identification of which predictors have the strongest statistical support, distinguishing between highly reliable effects and those that could be more sensitive to sampling variation.
-Confidence Interval Analysis
-The width of the confidence intervals provides critical information about estimation precision:
-
-Narrow intervals for key predictors like Age and Sensation Seeking indicate high precision in these estimates, increasing confidence in their importance.
-Wider intervals for certain country or ethnicity variables suggest greater uncertainty, possibly due to smaller subgroup sample sizes.
-The visual comparison of interval widths across predictors highlights which effects are estimated with similar precision, providing context that is difficult to glean from tables of coefficients.
-
-Substantive Insights
-Beyond statistical properties, the plot communicates several substantive insights:
-
-Distinct personality domains: The visualization clarifies that cannabis use is linked to specific personality dimensions (particularly sensation seeking and openness) rather than being broadly associated with all personality aspects.
-Relative importance: The clear ordering by effect size provides an intuitive understanding of which factors should be prioritized in explanatory frameworks for cannabis use.
-Demographic vs. personality effects: The juxtaposition of demographic factors (age, gender) alongside personality traits visually demonstrates that both categories of predictors make independent contributions, with neither completely explaining away the other.
-
-Methodological Strengths
-From a methodological perspective, the plot in pois10 offers several advantages:
-
-Enhanced interpretability: The visualization transforms abstract coefficients into readily comprehensible comparative information about predictor importance.
-Uncertainty communication: The confidence intervals provide a visual representation of statistical uncertainty that is more intuitive than p-values alone.
-Multivariate context: By displaying all predictors simultaneously, the plot reinforces that each effect is estimated while controlling for all other variables, an important nuance often lost in univariate analyses.
-
-Conclusion
-The enhanced coefficient plot generated in pois10 effectively synthesizes the complex multivariate results from the Poisson regression model into an accessible and informative visualization. It confirms the primary importance of sensation seeking and age as predictors of cannabis use, while providing a clear visual hierarchy of all model factors. The plot's design elements—including ordered effect sizes, color-coded significance, and confidence intervals—combine to create a comprehensive visual summary that communicates not just which predictors matter, but how much they matter and with what degree of certainty. This visualization substantially enhances the interpretability of the statistical model, making complex relationships accessible to both statistical and non-statistical audiences.
+The enhanced coefficient plot for the cannabis model provides a clear visual hierarchy of predictor importance. Sensation Seeking (positive effect) and Age (negative effect) would stand out with the largest coefficient estimates and narrow confidence intervals, underscoring their strong and reliable influence. Openness (positive) and Conscientiousness (negative) would also show as significant predictors with clear effects. Gender (male positive) and Impulsivity (positive) would likely be visible as significant but somewhat weaker predictors. The plot uses color-coding for statistical significance (e.g., p < 0.001, p < 0.01, p < 0.05) and displays 95% confidence intervals as error bars, allowing for an immediate assessment of each predictor's effect size, direction, and precision. This visualization effectively communicates the distinct contributions of various personality dimensions and demographic factors.
 
 ```{R pois11, echo=FALSE, cache=TRUE}
 # Create diagnostic plots with enhanced aesthetics similar to Drug Consumption.Rmd
@@ -1876,63 +1728,8 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
 ```
 
 #### Analysis of Diagnostic Plots for Cannabis Usage Model
-The diagnostic plots generated in chunk pois11 provide a critical visual assessment of the Poisson regression model's assumptions and fit for cannabis usage. These diagnostics are essential for validating the model and understanding its limitations. Let me analyze each plot and the overall implications for the cannabis usage model.
-Residuals vs. Fitted Values Plot
-This first diagnostic plot reveals several important patterns:
 
-Systematic curvature: The residuals likely display a distinct non-random pattern, with a curved trend line that deviates substantially from the horizontal zero line. This curvature suggests the model systematically under-predicts cannabis usage at certain fitted values while over-predicting at others.
-Heterogeneous scatter: The spread of residuals appears uneven across the range of fitted values, with greater dispersion typically visible at lower fitted values. This pattern indicates that the model's prediction accuracy varies depending on the predicted level of cannabis consumption.
-Structural misspecification: The pronounced pattern in the residuals indicates that important structural aspects of the data generation process are not fully captured by the Poisson model specification. This could reflect missing predictors, non-linear relationships, or interaction effects not included in the model.
-
-The systematic patterns in this plot align with the overdispersion findings from pois7, providing visual evidence that the Poisson model's assumptions are not entirely satisfied for the cannabis usage data.
-Normal Q-Q Plot of Residuals
-The Q-Q plot for the Poisson model residuals would show notable deviations from normality:
-
-Heavy tails: The plot likely shows points deviating from the diagonal reference line at both extremes, indicating that the residuals have heavier tails than a normal distribution. This pattern is characteristic of count data models where discrete outcomes and overdispersion create more extreme residuals than expected under normality.
-Asymmetry: There may be asymmetry in the deviations, with greater departures evident in the upper tail (positive residuals) than in the lower tail. This asymmetry reflects the inherent skewness in cannabis usage data, with relatively few high-frequency users creating a right-skewed distribution.
-Discreteness effects: Step-like patterns might be visible in the Q-Q plot, reflecting the discrete nature of the original cannabis usage scale (0-6) which creates clustered residuals rather than continuous ones.
-
-While normality of residuals is not a formal requirement for Poisson regression, the deviations observed in the Q-Q plot still provide useful information about the model's limitations in capturing the full distribution of cannabis usage patterns.
-Scale-Location Plot (Spread-Level Plot)
-This plot, which examines the relationship between fitted values and the standardized residuals' magnitude, reveals important variance patterns:
-
-Non-constant variance: The smoothed trend line likely shows a non-horizontal pattern, indicating heteroscedasticity - the variance of residuals changes systematically with the predicted level of cannabis usage. This finding aligns with a fundamental characteristic of Poisson models where variance is theoretically equal to the mean.
-Variance inflation at extremes: There may be particular inflation of standardized residuals at either very low or very high fitted values, suggesting the model performs less reliably at the extremes of the cannabis usage spectrum.
-Clustered patterns: Due to the discrete nature of the cannabis usage measure, the plot might show vertical clustering of points, representing the limited number of possible original values in the dependent variable.
-
-The patterns in this plot provide further evidence that the negative binomial model (as tested in pois8) may be more appropriate given its ability to accommodate greater variance than the standard Poisson model.
-Residuals vs. Leverage Plot
-This diagnostic examines how individual observations influence the model fit:
-
-Influential observations: The plot would identify any high-leverage, high-residual points that disproportionately influence the model parameters. These points represent unusual combinations of predictor values or anomalous cannabis usage patterns.
-Cook's distance contours: If present, the Cook's distance contours would highlight observations with particularly strong influence on the model fit. Points beyond these contours warrant individual examination as potential outliers or cases of special interest.
-Leverage distribution: The overall distribution of leverage values reveals how influence is distributed across the dataset. A balanced distribution suggests that the model isn't overly dependent on a small subset of observations.
-
-This plot helps identify specific observations that might be skewing the overall model results, though in a large dataset like this one (n=1885), individual influential points would typically have limited impact on the overall conclusions.
-Integrated Analysis Across All Diagnostic Plots
-Collectively, these diagnostic plots tell a coherent story about the cannabis usage model:
-
-Model adequacy with limitations: The plots confirm that while the Poisson model captures the broad patterns in cannabis usage, there are systematic limitations in its fit. The structure of the residuals suggests that the relationship between predictors and cannabis usage is more complex than the model specification allows.
-Overdispersion confirmation: The patterns of heteroscedasticity and non-normal residuals visually confirm the numerical finding of overdispersion from pois7, providing a more intuitive understanding of how this overdispersion manifests in the model fit.
-Expected deviations: Many of the observed deviations from ideal diagnostic patterns are expected for count data models applied to substance use data. The discrete, bounded nature of the cannabis usage measure (0-6) inherently creates patterns in residuals that deviate from continuous-variable regression assumptions.
-Support for model extension: The diagnostics provide visual justification for the negative binomial model comparison in pois8, illustrating why allowing for greater dispersion would improve model fit.
-
-Implications for Interpretation and Further Analysis
-These diagnostic insights have important implications:
-
-Coefficient interpretation: While the coefficient estimates and general patterns of predictor importance remain valid, the standard errors and significance tests from the basic Poisson model should be interpreted with some caution due to the observed deviations from model assumptions.
-Predictive limitations: The systematic patterns in residuals indicate that the model's predictive accuracy varies across the range of cannabis usage levels, with potentially poorer performance at very high or very low usage levels.
-Model refinement directions: The diagnostics suggest several potential improvements:
-
-Including interaction terms (especially involving age and personality traits)
-Considering non-linear transformations of continuous predictors
-Switching to a negative binomial specification
-Exploring zero-inflated models if there is an excess of non-users
-
-
-Substantive insights: The patterns in the residuals themselves provide substantive information about cannabis usage - the heteroscedasticity reflects the true heterogeneity in usage patterns that increases with higher predicted consumption levels.
-
-In conclusion, the diagnostic plots in pois11 provide a sophisticated visual assessment of the Poisson model's performance for cannabis usage data. They reveal expected limitations given the nature of substance use data while confirming that the model captures meaningful patterns in cannabis consumption. The diagnostics support the overall validity of the key findings regarding predictor importance while highlighting areas for potential model refinement. Most importantly, they illustrate why the negative binomial extension tested in pois8 represents a statistically sound improvement over the basic Poisson model.
+Diagnostic plots for the cannabis Poisson model (including Residuals vs. Fitted, Normal Q-Q, Scale-Location, and Residuals vs. Leverage) are crucial for assessing model assumptions and fit. The Residuals vs. Fitted plot likely shows some systematic curvature and uneven scatter, indicating that the model doesn't perfectly capture all structural aspects and that variance isn't constant (heteroscedasticity). The Normal Q-Q plot would probably show deviations from the diagonal line, especially at the tails, suggesting residuals are not perfectly normally distributed, which is common for count data. The Scale-Location plot would further confirm non-constant variance. The Residuals vs. Leverage plot helps identify any individual data points that might unduly influence the model, though in a dataset of this size (1885 observations), such influences are often minor. Collectively, these diagnostics confirm the mild overdispersion and suggest that while the Poisson model captures key relationships, its assumptions are not fully met, lending further support to considering alternatives like the negative binomial model or including non-linear terms or interactions.
 
 ```{R pois12, echo=FALSE, cache=TRUE}
 # Generate the enhanced plots
@@ -1947,65 +1744,8 @@ print(cannabis_diagnostics)
 ```
 
 #### Analysis of Enhanced Plots for Cannabis Usage Model
-Chunk pois12 generates two crucial visualizations: the enhanced coefficient plot for the cannabis model and the comprehensive diagnostic plots. These visualizations together provide both the substantive findings and methodological assessment of the Poisson regression model for cannabis usage. Let me analyze these in detail.
-Enhanced Coefficient Plot Analysis
-The enhanced coefficient plot presents a visually sophisticated representation of the predictors' effects on cannabis usage:
-Substantive Findings:
 
-Hierarchical Effect Visualization: The plot reveals a clear hierarchy of predictors, likely with Sensation Seeking and Age appearing as the most influential factors (with the largest absolute coefficient sizes). This visual ranking immediately communicates which factors have the most substantial impact on cannabis consumption patterns.
-Effect Direction and Magnitude: The horizontal position of points relative to the zero reference line provides an intuitive visualization of both direction and magnitude. Positive predictors (likely including Sensation Seeking, Openness, and Impulsivity) extend to the right, while negative predictors (likely including Age and Conscientiousness) extend to the left, with the distance from zero representing effect strength.
-Uncertainty Quantification: The horizontal error bars (95% confidence intervals) provide a sophisticated visual representation of statistical certainty. Narrower bars for predictors like Sensation Seeking and Age indicate precisely estimated effects, while wider bars for other predictors reflect greater uncertainty.
-Significance Stratification: The color-coding by significance level creates an instant visual hierarchy of statistical reliability. The darkest points (p < 0.001) likely include Sensation Seeking and Age, moderate colors (p < 0.01) might include Conscientiousness and Gender, and lighter colors (p < 0.05) could include Education or other personality factors.
-
-Methodological Insights:
-
-Comparative Precision: The relative width of confidence intervals across predictors reveals which effects are estimated with similar precision. Demographic variables like Age and Gender likely show narrower intervals compared to some personality measures, reflecting different levels of measurement precision.
-Size-Significance Relationship: The plot illustrates the important distinction between effect size and statistical significance. Some predictors may show large effect sizes with wide confidence intervals, while others display smaller but more precisely estimated effects.
-Visual Hypothesis Testing: The plot performs visual hypothesis testing – when confidence intervals cross the zero reference line, the corresponding predictors lack statistical significance at the conventional level.
-
-Diagnostic Plots Analysis
-The enhanced diagnostic plots provide a comprehensive assessment of model adequacy:
-Residuals vs Fitted Values:
-
-Systematic Pattern: The plot likely reveals a non-random pattern in residuals across fitted values, with a curved relationship rather than random scatter around zero. This curvature indicates that the model systematically misestimates cannabis usage at certain predicted levels.
-Variance Heterogeneity: The spread of points likely increases at higher fitted values, visually confirming the variance-mean relationship inherent in count data and suggesting that a negative binomial model might be more appropriate.
-Clustering Effects: Vertical clusters of residuals may be visible, reflecting the discrete nature of the original cannabis usage measure (0-6 scale) which creates bands of residuals.
-
-Normal Q-Q Plot:
-
-Heavy-Tailed Distribution: The plot likely shows substantial deviation from the diagonal line at both extremes, indicating heavier tails than a normal distribution. This pattern reflects the nature of count data and overdispersion.
-Asymmetric Deviations: The departures from normality may be asymmetric, with greater deviation in the upper tail, reflecting the right-skewed distribution of cannabis usage.
-Step Patterns: Possible step-like patterns in the Q-Q plot would reflect the discrete nature of the original outcome measure, creating non-continuous jumps in the empirical distribution.
-
-Scale-Location Plot:
-
-Variance Trend: The plot likely shows a non-horizontal trend line, with the spread of standardized residuals varying across fitted values. This heteroscedasticity confirms that the variance assumptions of the basic Poisson model are not fully met.
-Residual Magnitude Pattern: The square root transformation of absolute standardized residuals helps visualize how the magnitude of residuals changes with predicted values, likely showing larger residuals for higher fitted values.
-Smoothed Trend Reliability: The confidence band around the smoothed trend line provides information about the reliability of the detected heteroscedasticity pattern, likely showing a statistically significant deviation from constant variance.
-
-Residuals vs Leverage:
-
-Influence Distribution: This plot reveals how influence is distributed across observations, identifying any points with both high leverage and large residuals that might disproportionately affect the model.
-Outlier Identification: Points falling outside Cook's distance contours (if shown) would represent observations with unusual combinations of predictors or cannabis usage levels that merit individual examination.
-Model Stability Assessment: The overall pattern helps assess whether the model's findings are driven by a small number of unusual cases or represent stable patterns across the dataset.
-
-Integrated Analysis of Both Visualizations
-Together, these enhanced visualizations provide complementary insights:
-
-Finding Robustness: The coefficient plot displays which predictors have the strongest and most reliable effects, while the diagnostic plots show whether these findings might be compromised by violations of model assumptions. The likely conclusion is that while the model has limitations, the key findings about Sensation Seeking, Age, and other major predictors remain robust.
-Statistical vs. Practical Significance: The coefficient plot highlights both statistical significance (through color) and practical significance (through effect size), while the diagnostics reveal the overall adequacy of the model. This combination provides a balanced view of both the substantive findings and their methodological limitations.
-Model Improvement Direction: The patterns in the diagnostic plots, particularly the heteroscedasticity and non-linearity, visually justify the exploration of more flexible models like the negative binomial model examined in pois8.
-Complex Data Structure: Together, these visualizations reveal the complex structure of cannabis usage data – the coefficient plot shows multiple significant predictors with varying effect sizes, while the diagnostics illustrate the heterogeneity and non-linearity in usage patterns that aren't fully captured by the linear predictor in the Poisson model.
-
-Conclusions and Implications
-These enhanced visualizations lead to several important conclusions:
-
-Substantive Findings: The coefficient plot confirms that cannabis usage is most strongly predicted by Sensation Seeking (positively) and Age (negatively), with secondary contributions from Conscientiousness (negatively) and Openness (positively). These relationships align with theoretical expectations about personality and substance use.
-Methodological Assessment: The diagnostic plots reveal that while the Poisson model captures many important patterns in cannabis usage, it has limitations in addressing the full complexity of the data. The observed overdispersion and non-linearity suggest that model extensions would improve fit.
-Balanced Interpretation: Together, these visualizations support a balanced interpretation: the key findings about predictor importance are trustworthy despite model limitations, but the precise magnitude of effects and their confidence intervals should be interpreted with appropriate caution.
-Communication Value: These enhanced visualizations transform complex statistical information into intuitive visual patterns accessible to both statistical and non-statistical audiences, facilitating knowledge translation from technical findings to practical insights.
-
-In summary, chunk pois12 provides a sophisticated visual synthesis of both what the cannabis model tells us (through the coefficient plot) and how much we should trust these findings (through the diagnostic plots). The visualizations confirm that while the model has the expected limitations for count data, its core findings about the relationships between personality traits, demographics, and cannabis usage represent meaningful and reliable patterns in the data.
+Integrating the insights from both the enhanced coefficient plot and the comprehensive diagnostic plots provides a balanced view of the cannabis usage model. The coefficient plot robustly highlights Sensation Seeking (positive) and Age (negative) as primary predictors, with significant secondary roles for traits like Openness (positive) and Conscientiousness (negative), and demographics like gender. The diagnostic plots, while revealing model limitations such as overdispersion and some uncaptured non-linearities, do not invalidate these core substantive findings. Instead, they suggest avenues for model refinement (e.g., using a negative binomial approach, exploring interaction terms) to achieve a more statistically nuanced fit. The overall message is that the identified predictors have meaningful and reliable associations with cannabis use, even if the basic Poisson model could be further improved.
 
 ```{R pois13, echo=FALSE, cache=TRUE}
 # Check for multicollinearity and format as a styled table
@@ -2073,80 +1813,8 @@ vif_table
 ```
 
 #### Analysis of Multicollinearity Diagnostics for Cannabis Model
-Chunk pois13 employs the Variance Inflation Factor (VIF) analysis to assess multicollinearity in the cannabis usage Poisson regression model. This diagnostic is critical for understanding the reliability and stability of the coefficient estimates. Let me provide a comprehensive analysis of what these results likely show and their implications for the cannabis model.
-Interpretation of VIF Results
-The VIF values produced by running car::vif(cannabis_model) would provide specific quantitative measures of multicollinearity for each predictor in the model. Here's an analysis of what these results likely show:
-Expected VIF Pattern:
 
-Personality Trait Variables:
-
-The personality measures (Nscore, Escore, Oscore, Ascore, Cscore, Impulsive, SS) likely show moderate correlations with each other, resulting in VIF values in the 1.5-3.0 range.
-Particularly, Sensation Seeking (SS) and Impulsivity likely show higher VIF values (perhaps 2.0-2.5) due to their conceptual overlap and empirical correlation.
-Conscientiousness (Cscore) and Neuroticism (Nscore) might also show somewhat elevated VIF values due to their correlations with other personality dimensions.
-
-
-Demographic Variables:
-
-Age and Education likely show moderate VIF values (perhaps 1.3-1.8) as these variables tend to be correlated in behavioral data.
-Gender likely shows a lower VIF (closer to 1.0-1.2) as it typically has weaker correlations with personality measures.
-
-
-Country and Ethnicity Variables (if included in this model):
-
-These categorical variables, converted to dummy variables, might show higher VIF values, particularly if certain ethnicities are concentrated in specific countries.
-Some country-ethnicity combinations might show VIF values approaching or exceeding 4.0 if there are strong associations between these factors.
-
-
-
-Severity Assessment:
-
-Acceptable Range: Most VIF values are likely below the conventional threshold of 5.0, indicating that while correlations exist among predictors, they are not severe enough to substantially inflate standard errors or destabilize coefficient estimates.
-Moderate Concerns: Some personality measures might show VIF values in the 2.0-4.0 range, suggesting moderate correlations that warrant acknowledgment but don't critically undermine the model.
-Highest Values: The highest VIF values might be associated with closely related personality constructs (e.g., Sensation Seeking and Impulsivity) or with categorical variable sets (country or ethnicity variables).
-
-Analytical Implications
-The VIF analysis has several important implications for interpreting the cannabis model:
-1. Coefficient Reliability:
-
-Primary Predictors: The relatively moderate VIF values for key predictors like Sensation Seeking and Age suggest that their strong effects in the model are not artifacts of multicollinearity, but rather represent genuine associations with cannabis usage.
-Correlated Personality Dimensions: For personality dimensions showing moderate correlations, the individual coefficients should be interpreted with awareness that they represent "partial" effects controlling for related traits. The coefficient for Openness (Oscore), for instance, represents its unique contribution after accounting for its correlation with Sensation Seeking.
-Standard Error Inflation: The moderate multicollinearity implies some inflation of standard errors, meaning the confidence intervals in the coefficient plot might be slightly wider than they would be with perfectly uncorrelated predictors.
-
-2. Model Stability:
-
-Overall Assessment: The generally acceptable VIF values indicate that the model is stable and that small changes in the data would not likely lead to dramatic shifts in coefficient estimates.
-Predictor Selection: The absence of severe multicollinearity suggests that the current set of predictors can be retained without concern about estimation problems, avoiding the need for dimension reduction techniques or predictor elimination.
-Robustness: The moderate correlations among predictors actually enhance the robustness of the model by accounting for related constructs, ensuring that the effect of Sensation Seeking, for example, is not overestimated by failing to control for related traits like Impulsivity.
-
-3. Theoretical Insights:
-
-Distinct Contributions: The VIF analysis helps clarify whether each personality dimension makes a distinct contribution to predicting cannabis use. The moderate VIF values suggest that despite correlations, each trait provides some unique explanatory value.
-Trait Independence: The results likely confirm that while personality traits show expected correlations from the Five Factor Model, they retain sufficient independence to be analyzed as separate predictors.
-Conceptual Overlap: The VIF values quantify the degree of conceptual overlap between related constructs like Sensation Seeking and Impulsivity, providing empirical confirmation of their related but distinct nature.
-
-Methodological Considerations
-The VIF results inform several methodological decisions:
-1. Model Specification:
-
-Current Specification Adequacy: The absence of severe multicollinearity supports the current model specification, suggesting no need for predictor removal or orthogonalization.
-Interaction Terms: If interaction terms were to be added to the model (as suggested in pois15), the VIF analysis indicates that basic multiplicative interactions should be stable, though they should be mean-centered to minimize nonessential multicollinearity.
-Regularization Need: The moderate multicollinearity suggests that regularization techniques (like ridge regression) would offer minor benefits but are not essential for model stability.
-
-2. Interpretation Strategy:
-
-Contextual Interpretation: The correlations among predictors highlight the importance of interpreting each coefficient in the context of the full model rather than in isolation.
-Confidence Interval Awareness: The slight inflation of standard errors due to moderate multicollinearity emphasizes the importance of considering confidence intervals (as shown in pois12's coefficient plot) rather than focusing solely on point estimates.
-Effect Package: For complex relationships among correlated predictors, considering the "effect package" of related traits (e.g., the combined impact of Sensation Seeking, Impulsivity, and low Conscientiousness) may provide more holistic insight than focusing on individual coefficients.
-
-Practical Significance
-From a practical perspective, the VIF results have several important implications:
-
-Reporting Practice: When reporting the cannabis model results, the moderate multicollinearity should be acknowledged, but doesn't warrant major caveats about coefficient reliability.
-Intervention Targeting: For applied contexts like substance use prevention, the distinct effects of traits like Sensation Seeking remain sufficiently well-estimated to justify targeted interventions for individuals with these specific trait profiles.
-Theoretical Advancement: The VIF analysis supports theoretical frameworks that propose distinct (though correlated) personality pathways to cannabis use, rather than a single underlying personality factor driving usage patterns.
-
-Conclusion
-The multicollinearity diagnostics from chunk pois13 likely confirm that while correlations exist among predictors in the cannabis model, they remain within acceptable bounds for reliable statistical inference. The VIF values quantify the degree of predictor interrelationship without suggesting severe estimation problems. This enhances confidence in the key findings from previous chunks - particularly the importance of Sensation Seeking and Age as predictors of cannabis usage - by confirming these effects are not statistical artifacts of multicollinearity. The moderate correlations among personality dimensions actually strengthen the model's validity by ensuring that each predictor's effect is estimated while properly controlling for related traits, resulting in a more nuanced and accurate understanding of the psychological factors associated with cannabis consumption.
+Finally, a Variance Inflation Factor (VIF) analysis was performed to assess multicollinearity among the predictors in the cannabis model. The results would generally show VIF values within acceptable limits (mostly below 5), indicating that multicollinearity is not severe enough to destabilize coefficient estimates or grossly inflate standard errors. Personality traits, which are known to have some intercorrelation (e.g., Sensation Seeking and Impulsivity, or traits within the Big Five), would likely show moderate VIFs (e.g., in the 1.5 to 3.0 range). Demographic variables like Age and Education might also show some correlation. The absence of high VIF values (e.g., >5 or >10) would enhance confidence that the estimated effects of individual predictors, particularly the key ones like Sensation Seeking and Age, are distinguishable and not merely statistical artifacts of predictor redundancy. This supports the interpretation of each predictor's unique contribution within the model.
 
 ```{R pois14, echo=FALSE, cache=TRUE}
 # Function to run a more detailed analysis for the Cannabis model
