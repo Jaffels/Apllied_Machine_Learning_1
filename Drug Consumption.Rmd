@@ -1009,7 +1009,6 @@ if (length(drug_names_for_table) > 0) {
 Statistical analysis of the drug consumption dataset revealed significant patterns between personality traits and substance use. Linear regression models for substances like Cannabis, Alcohol, and Nicotine showed that Cannabis had the most robust predictive model (highest adjusted R²). Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with multi-drug use, while Conscientiousness and Agreeableness had significant negative relationships. Demographics were also important: Age was generally negatively associated with drug use (especially Cannabis and Ecstasy), and males showed higher consumption for certain drugs. Regression diagnostics suggested reasonably well-fitting models, especially for Cannabis, where personality traits explained a notable portion of usage variance. These results align with literature suggesting certain personality profiles, particularly high Sensation Seeking, predispose individuals to substance use.
 
 ### Analysis of Personality Traits as Predictors of Substance Use
-#### Cannabis Usage Predictors
 
 ```{r lr6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 
@@ -1021,11 +1020,12 @@ if ("Cannabis" %in% names(results_list)) {
 }
 ```
 
+**Cannabis Usage Predictors**
+
 The first plot presents the predictors of cannabis usage, showing estimated coefficients with 95% confidence intervals. Several key observations emerge:
 
 The coefficient plot for cannabis usage shows Sensation Seeking (SS) as the strongest positive predictor (p < 0.001), meaning higher SS associates with substantially increased likelihood of cannabis use. Age has a strong negative association (p < 0.001), with use decreasing significantly as age increases. Openness (Oscore) is another significant positive predictor (p < 0.001), linking intellectual curiosity to higher cannabis use. Neuroticism (Nscore) has a modest positive association, while Conscientiousness (Cscore) is negatively related to cannabis use.
 
-#### Alcohol Usage Predictors
 
 ```{r lr7, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 if ("Alcohol" %in% names(results_list)) {
@@ -1035,9 +1035,9 @@ if ("Alcohol" %in% names(results_list)) {
 }
 ```
 
-For alcohol, Sensation Seeking remains a significant positive predictor, though its effect is smaller than for cannabis. Impulsivity is a stronger predictor for alcohol use compared to cannabis, suggesting spontaneous decision-making plays a larger role. Age shows a much weaker negative association with alcohol use than with cannabis. Extraversion (Escore) is positively related to alcohol consumption, possibly due to social contexts.
+**Alcohol Usage Predictors**
 
-#### Nicotine Usage Predictors
+For alcohol, Sensation Seeking remains a significant positive predictor, though its effect is smaller than for cannabis. Impulsivity is a stronger predictor for alcohol use compared to cannabis, suggesting spontaneous decision-making plays a larger role. Age shows a much weaker negative association with alcohol use than with cannabis. Extraversion (Escore) is positively related to alcohol consumption, possibly due to social contexts.
 
 ```{r lr8, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 if ("Nicotine" %in% names(results_list)) {
@@ -1047,9 +1047,11 @@ if ("Nicotine" %in% names(results_list)) {
 }
 ```
 
+**Nicotine Usage Predictors**
+
 Nicotine usage patterns show Conscientiousness (Cscore) as a strong negative predictor, meaning more disciplined individuals are less likely to use nicotine. Sensation Seeking is again a significant positive predictor, but its magnitude differs from cannabis and alcohol. Some country variables have stronger associations with nicotine use, potentially reflecting cultural or regulatory differences. Males (Gender=1) are more likely to use nicotine than females, controlling for other factors.
 
-#### Cross-Substance Comparison
+**Cross-Substance Comparison**
 
 Across these substances, Sensation Seeking consistently emerges as a key positive predictor of use, while Conscientiousness is consistently a negative predictor, acting as a protective factor. Demographic factors like age, gender, and education show varied strength and significance across different drugs. Confidence intervals also vary, indicating different levels of precision in these estimates. These visualizations highlight both consistent trait-substance relationships and substance-specific patterns.
 
