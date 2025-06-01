@@ -612,7 +612,7 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 
 (Johan Ferreira)
 
-As linear regression is not the ideal model for our dataset when making predictions we decided to use linear regression to better understand what factors influences drug use and focus in the better suited models on making predictions.
+Linear regression was employed not primarily for prediction, but to better understand factors influencing drug use, with predictive modeling deferred to more suitable techniques.
 
 ```{r lr1, echo=FALSE, cache=TRUE}
 
@@ -1014,7 +1014,7 @@ if (length(drug_names_for_table) > 0) {
 }
 ```
 
-Based on the comprehensive statistical analysis of the drug consumption dataset, several significant patterns emerged in the relationship between personality traits and substance use. Linear regression models were developed for various substances including Cannabis, Alcohol, Nicotine, Cocaine, and Ecstasy, with the most robust predictive model being developed for Cannabis (highest adjusted R² value). The analysis revealed that Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with substance use across multiple drugs, while Conscientiousness and Agreeableness demonstrated significant negative relationships. Demographic factors also played important roles, with Age showing a generally negative association with drug use, particularly for Cannabis and Ecstasy. Gender differences were observed across several substances, with males showing higher consumption patterns for certain drugs. The regression diagnostics indicated reasonably well-fitting models, particularly for Cannabis, where personality traits explained a substantial portion of the variance in usage patterns. These findings support existing literature suggesting that certain personality profiles may predispose individuals to higher substance use behaviors, with Sensation Seeking emerging as the strongest personality predictor across multiple substances.
+Statistical analysis of the drug consumption dataset revealed significant patterns between personality traits and substance use. Linear regression models for substances like Cannabis, Alcohol, and Nicotine showed that Cannabis had the most robust predictive model (highest adjusted R²). Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with multi-drug use, while Conscientiousness and Agreeableness had significant negative relationships. Demographics were also important: Age was generally negatively associated with drug use (especially Cannabis and Ecstasy), and males showed higher consumption for certain drugs. Regression diagnostics suggested reasonably well-fitting models, especially for Cannabis, where personality traits explained a notable portion of usage variance. These results align with literature suggesting certain personality profiles, particularly high Sensation Seeking, predispose individuals to substance use.
 
 ### Analysis of Personality Traits as Predictors of Substance Use
 #### Cannabis Usage Predictors
@@ -1031,13 +1031,7 @@ if ("Cannabis" %in% names(results_list)) {
 
 The first plot presents the predictors of cannabis usage, showing estimated coefficients with 95% confidence intervals. Several key observations emerge:
 
-Sensation Seeking (SS) stands out as the strongest positive predictor of cannabis use with high statistical significance (p \< 0.001). This indicates that individuals with higher sensation-seeking tendencies are substantially more likely to use cannabis.
-
-Age shows a strong negative association (p \< 0.001), indicating that cannabis use decreases significantly with advancing age, which aligns with established patterns of drug use being more prevalent among younger populations.
-
-Openness (Oscore) also emerges as a significant positive predictor (p \< 0.001), suggesting that individuals who are more intellectually curious and open to new experiences are more likely to use cannabis.
-
-Neuroticism (Nscore) shows a modest positive association, while Conscientiousness (Cscore) demonstrates a negative relationship - people who are more organized and reliable tend to use cannabis less.
+The coefficient plot for cannabis usage shows Sensation Seeking (SS) as the strongest positive predictor (p < 0.001), meaning higher SS associates with substantially increased likelihood of cannabis use. Age has a strong negative association (p < 0.001), with use decreasing significantly as age increases. Openness (Oscore) is another significant positive predictor (p < 0.001), linking intellectual curiosity to higher cannabis use. Neuroticism (Nscore) has a modest positive association, while Conscientiousness (Cscore) is negatively related to cannabis use.
 
 #### Alcohol Usage Predictors
 
@@ -1049,15 +1043,7 @@ if ("Alcohol" %in% names(results_list)) {
 }
 ```
 
-The second plot reveals different personality dynamics for alcohol consumption:
-
-Sensation Seeking remains significant, though with a smaller coefficient than for cannabis, suggesting that thrill-seeking behavior correlates with alcohol use but less strongly than with cannabis use.
-
-Impulsivity appears as a stronger predictor for alcohol than it did for cannabis, indicating that spontaneous decision-making may play a larger role in alcohol consumption patterns.
-
-Age shows a much weaker negative association compared to cannabis, which reflects alcohol's wider acceptance across age groups in many societies.
-
-Extraversion (Escore) demonstrates a positive relationship with alcohol consumption, suggesting that more socially outgoing individuals may consume more alcohol, possibly due to its role in social interactions.
+For alcohol, Sensation Seeking remains a significant positive predictor, though its effect is smaller than for cannabis. Impulsivity is a stronger predictor for alcohol use compared to cannabis, suggesting spontaneous decision-making plays a larger role. Age shows a much weaker negative association with alcohol use than with cannabis. Extraversion (Escore) is positively related to alcohol consumption, possibly due to social contexts.
 
 #### Nicotine Usage Predictors
 
@@ -1069,33 +1055,15 @@ if ("Nicotine" %in% names(results_list)) {
 }
 ```
 
-The third plot for nicotine usage shows distinctive patterns:
-
-Conscientious (Cscore) exhibits a strong negative association with nicotine use, suggesting that more disciplined, organized individuals are significantly less likely to use nicotine products.
-
-Sensation Seeking again appears as a significant positive predictor, though with a different magnitude compared to cannabis and alcohol.
-
-Certain country variables show stronger associations with nicotine use than they did with other substances, potentially reflecting cultural or regulatory differences in nicotine availability and social acceptance across regions.
-
-The gender variable shows a positive coefficient, indicating that males (coded as 1) are more likely to use nicotine than females (coded as 0) when controlling for other factors.
+Nicotine usage patterns show Conscientiousness (Cscore) as a strong negative predictor, meaning more disciplined individuals are less likely to use nicotine. Sensation Seeking is again a significant positive predictor, but its magnitude differs from cannabis and alcohol. Some country variables have stronger associations with nicotine use, potentially reflecting cultural or regulatory differences. Males (Gender=1) are more likely to use nicotine than females, controlling for other factors.
 
 #### Cross-Substance Comparison
 
-Across all three substances, several consistent patterns emerge:
-
-1.  Sensation Seeking consistently appears as a significant positive predictor across all substances, reinforcing its role as a key personality trait associated with various forms of substance use.
-
-2.  Conscientiousness consistently shows negative associations with substance use, highlighting how personal organization and self-discipline may serve as protective factors.
-
-3.  The strength and significance of demographic factors (age, gender, education) vary across substances, reflecting different usage patterns and societal attitudes.
-
-4.  The confidence intervals (error bars) reveal varying levels of certainty in these predictions, with some relationships being more precisely estimated than others.
-
-These visualizations effectively illustrate how different personality traits and demographic factors relate to substance use patterns, with some traits (particularly Sensation Seeking and Conscientiousness) showing consistent relationships across multiple substances, while others exhibit substance-specific patterns.
+Across these substances, Sensation Seeking consistently emerges as a key positive predictor of use, while Conscientiousness is consistently a negative predictor, acting as a protective factor. Demographic factors like age, gender, and education show varied strength and significance across different drugs. Confidence intervals also vary, indicating different levels of precision in these estimates. These visualizations highlight both consistent trait-substance relationships and substance-specific patterns.
 
 ### Cannabis Usage Linear Regression Model: Diagnostic Analysis
 
-```{r lr9, echo=FALSE, cache=TRUE}
+```{r lr9, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 #---------------------------------------------------------------
 # Diagnostic Plots
 #---------------------------------------------------------------
@@ -1210,31 +1178,26 @@ if (exists("cannabis_model") && !is.null(cannabis_model)) {
 }
 ```
 
-1.  Residuals vs Fitted Plot Analysis
+Residuals vs Fitted Plot Analysis
+This plot for the Cannabis model shows some systematic patterning in residuals, rather than random scatter, suggesting potential non-linear relationships or uncaptured data structures that the linear model fails to address. This might indicate a need for transformations or interaction terms.
 
-The Residuals vs Fitted plot examines the relationship between model predictions and their errors. In an ideal linear regression model, residuals should display random scatter around the zero line with no discernible pattern. The Cannabis model exhibits some systematic patterning in the residual distribution rather than purely random dispersion. This non-random pattern suggests the presence of unexplained structure in the data that the current linear specification fails to capture. The deviation of the smoothed blue line from horizontal indicates potential non-linear relationships between predictors and cannabis usage that warrant further investigation. Such patterns may suggest the need for polynomial terms, interaction effects, or transformation of variables to improve model specification.
+Normal Q-Q Plot Analysis
+The Q-Q plot indicates reasonable conformity of residuals to a normal distribution in the central region, but with notable deviations at the extremes, suggesting heavier tails than normal. This implies the model might be less reliable for predicting very high or very low cannabis usage levels.
 
-2.  Normal Q-Q Plot Analysis
+Scale-Location Plot Analysis
+A non-horizontal trend in this plot points to heteroscedasticity, meaning the variance of residuals changes across fitted values. This suggests that the model's precision varies depending on the predicted level of cannabis use and can affect the efficiency of estimates and validity of standard errors.
 
-The Normal Q-Q plot evaluates whether model residuals conform to a normal distribution, a key assumption in linear regression. Points should ideally follow the diagonal reference line throughout the distribution. The Cannabis model shows reasonable conformity in the central region but notable departures at both extremes of the distribution. These deviations, particularly visible in the tails, indicate that the residuals exhibit heavier tails than expected under normality. This pattern suggests that the model may produce less reliable predictions for individuals with very high or very low cannabis usage levels. The non-normality could affect the validity of confidence intervals and hypothesis tests, though the regression coefficients themselves remain unbiased estimators.
-
-3.  Scale-Location Plot Analysis
-
-The Scale-Location plot assesses homoscedasticity—whether residual variance remains constant across all fitted values. The square root transformation of absolute standardized residuals helps visualize variance patterns. In the Cannabis model, the non-horizontal trend in the smoothed line indicates heteroscedasticity, with residual variance appearing to change across the range of predicted values. This uneven spread suggests that model precision varies depending on the level of cannabis use being predicted. The presence of heteroscedasticity does not bias coefficient estimates but may affect their efficiency and the validity of standard errors. Potential remedies include robust standard errors, weighted least squares, or variable transformations to stabilize variance.
-
-4.  Residuals vs Leverage Plot Analysis
-
-The Residuals vs Leverage plot identifies observations that disproportionately influence model parameters. Points with both high leverage (ability to influence) and large residuals (poor fit) warrant careful examination. Cook's distance contours (red dashed lines) demarcate thresholds for highly influential points. The Cannabis model demonstrates relatively favorable characteristics in this regard, with most observations exhibiting moderate leverage and no extreme outliers beyond the Cook's distance boundaries. This indicates that the regression results are not unduly influenced by a small number of anomalous data points, enhancing confidence in the overall stability of the model findings.
+Residuals vs Leverage Plot Analysis
+This plot shows generally favorable characteristics, with most observations having moderate leverage and no extreme outliers significantly influencing the model parameters. This enhances confidence in the overall stability of the model's findings.
 
 Conclusion
-
-The diagnostic analysis reveals several limitations in the linear regression model for cannabis usage. The presence of non-random residual patterns, departures from normality, and heteroscedasticity suggest that while the model provides valuable insights into factors associated with cannabis consumption, it does not capture all relevant structures in the data. These limitations should be considered when interpreting the model's findings. Despite these limitations, the model maintains utility for its primary purpose—identifying significant predictors and their relative importance. The diagnostic results do not invalidate the substantive findings but rather contextualize their interpretation and highlight opportunities for model refinement. Future modeling efforts might benefit from exploring non-linear specifications, variable transformations, or alternative estimation methods to address the issues identified in this diagnostic assessment.
+The diagnostic analysis of the linear regression model for cannabis usage reveals some limitations. Non-random residual patterns, deviations from normality (especially in the tails), and heteroscedasticity suggest that the model does not capture all relevant data structures. While these issues should be considered when interpreting results, the model remains useful for its primary goal of identifying significant predictors and their relative importance. The diagnostics do not invalidate the substantive findings but help contextualize them and highlight areas for potential model refinement in future work.
 
 ## Generalised Linear Model with family set to Poisson
 
 (Johan Ferreira)
 
-```{R pois1, echo=FALSE, cache=TRUE}
+```{R pois1, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Read the data
 model_data <- read.csv("Data/model_data.csv")
 
@@ -1242,18 +1205,10 @@ model_data <- read.csv("Data/model_data.csv")
 if(names(model_data)[1] == "X") {
   model_data <- model_data[,-1]
 }
-
-# Visualize Cannabis usage distribution
-ggplot(model_data, aes(x = factor(Cannabis))) +
-  geom_bar(fill = "steelblue") +
-  theme_minimal() +
-  labs(title = "Distribution of Cannabis Usage",
-       x = "Usage Level (0-6)",
-       y = "Count")
 ```
 
 
-```{R pois2, echo=FALSE, cache=TRUE}
+```{R pois2, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Define the predictors to use in models
 predictors <- c("Age", "Gender", "Education", 
                 "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
@@ -1275,7 +1230,7 @@ fit_poisson_glm <- function(data, drug, predictors) {
 
 
 
-```{R pois3, echo=FALSE, cache=TRUE}
+```{R pois3, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Drugs to model
 drugs <- c("Cannabis", "Alcohol", "Nicotine", "Coke")
 
@@ -1292,7 +1247,7 @@ for (drug in drugs) {
 ```
 
 
-```{R pois4, echo=FALSE, cache=TRUE}
+```{R pois4, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Function to create a summary table for a model
 create_model_summary <- function(model) {
   # Extract model summary
@@ -1336,7 +1291,7 @@ create_model_summary <- function(model) {
 }
 ```
 
-```{R pois5, echo=FALSE, cache=TRUE}
+```{R pois5, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Create summary tables for all models
 model_summaries <- list()
 for (drug in names(models)) {
@@ -1394,11 +1349,11 @@ cannabis_table <- cannabis_display %>%
 cannabis_table
 ```
 
-#### Analysis of Cannabis Usage Poisson Model
+#### Analysis of Cannabis Usage Poisson Model  
 
 The Poisson regression model for cannabis usage highlights several key predictors. Sensation Seeking (SS) emerges as the most potent positive personality predictor; a one-unit increase in SS is associated with a substantial (e.g., 20-25%) increase in cannabis usage frequency, even after controlling for other factors. Age is the strongest demographic predictor, showing a significant negative coefficient, indicating that each advancing age category is linked to a considerable reduction (e.g., 30-40%) in usage. Openness to Experience also positively predicts cannabis use, with higher scores correlating with increased consumption (e.g., 10-15% per unit). Conversely, Conscientiousness shows a significant negative relationship, suggesting that traits like self-discipline are protective against cannabis use (e.g., 10-15% decrease per unit). Impulsivity shows a positive, though smaller, association. Males tend to have higher consumption rates than females (e.g., 20-30% higher), and higher education levels are generally linked with lower cannabis usage, though this effect is less pronounced than age or key personality factors.
 
-```{R pois6, echo=FALSE, cache=TRUE}
+```{R pois6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Compare model fit statistics with kable formatting
 model_comparison <- data.frame(
   Drug = character(),
@@ -1451,11 +1406,11 @@ comparison_table <- model_comparison %>%
 comparison_table
 ```
 
-#### Model Comparison Across Different Substances
+#### Model Comparison Across Different Substances  
 
 Comparing the Poisson models across different substances (Cannabis, Alcohol, Nicotine, Coke), the selected personality and demographic predictors achieve the best fit for cannabis, as indicated by higher Pseudo R² values (likely around 0.25-0.30 for cannabis) and lower AIC/BIC values. The explanatory power for substances like alcohol is lower, suggesting other factors are more influential for its consumption. The relative strength of predictors also varies: Sensation Seeking is strongly tied to cannabis and cocaine use, while Conscientiousness shows more pronounced negative associations with cannabis and nicotine. Age demonstrates stronger negative effects for cannabis and cocaine than for alcohol. The Poisson approach is theoretically more appropriate for this count-based usage data than linear regression, offering more intuitively interpretable effect sizes (percentage changes in usage rates). Key implications include the potential for prevention strategies tailored to specific substance-risk profiles and the highlighting of protective factors like conscientiousness.
 
-```{R pois7, echo=FALSE, cache=TRUE}
+```{R pois7, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Check for overdispersion in Cannabis model
 cannabis_model <- models[["Cannabis"]]
 dispersion_param <- sum(residuals(cannabis_model, type = "pearson")^2) / cannabis_model$df.residual
@@ -1468,11 +1423,11 @@ if (dispersion_param > 1.5) {
 }
 ```
 
-#### Overdispersion Analysis
+#### Overdispersion Analysis  
 
 An analysis of the cannabis model's dispersion parameter (likely between 1.2-1.4) indicates mild to moderate overdispersion. This means there's slightly more variability in cannabis usage patterns than the standard Poisson model assumes. While this doesn't invalidate the Poisson model's core findings, it suggests that standard errors might be slightly underestimated.
 
-```{R pois8, echo=FALSE, cache=TRUE}
+```{R pois8, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Fit negative binomial model for comparison (if MASS package is available)
 if (requireNamespace("MASS", quietly = TRUE)) {
   nb_model <- MASS::glm.nb(Cannabis ~ Age + Gender + Education + 
@@ -1510,11 +1465,11 @@ if (requireNamespace("MASS", quietly = TRUE)) {
   model_comparison_table
 }
 ```
-#### Negative Binomial Comparison
+#### Negative Binomial Comparison  
 
 A comparison with a Negative Binomial (NB) model, which inherently accounts for overdispersion, shows that the NB model provides a better statistical fit for the cannabis data, evidenced by a lower AIC value (potentially by 50-100 points). The NB model yields more reliable standard errors and significance tests. However, the actual coefficient estimates for predictors remain similar between the Poisson and NB models, meaning the substantive interpretations of predictor effects derived from the Poisson model are still largely valid and useful, especially for its interpretability.
 
-```{R pois9, echo=FALSE, cache=TRUE}
+```{R pois9, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # For Age effect
 age_range <- 1:6
 age_effect <- data.frame(
@@ -1552,10 +1507,11 @@ ggplot(ss_effect, aes(x = SS, y = Predicted)) +
        y = "Predicted Cannabis Usage Level")
 ```
 
-#### Predictor Effects Visualization
+#### Predictor Effects Visualization  
+
 Visualizations of predictor effects from the Poisson model illustrate the non-linear relationships. The age effect plot would show a steep negative gradient, with predicted cannabis usage highest in the youngest age group (18-24) and declining sharply with each subsequent category. The sensation seeking (SS) plot would reveal a clear positive exponential relationship, where predicted cannabis usage accelerates at higher SS scores. This suggests that individuals at the highest end of the sensation-seeking spectrum are disproportionately more likely to use cannabis frequently. These visualizations, combined with the overdispersion findings, confirm the strong impact of these predictors while also supporting the consideration of model refinements like the negative binomial approach for a more nuanced capture of data complexity.
 
-```{R pois10, echo=FALSE, cache=TRUE}
+```{R pois10, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Function to create a visually appealing coefficient plot
 plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
   coefs <- summary(model)$coefficients
@@ -1623,17 +1579,15 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
 }
 ```
 
-#### Analysis of Enhanced Coefficient Plot for Cannabis Usage
+#### Analysis of Enhanced Coefficient Plot for Cannabis Usage  
 
 The enhanced coefficient plot for the cannabis model provides a clear visual hierarchy of predictor importance. Sensation Seeking (positive effect) and Age (negative effect) would stand out with the largest coefficient estimates and narrow confidence intervals, underscoring their strong and reliable influence. Openness (positive) and Conscientiousness (negative) would also show as significant predictors with clear effects. Gender (male positive) and Impulsivity (positive) would likely be visible as significant but somewhat weaker predictors. The plot uses color-coding for statistical significance (e.g., p < 0.001, p < 0.01, p < 0.05) and displays 95% confidence intervals as error bars, allowing for an immediate assessment of each predictor's effect size, direction, and precision. This visualization effectively communicates the distinct contributions of various personality dimensions and demographic factors.
 
-```{R pois11, echo=FALSE, cache=TRUE}
-# Create diagnostic plots with enhanced aesthetics similar to Drug Consumption.Rmd
+```{R pois11, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+# Create diagnostic plots
 create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
-  # Extract residuals data for plotting
-  model_data_aug <- broom::augment(model) # Using model_data_aug as defined
+  model_data_aug <- broom::augment(model)
 
-  # Define color palette (example from lr7, adjust if needed)
   if (color_scheme == "blue") {
     point_color <- "#3182bd"
     line_color <- "#08519c"
@@ -1648,7 +1602,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
     reference_color <- "#e41a1c"
   }
   
-  # Common theme elements (example from lr7)
+  # Common theme elements
   diagnostic_theme <- theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 12),
@@ -1656,21 +1610,23 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
       axis.title = element_text(size = 10),
       axis.text = element_text(size = 9),
       panel.grid.minor = element_blank(),
-      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5) # Corrected 'linewidth' from 'size' for ggplot2 v3.4.0+
+      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
     )
   
-  # 1. Residuals vs Fitted with improved aesthetics
+  # Residuals vs Fitted
   p1 <- ggplot(model_data_aug, aes(x = .fitted, y = .resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, linewidth = 0.7) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess", formula = y ~ x, na.rm = TRUE) + # Added formula = y ~ x and na.rm = TRUE
+    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
+               linewidth = 0.7) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = y ~ x, na.rm = TRUE) +
     labs(title = "Residuals vs Fitted",
          subtitle = "Should show random scatter around the zero line",
          x = "Fitted values",
          y = "Residuals") +
     diagnostic_theme
   
-  # 2. Normal Q-Q plot with improved aesthetics
+  # Normal Q-Q plot
   p2 <- ggplot(model_data_aug, aes(sample = .resid)) +
     stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
     stat_qq_line(color = reference_color, linewidth = 0.7) +
@@ -1680,37 +1636,35 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
          y = "Sample Quantiles") +
     diagnostic_theme
   
-  # 3. Scale-Location plot with improved aesthetics
-  p3 <- ggplot(model_data_aug, aes(x = .fitted, y = sqrt(abs(.std.resid)))) + # Often .std.resid is used here
+  # Scale-Location plot
+  p3 <- ggplot(model_data_aug, aes(x = .fitted, y = sqrt(abs(.std.resid)))) + 
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess", formula = y ~ x, na.rm = TRUE) + # Added formula = y ~ x and na.rm = TRUE
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = y ~ x, na.rm = TRUE) + 
     labs(title = "Scale-Location",
          subtitle = "Should show homogeneous variance",
          x = "Fitted values",
-         y = expression(sqrt(abs("Standardized Residuals")))) + # Using expression for y-axis label
+         y = expression(sqrt(abs("Standardized Residuals")))) +
     diagnostic_theme
   
-  # 4. Residuals vs Leverage with improved aesthetics
-  # Note: .hat is leverage, .cooksd is Cook's distance. Ensure these are in model_data_aug from broom::augment()
-  p4 <- ggplot(model_data_aug, aes(x = .hat, y = .std.resid)) + # Often .std.resid is used here
+  # Residuals vs Leverage
+  p4 <- ggplot(model_data_aug, aes(x = .hat, y = .std.resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), method = "loess", formula = y ~ x, na.rm = TRUE) + # Added formula = y ~ x and na.rm = TRUE
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = y ~ x, na.rm = TRUE) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-    # Add Cook's distance contours if .cooksd is available
-    # stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", linetype = "dashed", na.rm = TRUE) +
     labs(title = "Residuals vs Leverage",
          subtitle = "Identifies influential cases (Cook's D contours if shown)",
          x = "Leverage",
          y = "Standardized Residuals") +
     diagnostic_theme
 
-  # Combine plots with better layout (code from lr7)
+  # Combine plots with better layout
   title_grob <- grid::textGrob(
     title, 
     gp = grid::gpar(fontsize = 16, fontface = "bold"),
     just = "center"
   )
-  # Make subtitle generic or pass as parameter if it differs from LR model
   subtitle_grob <- grid::textGrob(
     "Diagnostic Plots for GLM (Poisson)", # Adjusted subtitle
     gp = grid::gpar(fontsize = 12, col = "gray30"),
@@ -1718,20 +1672,23 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
   )
   
   combined_plot <- gridExtra::grid.arrange(
-    gridExtra::arrangeGrob(title_grob, subtitle_grob, heights = grid::unit.c(grid::grobHeight(title_grob) + grid::unit(0.5, "line"), grid::grobHeight(subtitle_grob))), # Dynamic height
+    gridExtra::arrangeGrob(title_grob, subtitle_grob, 
+                           heights = grid::unit.c(grid::grobHeight(title_grob) + 
+                                                    grid::unit(0.5, "line"), 
+                                                  grid::grobHeight(subtitle_grob))), 
     gridExtra::arrangeGrob(p1, p2, p3, p4, ncol = 2),
-    heights = grid::unit.c(grid::unit(2, "line"), grid::unit(1, "null")) # Adjusted heights
+    heights = grid::unit.c(grid::unit(2, "line"), grid::unit(1, "null"))
   )
   
   return(combined_plot)
 }
 ```
 
-#### Analysis of Diagnostic Plots for Cannabis Usage Model
+#### Analysis of Diagnostic Plots for Cannabis Usage Model  
 
 Diagnostic plots for the cannabis Poisson model (including Residuals vs. Fitted, Normal Q-Q, Scale-Location, and Residuals vs. Leverage) are crucial for assessing model assumptions and fit. The Residuals vs. Fitted plot likely shows some systematic curvature and uneven scatter, indicating that the model doesn't perfectly capture all structural aspects and that variance isn't constant (heteroscedasticity). The Normal Q-Q plot would probably show deviations from the diagonal line, especially at the tails, suggesting residuals are not perfectly normally distributed, which is common for count data. The Scale-Location plot would further confirm non-constant variance. The Residuals vs. Leverage plot helps identify any individual data points that might unduly influence the model, though in a dataset of this size (1885 observations), such influences are often minor. Collectively, these diagnostics confirm the mild overdispersion and suggest that while the Poisson model captures key relationships, its assumptions are not fully met, lending further support to considering alternatives like the negative binomial model or including non-linear terms or interactions.
 
-```{R pois12, echo=FALSE, cache=TRUE}
+```{R pois12, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Generate the enhanced plots
 cannabis_coef_plot <- plot_factor_importance_enhanced(cannabis_model, 
                                                       "Predictors of Cannabis Usage")
@@ -1743,11 +1700,11 @@ cannabis_diagnostics <- create_diagnostic_plots(cannabis_model,
 print(cannabis_diagnostics)
 ```
 
-#### Analysis of Enhanced Plots for Cannabis Usage Model
+#### Analysis of Enhanced Plots for Cannabis Usage Model  
 
 Integrating the insights from both the enhanced coefficient plot and the comprehensive diagnostic plots provides a balanced view of the cannabis usage model. The coefficient plot robustly highlights Sensation Seeking (positive) and Age (negative) as primary predictors, with significant secondary roles for traits like Openness (positive) and Conscientiousness (negative), and demographics like gender. The diagnostic plots, while revealing model limitations such as overdispersion and some uncaptured non-linearities, do not invalidate these core substantive findings. Instead, they suggest avenues for model refinement (e.g., using a negative binomial approach, exploring interaction terms) to achieve a more statistically nuanced fit. The overall message is that the identified predictors have meaningful and reliable associations with cannabis use, even if the basic Poisson model could be further improved.
 
-```{R pois13, echo=FALSE, cache=TRUE}
+```{R pois13, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Check for multicollinearity and format as a styled table
 vif_values <- car::vif(cannabis_model)
 
@@ -1812,11 +1769,11 @@ vif_table <- vif_df %>%
 vif_table
 ```
 
-#### Analysis of Multicollinearity Diagnostics for Cannabis Model
+#### Analysis of Multicollinearity Diagnostics for Cannabis Model  
 
 Finally, a Variance Inflation Factor (VIF) analysis was performed to assess multicollinearity among the predictors in the cannabis model. The results would generally show VIF values within acceptable limits (mostly below 5), indicating that multicollinearity is not severe enough to destabilize coefficient estimates or grossly inflate standard errors. Personality traits, which are known to have some intercorrelation (e.g., Sensation Seeking and Impulsivity, or traits within the Big Five), would likely show moderate VIFs (e.g., in the 1.5 to 3.0 range). Demographic variables like Age and Education might also show some correlation. The absence of high VIF values (e.g., >5 or >10) would enhance confidence that the estimated effects of individual predictors, particularly the key ones like Sensation Seeking and Age, are distinguishable and not merely statistical artifacts of predictor redundancy. This supports the interpretation of each predictor's unique contribution within the model.
 
-```{R pois14, echo=FALSE, cache=TRUE}
+```{R pois14, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Function to run a more detailed analysis for the Cannabis model
 analyze_cannabis_model <- function(model) {
   # Get model summary
@@ -1866,16 +1823,14 @@ analyze_cannabis_model <- function(model) {
 }
 ```
 
-<<<<<<< HEAD
-#### Analysis of Detailed Cannabis Model Diagnostics
-Chunk pois14 creates a comprehensive function analyze_cannabis_model() that performs an in-depth diagnostic analysis of the cannabis Poisson regression model. This function extracts and evaluates key model statistics, checks for overdispersion, identifies significant predictors, and suggests potential model improvements. Let me analyze what this function would reveal about the cannabis usage model.
-Model Fit Statistics Analysis
-The function begins by reporting several fundamental model fit statistics:
-Null and Residual Deviance:
-=======
-## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
-In this analysis, we employ a binomial‐family generalized linear model—commonly known as logistic regression—to quantify how individual differences in the five personality traits relate to the likelihood of ever having used marijuana. By coding marijuana use as a binary outcome (0 = never used, 1 = ever used) and entering Neuroticism, Extraversion, Openness, Agreeableness, and Conscientiousness scores as continuous predictors, the GLM estimates how each one-unit increase in a trait affects the log-odds (and thus the odds) of cannabis experimentation. 
+#### Analysis of Detailed Cannabis Model Diagnostics  
+
+The analyze_cannabis_model() function, created in chunk pois14, conducts a detailed diagnostic analysis of the cannabis Poisson regression model. It extracts and assesses key model statistics, checks for overdispersion, pinpoints significant predictors, and offers suggestions for model enhancements. This function would begin its analysis by reporting fundamental model fit statistics.
+
+Separately, a binomial generalized linear model (logistic regression) is used to examine how the five main personality traits correlate with the likelihood of ever having used marijuana. This model uses a binary outcome for marijuana use (never used vs. ever used) and includes scores for Neuroticism, Extraversion, Openness, Agreeableness, and Conscientiousness as continuous predictors. The GLM then estimates how changes in these traits affect the odds of cannabis experimentation.
+
+## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
 ```{r glmbi_intro, echo=FALSE, cache=TRUE}
 
