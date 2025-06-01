@@ -294,9 +294,7 @@ plot_outliers <- function(drug_data, columns) {
 plot_outliers(drug_data, numeric_cols)
 ```
 
-The box plots reveal some data points outside the upper and lower bounds. Although these values are technically outliers, they are not extreme, fall within the expected range, and conform to a normal distribution.
-
-The dataset was considerably cleaner than anticipated, which suggests it was likely pre-processed or cleaned before we accessed it.
+The box plots generated for the seven psychometric personality scores reveal some data points that lie beyond the conventional 1.5xIQR (Interquartile Range) whiskers, technically identifying them as outliers. After invetigating the outliers we establised that outliers is not extreme in nature and fall within a plausible range, as well as being infrequent. Critically, their presence does not appear to significantly distort the overall distributional characteristics of these personality measures, which is important for subsequent analyses. The general cleanliness of the dataset, including the limited impact of these outliers, was better than anticipated, leading us to suspect that it may have undergone some form of pre-processing or curation before we accessed it.
 
 # Exploratory Data Analysis
 
@@ -395,7 +393,9 @@ ggplot(gender_results, aes(x = Trait_Name)) +
   coord_flip()
 ```
 
-The chart illustrates standardized behavioral traits, categorized by gender. The data suggest that males, on average, score higher in sensation-seeking, impulsivity, and openness. Conversely, females tend to demonstrate higher levels of impulsivity, as well as agreeableness and conscientiousness.
+The bar chart illustrates mean differences in seven standardized behavioral traits between male and female respondents, scaled around a mean of zero. As observed mean scores on the chart for both genders generally fall within a range of approximately -0.25 to 0.25.
+
+Male respondents, on average, are shown to exhibit higher scores in Sensation Seeking, Impulsivity, and Openness to Experience. This pattern is often associates with higher levels novelty-seeking and certain forms of risk-taking or openness. Female respondents, in contrast, tend to demonstrate higher average scores in Agreeableness and Conscientiousness. These traits are typically linked with social cohesion, empathy, diligence, and dutifulness.
 
 ## Comparing Education Level with Behavioral Measures
 
@@ -487,7 +487,7 @@ mtext("Personality Traits by Education Level", side = 3, line = 1,
       outer = TRUE, cex = 1.2, font = 2)
 ```
 
-The charts which compare education levels with behavioral measures, reveal an inverse relationship between the level of education and the prevalence of certain personality traits. While not immediately obvious from the charts alone, a closer examination of the data indicates that traits often perceived as negative specifically Neuroticism, Impulsivity, and Sensation Seeking are more pronounced in individuals with lower education levels, this includes respondents who selected "Not Provided" for their educational background. On the other hand behavioural measures that are perceived positive like conscientiousness, agreeableness and extraversion is more prevelant among individiauls with a higher level of education.
+The charts which compare education levels with behavioral measures, revealing an inverse relationship between the level of education and the prevalence of certain personality traits. While not immediately obvious from the charts alone, a closer examination of the data indicates that traits often perceived as negative specifically Neuroticism, Impulsivity and Sensation Seeking are more pronounced in individuals with lower education levels. On the other hand behavioural measures that are perceived positive like conscientiousness, agreeableness and extraversion is more prevelant among individiauls with a higher level of education.
 
 ## Analysis of Seremon Usage
 
@@ -612,7 +612,7 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 
 (Johan Ferreira)
 
-Linear regression was employed not primarily for prediction, but to better understand factors influencing drug use, with predictive modeling deferred to more suitable techniques.
+Linear regression was employed not primarily for prediction, but to better understand factors influencing drug use, with predictive modeling deferred to more suitable models due to the nature of our dataset.
 
 ```{r lr1, echo=FALSE, cache=TRUE}
 
@@ -904,7 +904,7 @@ create_model_coef_table <- function(model_list, drug_names) {
 
       # Extract coefficients and p-values
       drug_coefs <- numeric(length(result_df$Variable))
-      drug_p <- numeric(length(result_df$Variable))
+      drug_p <- numeric(length(result_df$Variable)) # p-values still extracted but not used for stars
 
       for (i in 1:length(result_df$Variable)) {
         var_name <- result_df$Variable[i]
@@ -917,14 +917,9 @@ create_model_coef_table <- function(model_list, drug_names) {
         }
       }
 
-      # Add significance stars
-      drug_sig <- ifelse(drug_p < 0.001, "***",
-                       ifelse(drug_p < 0.01, "**",
-                            ifelse(drug_p < 0.05, "*", "")))
-
-      # Format coefficients with significance stars
+      # Format coefficients (without significance stars)
       drug_coef_text <- ifelse(!is.na(drug_coefs),
-                             paste0(sprintf("%.3f", round(drug_coefs, 3)), drug_sig),
+                             sprintf("%.3f", round(drug_coefs, 3)), # drug_sig (stars) removed from here
                              "")
 
       # Add to result dataframe
@@ -997,18 +992,15 @@ if (length(drug_names_for_table) > 0) {
       align = c('l', rep('r', ncol(model_comparison_table) - 1)),
       longtable = TRUE) %>%
     kable_styling(
-      latex_options = c("striped", "hold_position"), # Made consistent with other PDF tables
+      latex_options = c("striped", "hold_position"), 
       full_width = FALSE,
-      position = "center"                             # Added for centering, consistent with others
+      position = "center"                             
     ) %>%
-    row_spec(0, bold = TRUE) %>%                      # Added to bold the header row
-    column_spec(1, bold = TRUE) %>%                   # Added to bold the first column (Variable names)
-    add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1)) %>%
-    footnote(
-      symbol = c("* p<0.05; ** p<0.01; *** p<0.001"),
-      symbol_title = "Significance levels:",
-      footnote_as_chunk = TRUE
-    )
+    row_spec(0, bold = TRUE) %>%                      
+    column_spec(1, bold = TRUE) %>%                   
+    add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1))
+    # The footnote call that was here has been removed.
+
 } else {
   cat("No valid drug models to display in table\n")
 }
