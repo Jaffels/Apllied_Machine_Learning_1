@@ -988,7 +988,7 @@ if (length(drug_names_for_table) > 0) {
 
   # Display the table with kable for better formatting
   kable(model_comparison_table,
-      caption = "Linear Regression Models for Drug Usage (Usage Level 0-6)",
+      caption = "Linear Regression Models for Drug Usage",
       align = c('l', rep('r', ncol(model_comparison_table) - 1)),
       longtable = TRUE) %>%
     kable_styling(
@@ -999,8 +999,6 @@ if (length(drug_names_for_table) > 0) {
     row_spec(0, bold = TRUE) %>%                      
     column_spec(1, bold = TRUE) %>%                   
     add_header_above(c(" " = 1, "Drug Models" = ncol(model_comparison_table) - 1))
-    # The footnote call that was here has been removed.
-
 } else {
   cat("No valid drug models to display in table\n")
 }
@@ -1093,7 +1091,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
       panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
     )
   
-  # 1. Residuals vs Fitted with improved aesthetics
+  # Residuals vs Fitted with improved aesthetics
   p1 <- ggplot(model_data, aes(x = .fitted, y = .resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
     geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
@@ -1106,7 +1104,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
          y = "Residuals") +
     diagnostic_theme
   
-  # 2. Normal Q-Q plot with improved aesthetics
+  # Normal Q-Q plot with improved aesthetics
   p2 <- ggplot(model_data, aes(sample = .resid)) +
     stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
     stat_qq_line(color = reference_color, linewidth = 0.7) +
@@ -1116,7 +1114,7 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
          y = "Sample Quantiles") +
     diagnostic_theme
   
-  # 3. Scale-Location plot with improved aesthetics
+  # Scale-Location plot with improved aesthetics
   p3 <- ggplot(model_data, aes(x = .fitted, y = sqrt(abs(.resid)))) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
     geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
@@ -1127,14 +1125,12 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
          y = "sqrt|Standardized Residuals|") +
     diagnostic_theme
   
-  # 4. Residuals vs Leverage with improved aesthetics
-  # Add Cook's distance contour lines
+  # Residuals vs Leverage with improved aesthetics
   p4 <- ggplot(model_data, aes(x = .hat, y = .resid)) +
     geom_point(alpha = 0.6, color = point_color, size = 1.5) +
     geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
                 method = "loess", message = FALSE, warning = FALSE) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-    # Add Cook's distance contours
     stat_contour(aes(z = .cooksd), breaks = c(0.5, 1), color = "red", 
                  linetype = "dashed", na.rm = TRUE) +
     labs(title = "Residuals vs Leverage",
@@ -1168,7 +1164,6 @@ create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
 # If we have diagnostic plots for Cannabis model
 if (exists("cannabis_model") && !is.null(cannabis_model)) {
   cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, "Cannabis Usage Model Diagnostics")
-  print(cannabis_diagnostics)
 }
 ```
 
@@ -1201,7 +1196,6 @@ if(names(model_data)[1] == "X") {
 }
 ```
 
-
 ```{R pois2, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Define the predictors to use in models
 predictors <- c("Age", "Gender", "Education", 
@@ -1222,8 +1216,6 @@ fit_poisson_glm <- function(data, drug, predictors) {
 }
 ```
 
-
-
 ```{R pois3, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Drugs to model
 drugs <- c("Cannabis", "Alcohol", "Nicotine", "Coke")
@@ -1233,13 +1225,11 @@ models <- list()
 for (drug in drugs) {
   if (drug %in% names(model_data)) {
     models[[drug]] <- fit_poisson_glm(model_data, drug, predictors)
-    cat("Model fitted for", drug, "\n")
   } else {
     cat("Drug column", drug, "not found in dataset\n")
   }
 }
 ```
-
 
 ```{R pois4, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Function to create a summary table for a model
@@ -1343,7 +1333,7 @@ cannabis_table <- cannabis_display %>%
 cannabis_table
 ```
 
-#### Analysis of Cannabis Usage Poisson Model  
+### Analysis of Cannabis Usage Poisson Model  
 
 The Poisson regression model for cannabis usage highlights several key predictors. Sensation Seeking (SS) emerges as the most potent positive personality predictor; a one-unit increase in SS is associated with a substantial (e.g., 20-25%) increase in cannabis usage frequency, even after controlling for other factors. Age is the strongest demographic predictor, showing a significant negative coefficient, indicating that each advancing age category is linked to a considerable reduction (e.g., 30-40%) in usage. Openness to Experience also positively predicts cannabis use, with higher scores correlating with increased consumption (e.g., 10-15% per unit). Conversely, Conscientiousness shows a significant negative relationship, suggesting that traits like self-discipline are protective against cannabis use (e.g., 10-15% decrease per unit). Impulsivity shows a positive, though smaller, association. Males tend to have higher consumption rates than females (e.g., 20-30% higher), and higher education levels are generally linked with lower cannabis usage, though this effect is less pronounced than age or key personality factors.
 
