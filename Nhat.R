@@ -10,6 +10,7 @@ library(kableExtra)
 library(mgcv)
 
 
+
 # Load the dataset
 df <- read.csv("Data/model_data.csv")
 
@@ -308,10 +309,6 @@ df_cnb_gam %>%
 #-------------------------------------------------------
 # fitting GAM model
 
-View(df)
-
-View(df_cnb)
-
 df_cnb <- df_cnb %>%
   mutate(
     cnb_past_year = if_else(Cannabis >= 3, 1, 0)
@@ -324,8 +321,162 @@ gam_mod <- gam(
   data = df_cnb,
   method = "REML"
 )
-# 5.2 Check model diagnostics
+# Check model diagnostics
 gam.check(gam_mod)
 
-# 5.3 Summary of smooth terms
+# Summary of smooth terms
 summary(gam_mod)
+
+ggplot(df_cnb, aes(x = Education,
+                   y = cnb_past_year,
+                   group = 1)) +          # ensure a single group
+  geom_point(alpha = 0.5) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 4),     # reduce k to ≤ your # of unique education
+    method.args = list(family = binomial),  # or family = binomial for logistic
+    se          = TRUE
+  ) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Education (GAM, k = 9)",
+    x     = "Education",
+    y     = "Past-Year Cannabis Use (0/1)"
+  ) +
+  theme_minimal(base_size = 14)
+
+# This GAM‐derived curve describes how the probability of past-year cannabis use (vertical axis) changes as education rises from level 1 (“Not Provided”) through level 10 (“Doctorate”).
+
+# At the lowest education levels (1–2), estimated use probability starts at around 40–45%. As education levels switch into level 4 - 6 (left school at 17, 18 and those studying in college/university respectively), the probability climbs steadily, reaching a peak near 80% at level 6. Beyond that peak, the probability falls off sharply—by the professional certificate and bachelor’s levels (7–8) it has dropped to roughly 50–60%, and by master’s level (9) it’s down near 30–35%. Finally, the curve flattens out (and even nudges upward a bit) at the doctorate level (10), but the wide confidence ribbon there indicates greater uncertainty due to sparse observations.
+
+# The gray band is the 95% confidence interval around the estimated probability. It is narrowest in the middle education bands (levels 3–7), where most of your data lie—so those estimates are quite precise. At the extremes (very low and very high education), the ribbon fans out, signaling that fewer respondents occupy those categories and thus our estimates are less certain.
+
+# Taken together, this non-linear “hill-shaped” relationship shows that cannabis use probability does not simply rise or fall with education. Instead, it increases sharply through those that left school at 17, 18 and college students reflecting experimentation during teenage-age/college students and then declines among individuals with higher degrees, suggesting that the highest educational attainments are associated with lower recent use.
+
+#--------------------------------------------------------
+ggplot(df_cnb, aes(x = Age,
+                   y = cnb_past_year,
+                   group = 1)) +          # ensure a single group
+  geom_point(alpha = 0.5) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 3),     # reduce k to ≤ your # of Age
+    method.args = list(family = binomial),  # or family = binomial for logistic
+    se          = TRUE
+  ) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Age (GAM, k = 3)",
+    x     = "Age",
+    y     = "Past-Year Cannabis Use (0/1)"
+  ) +
+  theme_minimal(base_size = 14)
+
+# The GAM‐smoothed curve reveals a clear, non‐linear decline in the probability of past‐year cannabis use as people age. At the youngest age category (18–24), use is highest—around 80–85%. From there, the curve drops steeply through the 25–34 and 35–44 brackets, reaching a nadir of roughly 20–25% by middle adulthood. This matches the expected pattern that cannabis experimentation and regular use peak in early adulthood and then fall off sharply.
+
+# Beyond middle age, the decline slows and even reverses slightly: in the 55–64 and 65+ groups the estimated probability edges back up toward 30%. The widening gray confidence band in those older bins reflects smaller sample sizes and greater uncertainty, but the gentle uptick suggests that a non‐negligible minority of older adults continue to report recent use.
+
+# Because we set k = 3, the model captures just the broad “high-early, steep-decline, slight rebound” pattern without overfitting. The narrow confidence interval among younger ages shows high precision where data are plentiful, while the broader ribbon at the extremes reminds us to be cautious in interpreting the very high and very low age categories.
+
+View(df_cnb)
+
+df_cnb %>%
+  distinct(Age)
+
+education_levels <- c(
+  "Not Provided",
+  "Left school before 16",
+  "Left school at 16",
+  "Left school at 17",
+  "Left school at 18",
+  "College/University student",
+  "Professional certificate/diploma",
+  "University degree",
+  "Masters degree",
+  "Doctorate degree"
+)
+df_cnb <- df_cnb %>%
+  mutate(
+    Education = factor(
+      Education,
+      levels = 1:10,
+      labels = education_levels
+    )
+  )
+ggplot(df_cnb, 
+       aes(x = Age, 
+           y = cnb_past_year)) +   
+  geom_point(alpha = 0.3) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 3),
+    method.args = list(family = binomial),
+    se          = TRUE
+  ) +
+  facet_wrap(~ Education, ncol = 3) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Age, by Education Level",
+    x     = "Age",
+    y     = "Probability of Past-Year Use"
+  ) +
+  theme_minimal(base_size = 12)
+
+# The “less‐educated” group (e.g. “Left before 16,” “Left at 17,” “Left at 18,” “Professional certificate”) all start with extremely high probabilities of use when respondents are young, and their curves decline steeply. By midlife, those groups still often have somewhat higher past‐year use than the more‐educated strata. Whereas, the highest‐education respondent group (“University degree,” “Masters,” “Doctorate”) start at a lower baseline in the youngest age bracket, decline more gradually, and by the oldest ages are clustered down near 10–25%. n almost every panel, the highest probability occurs in the youngest age bin (18–24), reflecting that early adulthood is when use is most common. For example, those who “left school at 16” or are current “College/University students” exhibit peaks around 90 – 95% in that age group, whereas “Master’s degree” or “Doctorate degree” holders start at roughly 50–65%. As age increases from the early-20s toward the mid-40s, all panels show a steep drop
+
+# The one outlier in shape is “College/University student.” That group has a very high probability at the youngest (freshman/first‐year) ages, dips in the middle (around 35-40), then rebounds at older ages. Almost every other “education” stratum shows a decline.
+
+# The gray ribbons around each blue line are the 95% confidence intervals for the estimated probabilities. Some are narrowest in the middle of the age range and some are narrowest at the 18-24 age bin, depending on how many respondents fall into each category. The wider ribbons in the oldest age bins reflect fewer observations, making those estimates less certain.
+
+# Overall, this GAM analysis shows that education level significantly modifies the age-use curve for past-year cannabis use. Lower education levels are associated with higher use probabilities at younger ages, while higher education levels tend to delay initiation and reduce escalation of use as individuals age.
+
+
+set.seed(123)
+gam.1 <- gam(
+  cnb_past_year ~ 
+    Education + 
+    s(Age, by = Education, k = 5),
+  family = binomial(link = "logit"),
+  data   = df_cnb,
+)
+
+summary(gam.1)
+
+
+# The “Parametric coefficients” table shows one row for the intercept (the reference category, here “Not Provided”) and one row for each of the other education levels. The intercept row can be seen as “the starting probability of past‐year use for the ‘Not Provided’ group”, and other row tells how much higher or lower that starting probability is for each education level compared to “Not Provided.”
+
+# (Intercept) = 0.3230 (p = 0.215)
+# For the “Not Provided” group, the model estimates a baseline probability of about 58% (since exp(0.3230)/(1 + exp(0.3230)) = 0.58005). p = 0.215 is not significant.
+
+# Left school before 16: +1.289 (p = 0.084)
+# Compared to “Not Provided,” those who left school before age 16 start with a probability roughly 23 points higher—around 81% instead of 58%. The p‐value of 0.084 is just above the usual threshold of 0.05, so this is a somewhat weak signal. There is some indication that early dropouts have a higher starting chance of past‐year use, but it isn’t quite strong enough to be certain.
+
+# Left school at 17: +0.526 (p = 0.332)
+# This group’s baseline probability is about 12 points higher than “Not Provided” (around 70% instead of 58%), but because p = 0.332 is not significant, we cannot confidently say they truly differ from the reference.
+
+# Left school at 18: +0.028 (p = 0.941)
+# Essentially no difference from “Not Provided” (only a 1–2 point bump to around 59%), and p = 0.941 confirms there is no evidence of a real shift.
+
+# College/University student: +0.704 (p = 0.0148)
+# Students start with about an 18‐point higher probability than “Not Provided” (around 76% vs. 58%), and p = 0.0148 is below 0.05. In other words, being a current student is significantly associated with a higher baseline chance of past‐year use.
+
+# Professional certificate/diploma: –0.0003 (p = 0.999)
+# There is effectively no change in starting probability (stays around 58%), and p ≈ 1 shows no difference from the reference.
+
+# University degree: –0.578 (p = 0.0379)
+# University graduates begin with a probability about 13 points lower than “Not Provided” (around 45% vs. 58%). Because p = 0.0379 is below 0.05, this lower baseline is statistically significant.
+
+# Masters degree: –1.069 (p = 0.00026)
+# Master’s holders start with about a 27‐point lower probability at baseline (roughly 31% instead of 58%). The p‐value is very small, so this is a highly significant finding: master’s graduates are much less likely to report past‐year use at the reference age.
+
+# Doctorate degree: –0.130 (p = 0.828)
+# Doctorate holders show only a slight drop (about 3 points lower, or ~55% vs. 58%), and p = 0.828 indicates no significant difference from “Not Provided.”
+
+# In summary, at the initial age (where the smooth hasn’t yet adjusted upward or downward), college/university students have a significantly higher starting chance of having used cannabis in the past year; university and master’s graduates have significantly lower starting chances; and the other categories do not show clear differences compared to the “Not Provided” group.
+
+# For the approximate significance of the smooth terms: 
+# For every education category except doctorate holders, age has a statistically significant effect on past‐year use, though the exact shape of that effect varies. Young adults in every education group exhibit dramatically higher past‐year cannabis use, yet the way that use declines with age differs depending on schooling. For example, those in “Not Provided” and “left school before 16” categories show an almost straight‐line drop from ages 18–24 onward (edf = 1.000, p < 0.01), indicating a steady decrease as they age.
+
+
+
+gam.check(gam.1)
+
+plot(gam.1, residuals = TRUE, pages = 1, shade = TRUE)
+
