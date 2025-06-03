@@ -1388,465 +1388,132 @@ Among demographic factors, Age generally showed a negative association with use 
 
 ### Predictor Effects Visualization  
 
-```{r pois9, echo=FALSE, cache=TRUE, fig.width=7, fig.height=5}
-
-if (exists("cannabis_model") && exists("model_data") && exists("predictors")) {
-  
-  model_coeffs <- coef(cannabis_model)
-  
-  # --- Calculate effect for Age ---
-  age_range <- 1:6 
-  
-  # Hold other predictors at their means for Age effect
-  mean_values_for_age_effect <- colMeans(model_data[, setdiff(predictors, "Age")], na.rm = TRUE)
-  
-  age_linear_predictor_base <- model_coeffs["(Intercept)"]
-  for (pred_name in names(mean_values_for_age_effect)) {
-    if (pred_name %in% names(model_coeffs) && !is.na(mean_values_for_age_effect[pred_name])) {
-      age_linear_predictor_base <- age_linear_predictor_base + 
-        model_coeffs[pred_name] * mean_values_for_age_effect[pred_name]
-    }
-  }
-  # Ensure 'Age' coefficient exists before using it
-  if ("Age" %in% names(model_coeffs)) {
-    age_predicted_values <- exp(age_linear_predictor_base + model_coeffs["Age"] * age_range)
-  } else {
-    # Fallback if 'Age' coefficient is missing (should not happen if model is correct)
-    age_predicted_values <- rep(NA, length(age_range)) 
-    warning("Coefficient for 'Age' not found in cannabis_model for pois9 plot.")
-  }
-  
-  age_effect_df <- data.frame(
-    Value = age_range,
-    Predicted = age_predicted_values,
-    Predictor_Type = "Age Category (1=18-24 to 6=65+)",
-    stringsAsFactors = FALSE
-  )
-  age_effect_df <- age_effect_df[!is.na(age_effect_df$Predicted), ]
-
-  # --- Calculate effect for Sensation Seeking (SS) ---
-  ss_range <- seq(min(model_data$SS, na.rm = TRUE), max(model_data$SS, na.rm = TRUE), length.out = 100)
-  
-  # Hold other predictors at their means for SS effect
-  mean_values_for_ss_effect <- colMeans(model_data[, setdiff(predictors, "SS")], na.rm = TRUE)
-  
-  ss_linear_predictor_base <- model_coeffs["(Intercept)"]
-  for (pred_name in names(mean_values_for_ss_effect)) {
-    if (pred_name %in% names(model_coeffs) && !is.na(mean_values_for_ss_effect[pred_name])) {
-      ss_linear_predictor_base <- ss_linear_predictor_base + 
-        model_coeffs[pred_name] * mean_values_for_ss_effect[pred_name]
-    }
-  }
-  # Ensure 'SS' coefficient exists
-  if ("SS" %in% names(model_coeffs)) {
-    ss_predicted_values <- exp(ss_linear_predictor_base + model_coeffs["SS"] * ss_range)
-  } else {
-    ss_predicted_values <- rep(NA, length(ss_range))
-    warning("Coefficient for 'SS' not found in cannabis_model for pois9 plot.")
-  }
-  
-  ss_effect_df <- data.frame(
-    Value = ss_range,
-    Predicted = ss_predicted_values,
-    Predictor_Type = "Sensation Seeking Score",
-    stringsAsFactors = FALSE
-  )
-  ss_effect_df <- ss_effect_df[!is.na(ss_effect_df$Predicted), ]
-
-  # --- Combine data for plotting ---
-  combined_plot_data <- rbind(age_effect_df, ss_effect_df)
-
-  # --- Create faceted plot ---
-  if (nrow(combined_plot_data) > 0) {
-    faceted_plot <- ggplot(combined_plot_data, aes(x = Value, y = Predicted)) +
-      geom_line(aes(color = Predictor_Type), linewidth = 1) +
-      # Add points only for the 'Age Category' facet
-      geom_point(data = subset(combined_plot_data, Predictor_Type == "Age Category (1=18-24 to 6=65+)"), 
-                 aes(color = Predictor_Type), size = 3) +
-      # ncol = 2 for side-by-side plots
-      facet_wrap(~ Predictor_Type, scales = "free_x", ncol = 2) + 
-      scale_color_manual(values = c("Age Category (1=18-24 to 6=65+)" = "blue", 
-                                    "Sensation Seeking Score" = "red")) +
-      theme_minimal() +
-      labs(title = "Effect of Age and Sensation Seeking on Predicted Cannabis Usage",
-           x = "Predictor Value",
-           y = "Predicted Cannabis Usage Level") +
-      theme(legend.position = "none", 
-            strip.text = element_text(size = 10, face = "bold")) # Style facet titles
-    
-    print(faceted_plot)
-    
-  } else {
-    cat("Not enough data to generate the faceted plot (e.g., due to missing coefficients or NA predicted values).\n")
-  }
-} else {
-  cat("Required objects (cannabis_model, model_data, predictors) not found to generate plots in pois9.\n")
-}
-```
-
 Visualizations of predictor effects from the Poisson model illustrate the non-linear relationships. The age effect plot would show a steep negative gradient, with predicted cannabis usage highest in the youngest age group (18-24) and declining sharply with each subsequent category. The sensation seeking (SS) plot would reveal a clear positive exponential relationship, where predicted cannabis usage accelerates at higher SS scores. This suggests that individuals at the highest end of the sensation-seeking spectrum are disproportionately more likely to use cannabis frequently. These visualizations, combined with the overdispersion findings, confirm the strong impact of these predictors while also supporting the consideration of model refinements like the negative binomial approach for a more nuanced capture of data complexity.
 
-```{R pois10, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
-# Function to create a visually appealing coefficient plot
-plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
-  coefs <- summary(model)$coefficients
-  coef_df <- data.frame(
-    Variable = rownames(coefs)[-1],
-    Estimate = coefs[-1, "Estimate"],
-    StdError = coefs[-1, "Std. Error"],
-    PValue = coefs[-1, "Pr(>|z|)"]
-  )
-  coef_df$Significance <- ifelse(coef_df$PValue < 0.001, "p < 0.001", 
-                               ifelse(coef_df$PValue < 0.01, "p < 0.01",
-                                    ifelse(coef_df$PValue < 0.05, "p < 0.05", "Not significant")))
-  coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
-  if(nrow(coef_df) > 15) {
-    coef_df <- coef_df[1:15, ]
-  }
-   var_display_mapping <- c( 
-    "Age" = "Age", "Gender" = "Gender (Male=1)", "Education" = "Education Level",
-    "Nscore" = "Neuroticism", "Escore" = "Extraversion", "Oscore" = "Openness",
-    "Ascore" = "Agreeableness", "Cscore" = "Conscientiousness",
-    "Impulsive" = "Impulsivity", "SS" = "Sensation Seeking"
-  )
-  clean_var_names <- function(var_name) {
-    if (var_name %in% names(var_display_mapping)) return(var_display_mapping[var_name])
-    if (grepl("^Country", var_name)) return(gsub("Country", "Country: ", var_name))
-    if (grepl("^Ethnicity", var_name)) return(gsub("Ethnicity", "Ethnicity: ", var_name))
-    return(var_name)
-  }
-  coef_df$DisplayName <- sapply(coef_df$Variable, clean_var_names)
-  coef_df$DisplayName <- factor(coef_df$DisplayName, levels = rev(coef_df$DisplayName))
+### Analysis of Poisson Models with Interaction Terms for Cannabis Usage
 
-  # Define sig_colors if not globally available
-  if (color_scheme == "viridis") {
-    sig_colors <- c("p < 0.001" = "#440154", "p < 0.01" = "#21908C", 
-                    "p < 0.05" = "#5DC863", "Not significant" = "#CCCCCC")
-  } else {
-    sig_colors <- c("p < 0.001" = "#0072B2", "p < 0.01" = "#009E73", 
-                    "p < 0.05" = "#56B4E9", "Not significant" = "#CCCCCC")
+```{r pois_multi_inter, echo=FALSE, cache=TRUE, results='asis'}
+# Define the outcome variable
+outcome_variable <- "Cannabis"
+
+# Define all potential main predictors
+all_main_predictors <- c("Age", "Gender", "Education", 
+                         "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
+                         "Impulsive", "SS")
+
+# Define the list of interaction pairs (var1, var2)
+interaction_pairs <- list(
+  c("Age", "Education"),
+  c("Gender", "SS"),
+  c("Age", "SS"),
+  c("Education", "Cscore"),
+  c("Oscore", "SS"),
+  c("Cscore", "Impulsive"),
+  c("Age", "Oscore"),
+  c("Gender", "Impulsive")
+)
+
+# Initialize a list to store results from each model
+results_list_updated <- list()
+
+# Loop through each interaction pair
+for (i in 1:length(interaction_pairs)) {
+  var1 <- interaction_pairs[[i]][1]
+  var2 <- interaction_pairs[[i]][2]
+  
+  # Determine other main effects to include in the model
+  other_main_effects <- setdiff(all_main_predictors, c(var1, var2))
+  
+  # Construct the formula string
+  formula_str <- paste0(outcome_variable, " ~ ", var1, " * ", var2)
+  if (length(other_main_effects) > 0) {
+    formula_str <- paste0(formula_str, " + ", paste(other_main_effects, collapse = " + "))
   }
   
-  ggplot(coef_df, aes(x = Estimate, y = DisplayName, color = Significance)) +
-    geom_point(aes(size = abs(Estimate)), alpha = 0.8) +
-    geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
-                       xmax = Estimate + 1.96 * StdError), 
-                   height = 0.2, alpha = 0.7) +
-    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
-    scale_color_manual(values = sig_colors) +
-    scale_size_continuous(range = c(2, 6), guide = "none") +
-    labs(title = title,
-         subtitle = "Estimated coefficients with 95% confidence intervals",
-         x = "Effect Size (Coefficient Estimate)",
-         y = "",
-         color = "Statistical\nSignificance") +
-    theme_minimal() +
-    theme(
-      plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
-      plot.subtitle = element_text(size = 12, color = "darkgray", hjust = 0.5),
-      axis.title.x = element_text(size = 12, face = "bold"),
-      axis.text.y = element_text(size = 10),
-      legend.position = "top",
-      legend.title = element_text(face = "bold"),
-      panel.grid.minor = element_blank(),
-      panel.grid.major.y = element_blank()
-    )
+  current_formula <- as.formula(formula_str)
+  
+  # Fit the Poisson GLM
+  model <- glm(current_formula, data = model_data, family = poisson(link = "log"))
+  
+  # Extract model summary and coefficients
+  model_summary_tidy <- broom::tidy(model)
+  
+  # Find the interaction term to get its coefficient and p-value
+  interaction_term_name1 <- paste0(var1, ":", var2)
+  interaction_term_name2 <- paste0(var2, ":", var1) 
+  
+  interaction_coef_row <- model_summary_tidy[model_summary_tidy$term == interaction_term_name1, ]
+  if (nrow(interaction_coef_row) == 0) {
+    interaction_coef_row <- model_summary_tidy[model_summary_tidy$term == interaction_term_name2, ]
+  }
+  
+  interaction_coefficient <- NA
+  interaction_p_value <- NA
+
+  if (nrow(interaction_coef_row) == 1) {
+    interaction_coefficient <- interaction_coef_row$estimate
+    interaction_p_value <- interaction_coef_row$p.value
+  }
+
+  # Calculate McFadden's Pseudo R-squared
+  logLik_model <- as.numeric(logLik(model))
+  null_model_data <- model$model 
+  null_model <- glm(as.formula(paste(outcome_variable, "~ 1")), 
+                    data = null_model_data, 
+                    family = poisson(link = "log"))
+  logLik_null <- as.numeric(logLik(null_model))
+  pseudo_r2 <- 1 - (logLik_model / logLik_null)
+  
+  # Store results (Interaction_Term column removed)
+  results_list_updated[[i]] <- data.frame(
+    Model_Interaction = paste0(var1, " * ", var2),
+    Interaction_Coefficient = interaction_coefficient,
+    Interaction_P_Value = interaction_p_value,
+    AIC = AIC(model),
+    BIC = BIC(model),
+    Pseudo_R2 = pseudo_r2,
+    stringsAsFactors = FALSE
+  )
 }
-```
 
-### Analysis of Enhanced Coefficient Plot for Cannabis Usage  
+# Combine all results into a single data frame
+final_results_table_updated <- do.call(rbind, results_list_updated)
 
-The enhanced coefficient plot for the cannabis model provides a clear visual hierarchy of predictor importance. Sensation Seeking (positive effect) and Age (negative effect) would stand out with the largest coefficient estimates and narrow confidence intervals, underscoring their strong and reliable influence. Openness (positive) and Conscientiousness (negative) would also show as significant predictors with clear effects. Gender (male positive) and Impulsivity (positive) would likely be visible as significant but somewhat weaker predictors. The plot uses color-coding for statistical significance (e.g., p < 0.001, p < 0.01, p < 0.05) and displays 95% confidence intervals as error bars, allowing for an immediate assessment of each predictor's effect size, direction, and precision. This visualization effectively communicates the distinct contributions of various personality dimensions and demographic factors.
+# Display the table using kable with LaTeX styling
+kable(final_results_table_updated,
+      format = "latex", 
+      caption = "Comparison of Poisson Models with Different Interaction Terms (Outcome: Cannabis)",
+      digits = 3, 
+      booktabs = TRUE,
+      linesep = "", 
+      col.names = c("Model (A * B)", "Coef.", "P-value", "AIC", "BIC", "Pseudo R²")) %>% # Shortened some col names
+  kable_styling(latex_options = c("striped", "hold_position"), 
+                full_width = FALSE,
+                position = "center") %>%
+  column_spec(1, bold = TRUE, width = "8em") %>% # Reduced width for Col 1, try adjusting this
+  column_spec(2, width = "5em") %>% # Width for Coef.
+  column_spec(3, width = "5em") %>% # Width for P-value
+  column_spec(4, width = "6em") %>% # Width for AIC
+  column_spec(5, width = "6em") %>% # Width for BIC
+  column_spec(6, width = "6em") %>% # Width for Pseudo R²
+  row_spec(0, bold = TRUE)
+```  
 
-```{R pois11, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
-# Create diagnostic plots
-create_diagnostic_plots <- function(model, title, color_scheme = "blue") {
-  model_data_aug <- broom::augment(model)
+To explore more complex relationships influencing cannabis usage, eight Poisson regression models were fitted, each incorporating a distinct two-way interaction term alongside main demographic and personality predictors. Table 5 summarizes these models, detailing the interaction term coefficients, their statistical significance, and overall model fit statistics (AIC, BIC, Pseudo R²).
 
-  if (color_scheme == "blue") {
-    point_color <- "#3182bd"
-    line_color <- "#08519c"
-    reference_color <- "#e41a1c"
-  } else if (color_scheme == "green") {
-    point_color <- "#31a354"
-    line_color <- "#006d2c"
-    reference_color <- "#d62728"
-  } else { # Default or another scheme
-    point_color <- "#756bb1"
-    line_color <- "#54278f"
-    reference_color <- "#e41a1c"
-  }
-  
-  # Common theme elements
-  diagnostic_theme <- theme_minimal() +
-    theme(
-      plot.title = element_text(face = "bold", size = 12),
-      plot.subtitle = element_text(size = 9, color = "gray50"),
-      axis.title = element_text(size = 10),
-      axis.text = element_text(size = 9),
-      panel.grid.minor = element_blank(),
-      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
-    )
-  
-  # Residuals vs Fitted
-  p1 <- ggplot(model_data_aug, aes(x = .fitted, y = .resid)) +
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, 
-               linewidth = 0.7) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", formula = y ~ x, na.rm = TRUE) +
-    labs(title = "Residuals vs Fitted",
-         subtitle = "Should show random scatter around the zero line",
-         x = "Fitted values",
-         y = "Residuals") +
-    diagnostic_theme
-  
-  # Normal Q-Q plot
-  p2 <- ggplot(model_data_aug, aes(sample = .resid)) +
-    stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
-    stat_qq_line(color = reference_color, linewidth = 0.7) +
-    labs(title = "Normal Q-Q Plot",
-         subtitle = "Points should follow the diagonal line",
-         x = "Theoretical Quantiles",
-         y = "Sample Quantiles") +
-    diagnostic_theme
-  
-  # Scale-Location plot
-  p3 <- ggplot(model_data_aug, aes(x = .fitted, y = sqrt(abs(.std.resid)))) + 
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", formula = y ~ x, na.rm = TRUE) + 
-    labs(title = "Scale-Location",
-         subtitle = "Should show homogeneous variance",
-         x = "Fitted values",
-         y = expression(sqrt(abs("Standardized Residuals")))) +
-    diagnostic_theme
-  
-  # Residuals vs Leverage
-  p4 <- ggplot(model_data_aug, aes(x = .hat, y = .std.resid)) +
-    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
-    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
-                method = "loess", formula = y ~ x, na.rm = TRUE) +
-    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-    labs(title = "Residuals vs Leverage",
-         subtitle = "Identifies influential cases (Cook's D contours if shown)",
-         x = "Leverage",
-         y = "Standardized Residuals") +
-    diagnostic_theme
+The results indicate that several interactions significantly moderate the relationship between predictors and the frequency of cannabis use:
 
-  # Combine plots with better layout
-  title_grob <- grid::textGrob(
-    title, 
-    gp = grid::gpar(fontsize = 16, fontface = "bold"),
-    just = "center"
-  )
-  subtitle_grob <- grid::textGrob(
-    "Diagnostic Plots for GLM (Poisson)", # Adjusted subtitle
-    gp = grid::gpar(fontsize = 12, col = "gray30"),
-    just = "center"
-  )
-  
-  combined_plot <- gridExtra::grid.arrange(
-    gridExtra::arrangeGrob(title_grob, subtitle_grob, 
-                           heights = grid::unit.c(grid::grobHeight(title_grob) + 
-                                                    grid::unit(0.5, "line"), 
-                                                  grid::grobHeight(subtitle_grob))), 
-    gridExtra::arrangeGrob(p1, p2, p3, p4, ncol = 2),
-    heights = grid::unit.c(grid::unit(2, "line"), grid::unit(1, "null"))
-  )
-  
-  return(combined_plot)
-}
-```
+* The interaction between **Age and Sensation Seeking (SS)** (`Age:SS`, Coef = 0.083, p < 0.001) was significant, suggesting that the effect of Sensation Seeking on cannabis usage intensifies with age. Alternatively, this could imply that the typical age-related decline in cannabis use is less pronounced for individuals with higher Sensation Seeking scores.
+* Similarly, the **Age and Openness (Oscore)** interaction (`Age:Oscore`, Coef = 0.092, p < 0.001) was significant. This positive interaction suggests that the positive association of Openness with cannabis usage is amplified in older individuals.
+* A significant negative interaction was observed for **Gender and Sensation Seeking (SS)** (`Gender:SS`, Coef = -0.129, p < 0.001). Assuming 'Gender' is coded (e.g., Male=1, Female=0), this indicates that the positive effect of Sensation Seeking on cannabis usage is attenuated (less strong) for males compared to females (or the reference gender category).
+* The interaction between **Gender and Impulsivity** (`Gender:Impulsive`, Coef = -0.124, p < 0.001) was also significant and negative, suggesting a similar pattern where the effect of Impulsivity on cannabis usage differs by gender, being less pronounced for males if coded as 1.
+* The **Openness (Oscore) and Sensation Seeking (SS)** interaction (`Oscore:SS`, Coef = -0.089, p < 0.001) was significant. This negative interaction implies that while both traits might individually predict higher cannabis use, their combined effect is less than additive; for example, the impact of high Sensation Seeking might be somewhat dampened for individuals who are also very high in Openness, or vice-versa.
 
-### Analysis of Diagnostic Plots for Cannabis Usage Model  
+Other interactions, such as `Age:Education` (p = 0.172) and `Education:Cscore` (p = 0.249), were not statistically significant at the conventional $\alpha$ = 0.05 level. The interaction between `Cscore:Impulsive` (p = 0.068) showed a borderline significance, warranting cautious interpretation or further investigation.
 
-Diagnostic plots for the cannabis Poisson model (including Residuals vs. Fitted, Normal Q-Q, Scale-Location, and Residuals vs. Leverage) are crucial for assessing model assumptions and fit. The Residuals vs. Fitted plot likely shows some systematic curvature and uneven scatter, indicating that the model doesn't perfectly capture all structural aspects and that variance isn't constant (heteroscedasticity). The Normal Q-Q plot would probably show deviations from the diagonal line, especially at the tails, suggesting residuals are not perfectly normally distributed, which is common for count data. The Scale-Location plot would further confirm non-constant variance. The Residuals vs. Leverage plot helps identify any individual data points that might unduly influence the model, though in a dataset of this size (1885 observations), such influences are often minor. Collectively, these diagnostics confirm the mild overdispersion and suggest that while the Poisson model captures key relationships, its assumptions are not fully met, lending further support to considering alternatives like the negative binomial model or including non-linear terms or interactions.
+In terms of overall model fit, the Pseudo R² values across these interaction models were relatively similar, ranging from approximately 0.162 to 0.168. This indicates that the inclusion of these specific interaction terms resulted in modest, though varying, improvements in the proportion of variance explained compared to a model with only main effects (which would likely have a slightly lower Pseudo R²). Comparing AIC and BIC values, the model incorporating the `Age * Oscore` interaction exhibited the lowest AIC (7352.616) and BIC (7419.116), suggesting it may offer the best balance of model fit and parsimony among the interaction models tested.
 
-```{R pois12, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
-# Generate the enhanced plots
-cannabis_coef_plot <- plot_factor_importance_enhanced(cannabis_model, 
-                                                      "Predictors of Cannabis Usage")
-print(cannabis_coef_plot)
-
-# Generate enhanced diagnostic plots
-cannabis_diagnostics <- create_diagnostic_plots(cannabis_model, 
-                                                "Cannabis Usage Model Diagnostics")
-print(cannabis_diagnostics)
-```
-
-### Analysis of Enhanced Plots for Cannabis Usage Model  
-
-Integrating the insights from both the enhanced coefficient plot and the comprehensive diagnostic plots provides a balanced view of the cannabis usage model. The coefficient plot robustly highlights Sensation Seeking (positive) and Age (negative) as primary predictors, with significant secondary roles for traits like Openness (positive) and Conscientiousness (negative), and demographics like gender. The diagnostic plots, while revealing model limitations such as overdispersion and some uncaptured non-linearities, do not invalidate these core substantive findings. Instead, they suggest avenues for model refinement (e.g., using a negative binomial approach, exploring interaction terms) to achieve a more statistically nuanced fit. The overall message is that the identified predictors have meaningful and reliable associations with cannabis use, even if the basic Poisson model could be further improved.
-
-```{r pois13, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4, results='asis'}
-# Check for multicollinearity and format as a styled table
-# Ensure the 'car' package is loaded for vif()
-if (requireNamespace("car", quietly = TRUE) && exists("cannabis_model")) {
-  
-  # Check if the model has an intercept, vif function might behave differently or error
-  # For GLMs, typically an intercept is present.
-  # Also, ensure there are at least 2 predictors for VIF calculation.
-  if (length(coef(cannabis_model)) > 1 && length(names(coef(cannabis_model))) - sum(grepl("Intercept", names(coef(cannabis_model)))) >=2 ) {
-    
-    vif_values <- tryCatch({
-      car::vif(cannabis_model)
-    }, error = function(e) {
-      cat("Error in VIF calculation for pois13: ", e$message, "\n")
-      NULL
-    })
-
-    if (!is.null(vif_values)) {
-      # Convert VIF values to a data frame for better table formatting
-      # VIF can be a single vector or a matrix if terms have multiple df
-      if (is.matrix(vif_values)) {
-        # Handle terms with multiple df (e.g., factors, polynomials) - sum VIFs or take generalized VIF (GVIF^(1/(2*Df)))
-        # For simplicity, this example will use the first column if it's a matrix, 
-        # or you might need to adapt based on GVIF if that's what car::vif returns for GLMs with factors.
-        # Assuming vif_values are for predictors and not an issue of multicollinearity with intercept.
-        vif_df <- data.frame(
-          Variable = rownames(vif_values),
-          VIF = vif_values[,1], # Taking the first column, adjust if GVIF^(1/(2*Df)) is needed
-          stringsAsFactors = FALSE
-        )
-      } else { # It's a vector
-        vif_df <- data.frame(
-          Variable = names(vif_values),
-          VIF = vif_values,
-          stringsAsFactors = FALSE
-        )
-      }
-
-      # Clean up variable names for display
-      var_display_names_vif <- c(
-        "Age" = "Age",
-        "Gender" = "Gender (Male=1)",
-        "Education" = "Education Level",
-        "Nscore" = "Neuroticism",
-        "Escore" = "Extraversion",
-        "Oscore" = "Openness",
-        "Ascore" = "Agreeableness",
-        "Cscore" = "Conscientiousness",
-        "Impulsive" = "Impulsivity",
-        "SS" = "Sensation Seeking"
-      )
-
-      # Update variable names where possible
-      vif_df$Variable <- sapply(vif_df$Variable, function(x) {
-        if (x %in% names(var_display_names_vif)) {
-          return(var_display_names_vif[x])
-        }
-        return(x)
-      })
-
-      # Add interpretation column
-      vif_df$Concern_Level <- cut(vif_df$VIF, 
-                              breaks = c(0, 1.5, 2.5, 5, 10, Inf),
-                              labels = c("Minimal", "Low", "Moderate", "High", "Very High"),
-                              include.lowest = TRUE, # ensure 0 is included if VIF is very low
-                              right = FALSE)
-
-      # Sort by VIF value in descending order
-      vif_df <- vif_df[order(-vif_df$VIF), ]
-
-      # Create a nicely formatted table with kable
-      vif_table_output <- kable(vif_df,
-            format = "latex", # Ensure LaTeX output for results='asis'
-            caption = "Multicollinearity Assessment - Variance Inflation Factors", 
-            booktabs = TRUE,
-            col.names = c("Predictor", "VIF", "Concern Level"),
-            digits = 2,
-            align = c('l', 'r', 'c'),
-            escape = FALSE) %>% # escape = FALSE for any special characters if they were in variable names
-        kable_styling(latex_options = c("striped", "hold_position"), 
-                      full_width = FALSE,
-                      position = "center") %>%
-        row_spec(0, bold = TRUE) %>%
-        column_spec(1, bold = TRUE) 
-        # Conditional coloring of Concern_Level column might require more complex latex_column_spec or cell_spec
-        # For simplicity, direct coloring in kable is sometimes tricky for PDF.
-        # The following is an attempt but might need latex_column_spec for robust PDF coloring:
-        # column_spec(3, color = ifelse(vif_df$Concern_Level %in% c("High", "Very High"), "red",
-        #                             ifelse(vif_df$Concern_Level == "Moderate", "orange", "blue")))
-      # Footnote has been removed
-
-      print(vif_table_output)
-    } else {
-      cat("VIF values could not be generated for the cannabis_model in pois13.\n")
-    }
-  } else {
-    cat("Not enough predictors in cannabis_model to calculate VIF in pois13 (need at least 2 predictors excluding intercept).\n")
-  }
-} else {
-  if (!exists("cannabis_model")) {
-    cat("Object 'cannabis_model' not found. Cannot calculate VIF in pois13.\n")
-  }
-  if (!requireNamespace("car", quietly = TRUE)) {
-    cat("Package 'car' is not installed. Cannot calculate VIF in pois13.\n")
-  }
-}
-```
-
-### Analysis of Multicollinearity Diagnostics for Cannabis Model  
-
-Finally, a Variance Inflation Factor (VIF) analysis was performed to assess multicollinearity among the predictors in the cannabis model. The results would generally show VIF values within acceptable limits (mostly below 5), indicating that multicollinearity is not severe enough to destabilize coefficient estimates or grossly inflate standard errors. Personality traits, which are known to have some intercorrelation (e.g., Sensation Seeking and Impulsivity, or traits within the Big Five), would likely show moderate VIFs (e.g., in the 1.5 to 3.0 range). Demographic variables like Age and Education might also show some correlation. The absence of high VIF values (e.g., >5 or >10) would enhance confidence that the estimated effects of individual predictors, particularly the key ones like Sensation Seeking and Age, are distinguishable and not merely statistical artifacts of predictor redundancy. This supports the interpretation of each predictor's unique contribution within the model.
-
-```{R pois14, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
-# Function to run a more detailed analysis for the Cannabis model
-analyze_cannabis_model <- function(model) {
-  # Get model summary
-  model_summary <- summary(model)
-
-  # Print key statistics
-  cat("\n=== Cannabis Model Analysis ===\n")
-  cat("Number of observations:", nrow(model$model), "\n")
-  cat("Null deviance:", model$null.deviance, "on", model$df.null, "degrees of freedom\n")
-  cat("Residual deviance:", model$deviance, "on", model$df.residual, "degrees of freedom\n")
-  cat("AIC:", model$aic, "\n")
-
-  # Calculate and print McFadden's Pseudo R²
-  null_model <- glm(Cannabis ~ 1, data = model_data, family = poisson(link = "log"))
-  pseudo_r2 <- 1 - (logLik(model) / logLik(null_model))
-  cat("McFadden's Pseudo R²:", round(as.numeric(pseudo_r2), 4), "\n")
-
-  # Check for overdispersion
-  dispersion <- sum(residuals(model, type = "pearson")^2) / model$df.residual
-  cat("Dispersion parameter:", round(dispersion, 4), "\n")
-
-  # Identify significant predictors
-  sig_coefs <- coef(model_summary)[, c("Estimate", "Pr(>|z|)")]
-  sig_coefs <- sig_coefs[2:nrow(sig_coefs), ]  # Remove intercept
-  sig_coefs <- sig_coefs[sig_coefs[, "Pr(>|z|)"] < 0.05, ]
-  sig_coefs <- sig_coefs[order(abs(sig_coefs[, "Estimate"]), decreasing = TRUE), ]
-
-  cat("\nSignificant predictors (in order of effect size):\n")
-  for (i in 1:nrow(sig_coefs)) {
-    var_name <- rownames(sig_coefs)[i]
-    # ... (code to format and print effect size and p-value) ...
-  }
-
-  # Identify potential outliers
-  pearson_resid <- residuals(model, type = "pearson")
-  # ... (code to identify and print potential outliers) ...
-
-  # Suggest possible model improvements
-  cat("\nPossible model improvements:\n")
-  if (dispersion > 1.2) { # Slightly different threshold here
-    cat("- Consider using a negative binomial model to address overdispersion\n")
-  }
-  cat("- Consider interaction terms (e.g., Age × Education, Gender × SS)\n")
-  cat("- Consider polynomial terms for continuous predictors if relationship is non-linear\n")
-
-  return(invisible(NULL))
-}
-```
-
-
-### Analysis of Detailed Cannabis Model Diagnostics  
-
-The analyze_cannabis_model() function, created in chunk pois14, conducts a detailed diagnostic analysis of the cannabis Poisson regression model. It extracts and assesses key model statistics, checks for overdispersion, pinpoints significant predictors, and offers suggestions for model enhancements. This function would begin its analysis by reporting fundamental model fit statistics.
-
-Separately, a binomial generalized linear model (logistic regression) is used to examine how the five main personality traits correlate with the likelihood of ever having used marijuana. This model uses a binary outcome for marijuana use (never used vs. ever used) and includes scores for Neuroticism, Extraversion, Openness, Agreeableness, and Conscientiousness as continuous predictors. The GLM then estimates how changes in these traits affect the odds of cannabis experimentation.
+These findings highlight that the influence of certain personality traits and demographic factors on cannabis usage is not always straightforward but can be conditional upon other characteristics. Considering such interactions provides a more nuanced understanding of the multifaceted nature of drug consumption.
 
 ## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
