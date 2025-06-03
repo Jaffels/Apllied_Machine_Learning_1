@@ -608,9 +608,7 @@ It prevents the machine learning algorithm from assuming an arbitrary numerical 
 
 # Machine Learning Models
 
-## Linear Model
-
-(Johan Ferreira)
+## Linear Model (Johan Ferreira)
 
 Linear regression was employed not primarily for prediction, but to better understand factors influencing drug use, with predictive modeling deferred to more suitable models due to the nature of our dataset.
 
@@ -1199,9 +1197,7 @@ This plot shows generally favorable characteristics, with most observations havi
 **Conclusion**  
 The diagnostic analysis of the linear regression model for cannabis usage reveals some limitations. Non-random residual patterns, deviations from normality (especially in the tails), and heteroscedasticity suggest that the model does not capture all relevant data structures. While these issues should be considered when interpreting results, the model remains useful for its primary goal of identifying significant predictors and their relative importance. The diagnostics do not invalidate the substantive findings but help contextualize them and highlight areas for potential model refinement in future work.
 
-## Generalised Linear Model with family set to Poisson
-
-(Johan Ferreira)
+## Generalised Linear Model with family set to Poisson (Johan Ferreira)
 
 ```{R pois1, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5}
 # Read the data
