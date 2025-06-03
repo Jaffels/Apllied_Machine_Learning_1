@@ -1025,7 +1025,7 @@ Statistical analysis of the drug consumption dataset revealed significant patter
 
 ### Analysis of Personality Traits as Predictors of Substance Use
 
-```{r lr6, echo=FALSE, cache=TRUE, fig.width=7, fig.height=3.5}
+```{r lr6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
 
 # Properly define the individual models for plotting
 if ("Cannabis" %in% names(results_list)) {
@@ -1042,7 +1042,7 @@ The first plot presents the predictors of cannabis usage, showing estimated coef
 The coefficient plot for cannabis usage shows Sensation Seeking (SS) as the strongest positive predictor (p < 0.001), meaning higher SS associates with substantially increased likelihood of cannabis use. Age has a strong negative association (p < 0.001), with use decreasing significantly as age increases. Openness (Oscore) is another significant positive predictor (p < 0.001), linking intellectual curiosity to higher cannabis use. Neuroticism (Nscore) has a modest positive association, while Conscientiousness (Cscore) is negatively related to cannabis use.
 
 
-```{r lr7, echo=FALSE, cache=TRUE, fig.width=7, fig.height=3.5}
+```{r lr7, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
 if ("Alcohol" %in% names(results_list)) {
   alcohol_model <- results_list[["Alcohol"]]$model
   alcohol_coef_plot <- plot_factor_importance_enhanced(alcohol_model, "Predictors of Alcohol Usage")
@@ -1054,7 +1054,7 @@ if ("Alcohol" %in% names(results_list)) {
 
 For alcohol, Sensation Seeking remains a significant positive predictor, though its effect is smaller than for cannabis. Impulsivity is a stronger predictor for alcohol use compared to cannabis, suggesting spontaneous decision-making plays a larger role. Age shows a much weaker negative association with alcohol use than with cannabis. Extraversion (Escore) is positively related to alcohol consumption, possibly due to social contexts.
 
-```{r lr8, echo=FALSE, cache=TRUE, fig.width=7, fig.height=3.5}
+```{r lr8, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
 if ("Nicotine" %in% names(results_list)) {
   nicotine_model <- results_list[["Nicotine"]]$model
   nicotine_coef_plot <- plot_factor_importance_enhanced(nicotine_model, "Predictors of Nicotine Usage")
@@ -1203,7 +1203,7 @@ The diagnostic analysis of the linear regression model for cannabis usage reveal
 
 (Johan Ferreira)
 
-```{R pois1, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{R pois1, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5}
 # Read the data
 model_data <- read.csv("Data/model_data.csv")
 
@@ -1213,7 +1213,7 @@ if(names(model_data)[1] == "X") {
 }
 ```
 
-```{R pois2, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{R pois2, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5}
 # Define the predictors to use in models
 predictors <- c("Age", "Gender", "Education", 
                 "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
@@ -1233,7 +1233,7 @@ fit_poisson_glm <- function(data, drug, predictors) {
 }
 ```
 
-```{R pois3, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{R pois3, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5}
 # Drugs to model
 drugs_for_poisson_table <- c("Cannabis", "Alcohol", "Nicotine", "Coke", "Ecstasy")
 
@@ -1257,7 +1257,7 @@ models <- Filter(Negate(is.null), models)
 drugs_for_poisson_table <- names(models)
 ```
 
-```{R pois4, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{R pois4, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5}
 # Function to create a comparison table for Poisson models (similar to lr5's table)
 create_poisson_comparison_table <- function(model_list, drug_names) {
   # Key variables to include (same as in predictors for consistency)
@@ -1368,7 +1368,7 @@ create_poisson_comparison_table <- function(model_list, drug_names) {
 
 ### Analysis of Cannabis Usage Poisson Model  
 
-```{r pois5, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4, results='asis'}
+```{r pois5, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3.5, results='asis'}
 # Create and display the Poisson model comparison table
 
 if (length(models) > 0 && length(drugs_for_poisson_table) > 0) {
@@ -1407,7 +1407,7 @@ Among demographic factors, Age generally showed a negative association with use 
 
 ### Analysis of Personality Traits as Predictors of Cannabis Use
 
-```{r pios6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{r pios6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
 plot_glm_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
   coefs_summary <- summary(model)$coefficients
   coef_df <- data.frame(
@@ -1519,35 +1519,32 @@ if (exists("models") && "Cannabis" %in% names(models) && !is.null(models[["Canna
 
 ```
 
-The coefficient plot derived from the Poisson regression model provides insights into the factors influencing the frequency of cannabis usage. The estimates represent changes in the log of the expected count of cannabis use occasions. Several personality traits and demographic factors emerge as significant predictors:
+The Poisson regression model reveals key factors influencing cannabis usage frequency. Sensation Seeking is the most potent positive predictor (p < 0.001), with higher Openness, Impulsivity, Neuroticism (all p < 0.001), and being male (p < 0.001) also increasing expected use. Conversely, older Age and higher Conscientiousness (both p < 0.001) are strong negative predictors. Increased Education, Agreeableness (both p < 0.001), and Extraversion (p < 0.05) are associated with lower frequency. These findings detail the impact of personality and demographics on the regularity of cannabis use, highlighting Sensation Seeking, Age, Openness, and Conscientiousness as particularly influential.
 
-Sensation Seeking (SS): Consistent with findings from other models, Sensation Seeking stands out as the most potent positive predictor of cannabis usage frequency (p < 0.001). Individuals with higher Sensation Seeking scores are associated with a substantially higher expected frequency of cannabis use. This suggests a strong link between the pursuit of novel and intense experiences and more regular cannabis consumption.
+**Comparative Analysis between the Linear and Poisson Models**
 
-Age: Age demonstrates a strong, statistically significant negative association with the frequency of cannabis use (p < 0.001). As age increases, the expected frequency of cannabis use tends to decrease markedly. This is a common finding in substance use research, indicating that cannabis use is often more frequent in younger individuals.
+Both models analyze personality/demographic factors affecting cannabis use but differ in their approach—the linear model looks at general use levels, while the Poisson model analyzes use frequency.
 
-Openness to Experience (Oscore): Openness is another significant positive predictor (p < 0.001). Higher scores on Openness are linked to a higher expected frequency of cannabis use. This aligns with the idea that individuals who are more curious, imaginative, and open to new experiences may engage in cannabis use more frequently.
 
-Conscientiousness (Cscore): Conversely, Conscientiousness is a strong negative predictor of cannabis usage frequency (p < 0.001). Individuals exhibiting higher levels of organization, self-discipline, and dutifulness tend to use cannabis less frequently. This trait appears to act as a protective factor against more regular use.
+Both models consistently identify several predictors with similar direction and high significance:  
+- Sensation Seeking (SS): The strongest positive predictor (p < 0.001).  
+- Age: A strong negative predictor (p < 0.001).  
+- Openness (Oscore): A significant positive predictor (p < 0.001).  
+- Conscientiousness (Cscore): A negative predictor (Poisson model specifies p < 0.001 for frequency).  
+- Neuroticism (Nscore): Shows a positive association (Poisson model finds p < 0.001 with frequency).  
 
-Impulsivity: Impulsivity shows a positive association with cannabis usage frequency (p < 0.001). Those who score higher on impulsivity, indicating a tendency to act without full forethought, are expected to use cannabis more frequently.
+Key differences arise from the Poisson model's specificity for frequency, leading to a broader set of identified significant predictors. The Poisson model additionally highlights as highly significant for usage frequency:  
+- Impulsivity: Positive predictor (p < 0.001).  
+- Gender (Male=1): Positive predictor (p < 0.001).  
+- Education Level: Negative predictor (p < 0.001).  
+- Agreeableness (Ascore): Negative predictor (p < 0.001).  
+- Extraversion (Escore): Negative predictor (p < 0.05).  
 
-Gender (Male=1): Being male (coded as 1) is positively and significantly associated with a higher frequency of cannabis use (p < 0.001) compared to females, holding other factors constant.
-
-Neuroticism (Nscore): Neuroticism also shows a statistically significant positive relationship with cannabis usage frequency (p < 0.001), suggesting that individuals with a higher tendency towards negative emotions like anxiety and moodiness may use cannabis more frequently.
-
-Education Level: Higher levels of education are significantly associated with a lower frequency of cannabis use (p < 0.001). This negative relationship suggests that increased educational attainment may be a protective factor against frequent cannabis consumption.
-
-Agreeableness (Ascore): Agreeableness is negatively associated with cannabis usage frequency (p < 0.001). Individuals who are more cooperative, empathetic, and considerate of others tend to report using cannabis less frequently.
-
-Extraversion (Escore): Extraversion displays a statistically significant negative association with the frequency of cannabis use (p < 0.05). This suggests that more outgoing and sociable individuals, in this model, tend to use cannabis less frequently, which is an interesting contrast to some substance use patterns where extraversion might be linked to more social use.
-
-Summary of Poisson Model Findings for Cannabis Usage Frequency:
-
-The Poisson model for cannabis usage frequency highlights a clear pattern of predictors. High Sensation Seeking, Openness, Impulsivity, Neuroticism, and being male are associated with an increased expected frequency of use. Conversely, older Age, higher Conscientiousness, higher Education levels, greater Agreeableness, and higher Extraversion are linked to a decreased expected frequency. These findings provide a nuanced view of how personality and demographics relate not just to ever using cannabis, but to the regularity of its consumption. The strong effects of Sensation Seeking, Age, Openness, and Conscientiousness are particularly notable and largely consistent in direction with models predicting general cannabis use, but this model specifically quantifies their impact on usage frequency.
+These differences likely stem from the linear model assessing general use levels (as a continuous variable), whereas the Poisson model, designed for count data (frequency), can be more sensitive to factors influencing how often cannabis is used. Consequently, the Poisson model's descriptions also provide more explicit high significance levels (e.g., p < 0.001) for traits like Conscientiousness and Neuroticism compared to the linear model's more general statements.
 
 ### Analysis of Poisson Models with Interaction Terms for Cannabis Usage
 
-```{r pois_multi_inter, echo=FALSE, cache=TRUE, results='asis'}
+```{r pois_multi_inter, echo=FALSE, cache=TRUE, results='asis', fig.width=5, fig.height=4}
 # Define the outcome variable
 outcome_variable <- "Cannabis"
 
@@ -1654,21 +1651,15 @@ kable(final_results_table_updated,
   row_spec(0, bold = TRUE)
 ```  
 
-To explore more complex relationships influencing cannabis usage, eight Poisson regression models were fitted, each incorporating a distinct two-way interaction term alongside main demographic and personality predictors. Table 5 summarizes these models, detailing the interaction term coefficients, their statistical significance, and overall model fit statistics (AIC, BIC, Pseudo R²).
+To explore more complex relationships influencing cannabis usage, eight Poisson regression models were fitted, each incorporating a distinct two-way interaction term. Several interactions significantly moderated the relationship between predictors and the frequency of cannabis use:
 
-The results indicate that several interactions significantly moderate the relationship between predictors and the frequency of cannabis use:
+- The Age:SS interaction (p < 0.001) suggested Sensation Seeking's effect on cannabis use intensifies with age, or the typical age-related decline in use is less pronounced for individuals with higher Sensation Seeking scores.
+- The Age:Oscore interaction (p < 0.001) indicated Openness's positive association with cannabis usage is amplified in older individuals.
+- Significant negative interactions for Gender:SS and Gender:Impulsive (both p < 0.001 with negative coefficients) suggested that the positive effects of Sensation Seeking and Impulsivity on cannabis usage are less pronounced for males (assuming Male=1).
+- The Oscore:SS interaction (p < 0.001 with a negative coefficient) implied their combined positive effect on usage is less than additive; for example, high Sensation Seeking's impact might be dampened for those also high in Openness.
+- Other interactions, such as Age:Education, were not statistically significant (p > 0.05), while Cscore:Impulsive showed borderline significance (p = 0.068).
 
-* The interaction between **Age and Sensation Seeking (SS)** (`Age:SS`, Coef = 0.083, p < 0.001) was significant, suggesting that the effect of Sensation Seeking on cannabis usage intensifies with age. Alternatively, this could imply that the typical age-related decline in cannabis use is less pronounced for individuals with higher Sensation Seeking scores.
-* Similarly, the **Age and Openness (Oscore)** interaction (`Age:Oscore`, Coef = 0.092, p < 0.001) was significant. This positive interaction suggests that the positive association of Openness with cannabis usage is amplified in older individuals.
-* A significant negative interaction was observed for **Gender and Sensation Seeking (SS)** (`Gender:SS`, Coef = -0.129, p < 0.001). Assuming 'Gender' is coded (e.g., Male=1, Female=0), this indicates that the positive effect of Sensation Seeking on cannabis usage is attenuated (less strong) for males compared to females (or the reference gender category).
-* The interaction between **Gender and Impulsivity** (`Gender:Impulsive`, Coef = -0.124, p < 0.001) was also significant and negative, suggesting a similar pattern where the effect of Impulsivity on cannabis usage differs by gender, being less pronounced for males if coded as 1.
-* The **Openness (Oscore) and Sensation Seeking (SS)** interaction (`Oscore:SS`, Coef = -0.089, p < 0.001) was significant. This negative interaction implies that while both traits might individually predict higher cannabis use, their combined effect is less than additive; for example, the impact of high Sensation Seeking might be somewhat dampened for individuals who are also very high in Openness, or vice-versa.
-
-Other interactions, such as `Age:Education` (p = 0.172) and `Education:Cscore` (p = 0.249), were not statistically significant at the conventional $\alpha$ = 0.05 level. The interaction between `Cscore:Impulsive` (p = 0.068) showed a borderline significance, warranting cautious interpretation or further investigation.
-
-In terms of overall model fit, the Pseudo R² values across these interaction models were relatively similar, ranging from approximately 0.162 to 0.168. This indicates that the inclusion of these specific interaction terms resulted in modest, though varying, improvements in the proportion of variance explained compared to a model with only main effects (which would likely have a slightly lower Pseudo R²). Comparing AIC and BIC values, the model incorporating the `Age * Oscore` interaction exhibited the lowest AIC (7352.616) and BIC (7419.116), suggesting it may offer the best balance of model fit and parsimony among the interaction models tested.
-
-These findings highlight that the influence of certain personality traits and demographic factors on cannabis usage is not always straightforward but can be conditional upon other characteristics. Considering such interactions provides a more nuanced understanding of the multifaceted nature of drug consumption.
+In terms of overall model fit, the Pseudo R² values (approximately 0.162 to 0.168) showed modest improvements over models with only main effects. Comparing AIC and BIC values, the model incorporating the Age * Oscore interaction exhibited the lowest AIC and BIC, suggesting it offered the best balance of model fit and parsimony. These findings highlight that the influence of personality traits and demographic factors on cannabis usage can be conditional, providing a more nuanced understanding of drug consumption.
 
 ## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
