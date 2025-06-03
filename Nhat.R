@@ -472,7 +472,7 @@ summary(gam.1)
 # In summary, at the initial age (where the smooth hasn’t yet adjusted upward or downward), college/university students have a significantly higher starting chance of having used cannabis in the past year; university and master’s graduates have significantly lower starting chances; and the other categories do not show clear differences compared to the “Not Provided” group.
 
 # For the approximate significance of the smooth terms: 
-For every education category except doctorate holders, age has a statistically significant effect on past‐year use, though the exact shape of that effect varies. Young adults in every education group exhibit dramatically higher past‐year cannabis use, yet the way that use declines with age differs depending on schooling. For example, those in “Not Provided” and “left school before 16” categories show an almost straight‐line drop from ages 18–24 onward (edf = 1.000, p < 0.01), indicating a steady decrease as they age.
+# For every education category except doctorate holders, age has a statistically significant effect on past‐year use, though the exact shape of that effect varies. Young adults in every education group exhibit dramatically higher past‐year cannabis use, yet the way that use declines with age differs depending on schooling. For example, those in “Not Provided” and “left school before 16” categories show an almost straight‐line drop from ages 18–24 onward (edf = 1.000, p < 0.01), indicating a steady decrease as they age.
 
 
 
