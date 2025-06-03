@@ -63,6 +63,7 @@ library(broom)
 library(dplyr)
 library(janitor)
 library(GGally)
+library(mgcv)
 
 # Suppresses all warnings
 options(warn = -1)
@@ -529,6 +530,147 @@ semeron_table
 ```
 
 The questionnaire included Semeron a fictitious drug. The fact that only a very small fraction of participants, 0.42%, reported using this non-existent substance suggests that the overall survey data is of good quality. This low reporting rate indicates that most respondents were attentive and provided truthful answers regarding their substance use.
+
+## Personality Traits by Marijuana Use
+
+```{r glmbi_intro, echo=FALSE, cache=TRUE}
+# Load the dataset
+df <- read.csv("Data/model_data.csv")
+#Remove the first column index X
+df_cnb <- df[,-1]
+# Create a column to flag if ever used cannabis
+df_cnb <- df_cnb %>%
+  mutate(
+    cnb_use = if_else(Cannabis == 0, 0, 1)
+  )
+```
+
+```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
+# Boxplots by use status
+trait_labs <- c(
+  Nscore = "Neuroticism",
+  Escore = "Extraversion",
+  Oscore = "Openness",
+  Ascore = "Agreeableness",
+  Cscore = "Conscientiousness"
+)
+df_cnb %>%
+  gather(trait, score, Nscore:Cscore) %>%
+  ggplot(aes(x = factor(cnb_use), y = score)) +
+    geom_boxplot() +
+    facet_wrap(
+      ~ trait, 
+      scales = "free_y", 
+      ncol = 5, 
+      labeller = labeller(trait = trait_labs)) +
+    scale_x_discrete(labels = c("Never", "Ever")) +
+    labs(x = "Marijuana Use", y = "Trait Score",
+         title = "Personality Traits by Marijuana Use")
+```
+The boxplots show a clear pattern across several traits when comparing people who’ve never tried marijuana to those who have. Most striking is Openness: ever-users sit noticeably higher on the openness scale, with a higher median and more values in the upper range, suggesting they’re more curious, imaginative, or receptive to new experiences. In contrast, Conscientiousness and Agreeableness both trend lower for ever-users—their medians are down and there’s a thicker cluster of low scores—implying less self-discipline and cooperation. Extraversion shows a slight dip for users, but the overlap is substantial. Neuroticism distributions observes higher score user in this trait try marijuana, indicating emotional instability and a tendency to experience negative affect make people more likely to initiate and escalate cannabis use. Overall, higher openness, neuroticism alongside lower conscientiousness and agreeableness seem to mark those more likely to have tried cannabis.
+
+## Past-year cannabis use by Education levels
+
+```{r edu_distribute, echo=FALSE, cache=TRUE}
+# Load cleaned dataset
+df_cl <- read.csv("Data/cleaned.csv")
+# Remove the X column
+if("X" %in% names(df_cl)) df_cl <- df_cl %>% select(-X)
+# Classify past-year cannabis use: if use cannabis in the past year, then 1, otherwise 0 
+past_year_labels <- c(
+  "Used in Last Year",
+  "Used in Last Month",
+  "Used in Last Week",
+  "Used in Last Day"
+)
+df_cnb_gam <- df_cl %>%
+  mutate(
+    cnb_use = case_when(
+      Cannabis %in% past_year_labels           ~ "Yes",
+      Cannabis %in% c("Never Used",
+                      "Used over a Decade Ago",
+                      "Used in Last Decade")  ~ "No",
+      TRUE                                     ~ NA_character_
+    ),
+    cnb_use = factor(cnb_use, levels = c("No","Yes"))
+  )
+```
+```{r edu_dist_plot, echo=FALSE, cache=TRUE}
+# Summarise into a data frame
+edu_summary <- df_cnb_gam %>%
+  group_by(Education) %>%
+  summarise(
+    n    = n(),
+    prev = mean(cnb_use == "Yes") * 100
+  ) %>%
+  arrange(prev) %>%            
+  mutate(
+    prev  = round(prev, 1),
+    label = paste0(n, " (", prev, "%)")
+  )
+#Show the same table with kable
+edu_summary %>%
+  select(Education, n, prev) %>%
+  kable(
+    col.names = c("Education Level", "Count", "Past-Year Use (%)"),
+    caption   = "Cannabis Use Prevalence by Education Level",
+    align     = c("l","r","r"),
+    digits    = c(0,0,1)
+  ) %>%
+  kable_styling(bootstrap_options = c("striped","hover","condensed"))
+#Plot a horizontal bar chart
+ggplot(edu_summary, aes(x = prev, y = reorder(Education, prev))) +
+  geom_col(fill = "steelblue", width = 0.6) +
+  geom_text(aes(label = label), hjust = -0.05, size = 3) +
+  scale_x_continuous(
+    expand = expansion(mult = c(0, .1))
+  ) +
+  labs(
+    x       = "Past-Year Cannabis Use (%)",
+    y       = "Education Level",
+    title   = "Prevalence of Past-Year Cannabis Use\nby Education Level",
+    caption = "Counts in parentheses"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+It is striking to see how education seems to go hand-in-hand with cannabis habits: people who started college but didn’t finish top the chart at about 80% past-year use, while those who walked away before age 18 still hover around two-thirds. But as you climb the credential ladder—bachelor’s, professional diplomas, then master’s and doctorates—the rate steadily falls into the 30–45% range. Sure, some of that drop comes simply because graduate students tend to be older, but even among older adults you see lower use in the highest-degree groups. That makes you wonder: does the discipline and structure of finishing a degree actually delay trying cannabis or keep use from ramping up? A GAM that fits its own smooth age-use curve for each education level will help us untangle whether a college diploma really pushes that peak of use later and tames its rise, or if it’s mostly just reflecting who’s in which age bracket.
+
+## Overall age-use curve
+
+```{r age-use curve, echo=FALSE, cache=TRUE}
+# define your age‐bins (adjust to your exact labels!)
+age_levels <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
+df_cnb_gam <- df_cnb_gam %>%
+  mutate(
+    age_cat = factor(Age, levels = age_levels, ordered = TRUE),
+    # numeric midpoint (as rough continuous proxy)
+    age_mid = case_when(
+      age_cat == "18-24" ~ 21,
+      age_cat == "25-34" ~ 29.5,
+      age_cat == "35-44" ~ 39.5,
+      age_cat == "45-54" ~ 49.5,
+      age_cat == "55-64" ~ 59.5,
+      age_cat == "65+"   ~ 70,
+      TRUE ~ NA_real_
+    )
+  )
+df_cnb_gam %>%
+  group_by(age_cat) %>%
+  summarise(pct_use = mean(cnb_use == "Yes") * 100,
+            n = n()) %>%
+  ggplot(aes(x = age_cat, y = pct_use, group = 1)) +
+    geom_point(aes(size = n)) +
+    geom_line() +
+    labs(x = "Age group", y = "Past-year cannabis use (%)",
+         title = "Overall age–use curve")
+```
+
+The age‐use curve paints a striking picture of how past‐year cannabis consumption shifts across the lifespan. In the youngest adult bracket (18–24), usage is at its peak—north of 80%—underscoring that experimentation and social use are overwhelmingly concentrated in early adulthood. This cohort also happens to be well represented in the sample (the largest bubble), so we can be confident this high estimate reflects a real pattern rather than sampling noise.
+
+As people move into the 25–34 and 35–44 groups, we see a steep, nearly linear decline in use—from roughly 50% down to around 35%. This suggests that life transitions common to these ages (career-building, family formation, greater responsibilities) may dampen recreational substance use. By middle age (45–54), prevalence dips further to about 25%, illustrating a continued retreat from cannabis as adults settle into longer‐term routines.
+
+Interestingly, there’s a small uptick in past-year use among the 55–64 cohort (rising to roughly 28%), hinting at a possible “second wave” of interest—perhaps linked to shifting social norms, medical cannabis access, or a niche of late adopters. Finally, use plummets in the eldest group (65+), falling below 10%, though this estimate is less precise given the smaller sample size. Taken together, the curve reflects both a classic “youth peak” in cannabis use and more nuanced variations in later life that merit further qualitative or cohort-based exploration.
 
 # Prepraring the Dataset for Machine Learning
 
@@ -1516,7 +1658,6 @@ The Poisson regression model reveals key factors influencing cannabis usage freq
 
 Both models analyze personality/demographic factors affecting cannabis use but differ in their approach—the linear model looks at general use levels, while the Poisson model analyzes use frequency.
 
-
 Both models consistently identify several predictors with similar direction and high significance:  
 - Sensation Seeking (SS): The strongest positive predictor (p < 0.001).  
 - Age: A strong negative predictor (p < 0.001).  
@@ -1783,146 +1924,6 @@ if (exists("cannabis_poisson_model") && !is.null(cannabis_poisson_model)) {
 
 **Conclusion** The diagnostic analysis of the Cannabis Poisson model highlights probable overdispersion and some non-random patterns in residuals, suggesting the basic Poisson structure may not fully capture the data's complexity. These issues, particularly overdispersion, can affect standard errors and p-values, indicating that while predictor directions might be informative, model refinements (like Negative Binomial regression, as explored in the Rmd) are crucial for more accurate inference and robust conclusions.
 
-## Generalised Linear Model with family set to Binomial (Nhat Bui)
-
-```{r glmbi_intro, echo=FALSE, cache=TRUE}
-
-# Load the dataset
-df <- read.csv("Data/model_data.csv")
-
-#Remove the first column index X
-df_cnb <- df[,-1]
-
-# Create a column to flag if ever used cannabis
-df_cnb <- df_cnb %>%
-  mutate(
-    cnb_use = if_else(Cannabis == 0, 0, 1)
-  )
-
-```
-
-1. Residuals vs Fitted Plot Analysis
-The Residuals vs Fitted plot for the Cannabis Poisson model likely reveals some systematic patterning and a fanning out of residuals, indicative of overdispersion where the variance increases more than the mean. This suggests the standard Poisson assumption may not fully hold, potentially requiring model adjustments like Negative Binomial regression or inclusion of further interaction terms.
-
-2. Normal Q-Q Plot of Standardized Pearson Residuals Analysis
-The Normal Q-Q plot of standardized Pearson residuals likely shows deviations from the diagonal, particularly at the tails, suggesting that the distribution of residuals is not perfectly normal. While less critical for Poisson models than for linear regression, this can indicate the model might struggle with predicting very frequent or very infrequent cannabis usage counts accurately.
-
-3. Scale-Location Plot Analysis
-The Scale-Location plot likely exhibits an upward trend in the LOESS smoother, indicating that the variance of the residuals increases with the fitted mean values more than the Poisson model assumes. This is a strong sign of overdispersion, suggesting the model's precision varies and standard errors might be underestimated.
-
-4. Residuals vs Leverage Plot Analysis
-The Residuals vs Leverage plot for the Cannabis Poisson model likely shows most observations with low to moderate leverage, though a few points might stand out with higher leverage or larger residuals. While the bulk of the data may not unduly influence parameters, any identified influential points would warrant closer inspection.
-
-Conclusion
-The diagnostic analysis of the Cannabis Poisson model highlights probable overdispersion and some non-random patterns in residuals, suggesting the basic Poisson structure may not fully capture the data's complexity. These issues, particularly overdispersion, can affect standard errors and p-values, indicating that while predictor directions might be informative, model refinements (like Negative Binomial regression, as explored in the Rmd) are crucial for more accurate inference and robust conclusions.
-
-```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
-# Boxplots by use status
-trait_labs <- c(
-  Nscore = "Neuroticism",
-  Escore = "Extraversion",
-  Oscore = "Openness",
-  Ascore = "Agreeableness",
-  Cscore = "Conscientiousness"
-)
-df_cnb %>%
-  gather(trait, score, Nscore:Cscore) %>%
-  ggplot(aes(x = factor(cnb_use), y = score)) +
-    geom_boxplot() +
-    facet_wrap(
-      ~ trait, 
-      scales = "free_y", 
-      ncol = 5, 
-      labeller = labeller(trait = trait_labs)) +
-    scale_x_discrete(labels = c("Never", "Ever")) +
-    labs(x = "Marijuana Use", y = "Trait Score",
-         title = "Personality Traits by Marijuana Use")
-```
-
-The boxplots show a clear pattern across several traits when comparing people who’ve never tried marijuana to those who have. Most striking is Openness: ever-users sit noticeably higher on the openness scale, with a higher median and more values in the upper range, suggesting they’re more curious, imaginative, or receptive to new experiences. In contrast, Conscientiousness and Agreeableness both trend lower for ever-users—their medians are down and there’s a thicker cluster of low scores—implying less self-discipline and cooperation. Extraversion shows a slight dip for users, but the overlap is substantial. Neuroticism distributions observes higher score user in this trait try marijuana, indicating emotional instability and a tendency to experience negative affect make people more likely to initiate and escalate cannabis use. Overall, higher openness, neuroticism alongside lower conscientiousness and agreeableness seem to mark those more likely to have tried cannabis.
-
-```{r glmbi_corrmatrix, echo=FALSE, cache=TRUE}
-# Correlation matrix
-df_cnb %>%
-  select(Nscore:Cscore, cnb_use) %>%
-  ggpairs(
-    columns = 1:5,
-    mapping = aes(color = factor(`cnb_use`), alpha = 0.7),
-    upper = list(
-      continuous = wrap("cor", size = 4, digits = 2)
-    ),
-    lower = list(
-      continuous = wrap("smooth", se = FALSE, size = 0.3)
-    ),
-    diag = list(
-      continuous = wrap("densityDiag", alpha = 0.5)
-    ),
-    axisLabels = "show"
-  ) +
-  scale_color_brewer(
-    type    = "qual",
-    palette = "Set1",
-    name    = "Cannabis\nUse"
-  ) +
-  labs(
-    title    = "Pairwise Relationships & Correlations of Personality Traits",
-    subtitle = "Colored by Cannabis-use indicator",
-    caption  = "Note: Correlation coefficients rounded to two decimals"
-  ) +
-  theme_minimal(base_size = 15) +
-  theme(
-    legend.position   = "bottom",
-    legend.title.align= 0.5,
-    plot.title        = element_text(face = "bold", size = 16),
-    plot.subtitle     = element_text(size = 12),
-    strip.text        = element_text(face = "bold"),
-    panel.grid.minor  = element_blank()
-  )
-```
-```{r glmbi_model, echo=FALSE, cache=TRUE}
-# Fit the model 
-
-model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
-summary(model)
-
-cnb_model <- broom::tidy(model) %>%
-  mutate(
-    raw_p = p.value,
-    p.value = round(p.value, 3),
-    p.value = ifelse(p.value < 0.001, sprintf("%.2e", raw_p), p.value),
-    OR = round(exp(estimate), 2),
-    lower_CI = round(exp(estimate - 1.96 * std.error), 2),
-    upper_CI = round(exp(estimate + 1.96 * std.error), 2),
-        term     = recode(term,
-               `(Intercept)` = "Intc.",
-               Nscore        = "Neuroticism",
-               Escore        = "Extraversion",
-               Oscore        = "Openness",
-               Ascore        = "Agreeableness",
-               Cscore        = "Conscientiousness"
-             )
-  ) %>%
-  select(term, estimate, OR, lower_CI, upper_CI, p.value)
-
-kable(cnb_model, 
-      col.names = c("Term", "Estimate", "OR", "Lower 95%", "Upper 95%", "p-value"),
-      digits = c( NA, 3, 2, 2, 2, NA),
-      caption = "Logistic Regression (Binomial GLM) Results") %>%
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"),
-    full_width        = FALSE,
-    position          = "center",
-    font_size         = 12
-  ) %>%
-  row_spec(0, bold = TRUE) %>%        
-  column_spec(1, width = "4cm") %>%   
-  column_spec(2:5, width = "2.5cm") %>%
-  column_spec(6, width = "3cm")      
-```
-
-The logistic regression shows that, of the five personality traits, Openness is by far the strongest predictor of having ever tried marijuana: each one-point increase in Openness more than doubles the odds of experimentation (OR = 2.51, 95% CI 2.18–2.89, p < 0.001). Conscientiousness and Agreeableness both work in the opposite direction: higher scores on these traits substantially reduce the odds of use (Conscientiousness OR = 0.57, 95% CI 0.49–0.66, p < 0.001; Agreeableness OR = 0.74, 95% CI 0.65–0.85, p < 0.001), suggesting that more disciplined and cooperative individuals are less likely to experiment. Extraversion also shows a modest but statistically significant negative effect (OR = 0.83, 95% CI 0.71–0.96, p = 0.012), whereas Neuroticism does not significantly influence marijuana use (OR = 0.92, 95% CI 0.80–1.07, p = 0.28). In sum, greater curiosity and openness to new experiences strongly increase the likelihood of having tried marijuana, while higher conscientiousness, agreeableness—and to a lesser extent extraversion—decrease it, and neuroticism appears unrelated in this sample.
-
-
 Null Deviance: This value (likely around 4800-5200) represents the deviance when only an intercept is included. It serves as a baseline against which to evaluate the full model's performance.
 Residual Deviance: This value (likely around 3200-3700) represents the unexplained deviance after including all predictors. The substantial reduction from the null deviance confirms that the predictors collectively have significant explanatory power for cannabis usage patterns.
 Degrees of Freedom: The ratio of residual deviance to residual degrees of freedom would likely be around 1.2-1.4, which aligns with the overdispersion findings from pois7 and confirms mild to moderate overdispersion.
@@ -2129,11 +2130,205 @@ Chunk pois15 represents the culmination of the Poisson regression analysis for c
 The significant interactions discovered – particularly between age and education, and between gender and sensation seeking – reveal that risk factors for cannabis use operate in context-dependent ways rather than having universal effects. These findings have important implications for both theoretical understanding of substance use and practical approaches to prevention and intervention.
 Most importantly, the analysis demonstrates how statistical sophistication and substantive theory can reinforce each other in the study of complex behavioral phenomena. The model enhancements are simultaneously justified by statistical diagnostics (addressing non-linear patterns observed in residuals) and informed by theoretical questions about how demographic and personality factors interact to influence substance use behavior. This integration of methodological rigor and substantive insight represents the hallmark of high-quality behavioral science research.
 
-## Generalised Linear Model with family set to Binomial
+## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
-Don't know if this will improve your model, but it might be worth your time to test the Negative Binomial Model
+```{r glmbi_model, echo=FALSE, cache=TRUE}
+# Fit the model 
 
-## Generalised Additive Model
+model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
+summary(model)
+
+cnb_model <- broom::tidy(model) %>%
+  mutate(
+    raw_p = p.value,
+    p.value = round(p.value, 3),
+    p.value = ifelse(p.value < 0.001, sprintf("%.2e", raw_p), p.value),
+    OR = round(exp(estimate), 2),
+    lower_CI = round(exp(estimate - 1.96 * std.error), 2),
+    upper_CI = round(exp(estimate + 1.96 * std.error), 2),
+        term     = recode(term,
+               `(Intercept)` = "Intc.",
+               Nscore        = "Neuroticism",
+               Escore        = "Extraversion",
+               Oscore        = "Openness",
+               Ascore        = "Agreeableness",
+               Cscore        = "Conscientiousness"
+             )
+  ) %>%
+  select(term, estimate, OR, lower_CI, upper_CI, p.value)
+
+kable(cnb_model, 
+      col.names = c("Term", "Estimate", "OR", "Lower 95%", "Upper 95%", "p-value"),
+      digits = c( NA, 3, 2, 2, 2, NA),
+      caption = "Logistic Regression (Binomial GLM) Results") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width        = FALSE,
+    position          = "center",
+    font_size         = 12
+  ) %>%
+  row_spec(0, bold = TRUE) %>%        
+  column_spec(1, width = "4cm") %>%   
+  column_spec(2:5, width = "2.5cm") %>%
+  column_spec(6, width = "3cm")      
+```
+
+The logistic regression shows that, of the five personality traits, Openness is by far the strongest predictor of having ever tried marijuana: each one-point increase in Openness more than doubles the odds of experimentation (OR = 2.51, 95% CI 2.18–2.89, p < 0.001). Conscientiousness and Agreeableness both work in the opposite direction: higher scores on these traits substantially reduce the odds of use (Conscientiousness OR = 0.57, 95% CI 0.49–0.66, p < 0.001; Agreeableness OR = 0.74, 95% CI 0.65–0.85, p < 0.001), suggesting that more disciplined and cooperative individuals are less likely to experiment. Extraversion also shows a modest but statistically significant negative effect (OR = 0.83, 95% CI 0.71–0.96, p = 0.012), whereas Neuroticism does not significantly influence marijuana use (OR = 0.92, 95% CI 0.80–1.07, p = 0.28). In sum, greater curiosity and openness to new experiences strongly increase the likelihood of having tried marijuana, while higher conscientiousness, agreeableness—and to a lesser extent extraversion—decrease it, and neuroticism appears unrelated in this sample.
+
+## Generalised Additive Model (Nhat Bui)
+
+```{r gam_eda_plot_edu, echo=FALSE, cache=TRUE}
+df_cnb <- df_cnb %>%
+  mutate(
+    cnb_past_year = if_else(Cannabis >= 3, 1, 0)
+  )
+ggplot(df_cnb, aes(x = Education,
+                   y = cnb_past_year,
+                   group = 1)) +          
+  geom_point(alpha = 0.5) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 4),     
+    method.args = list(family = binomial),  
+    se          = TRUE
+  ) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Education (GAM, k = 4)",
+    x     = "Education",
+    y     = "Past-Year Cannabis Use (0/1)"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+This GAM‐derived curve describes how the probability of past-year cannabis use (vertical axis) changes as education rises from level 1 (“Not Provided/left before 16”) through level 10 (“Doctorate”). A few key takeaways emerge:
+
+At the lowest education levels (1–2), estimated use probability starts at around 40–45%. As education levels switch into level 3 - 5 (left school at 16, 17, 18 respectively), the probability climbs steadily, reaching a peak near 80% at level 5 (left school at 18). Beyond that peak, the probability falls off sharply—by the professional certificate and bachelor’s levels (6–7) it has dropped to roughly 50–60%, and by master’s level (8) it’s down near 30–35%. Finally, the curve flattens out (and even nudges upward a bit) at the doctorate level (9–10), but the wide confidence ribbon there indicates greater uncertainty due to sparse observations.
+
+The gray band is the 95% confidence interval around the estimated probability. It is narrowest in the middle education bands (levels 3–7), where most of your data lie—so those estimates are quite precise. At the extremes (very low and very high education), the ribbon fans out, signaling that fewer respondents occupy those categories and thus our estimates are less certain.
+
+Taken together, this non-linear relationship shows that cannabis use probability does not simply rise or fall with education. Instead, it increases sharply through those that left school at 16, 17, 18 reflecting experimentation during teenage-age—and then declines among individuals with higher degrees, suggesting that the highest educational attainments are associated with lower recent use.
+
+```{r gam_eda_plot_age, echo=FALSE, cache=TRUE}
+ggplot(df_cnb, aes(x = Age,
+                   y = cnb_past_year,
+                   group = 1)) +          
+  geom_point(alpha = 0.5) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 3),     
+    method.args = list(family = binomial),  
+    se          = TRUE
+  ) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Age (GAM, k = 3)",
+    x     = "Age",
+    y     = "Past-Year Cannabis Use (0/1)"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
+The GAM‐smoothed curve reveals a clear, non‐linear decline in the probability of past‐year cannabis use as people age. At the youngest age category (18–24), use is highest—around 80–85%. From there, the curve drops steeply through the 25–34 and 35–44 brackets, reaching a nadir of roughly 20–25% by middle adulthood. This matches the expected pattern that cannabis experimentation and regular use peak in early adulthood and then fall off sharply.
+
+Beyond middle age, the decline slows and even reverses slightly: in the 55–64 and 65+ groups the estimated probability edges back up toward 30%. The widening gray confidence band in those older bins reflects smaller sample sizes and greater uncertainty, but the gentle uptick suggests that a non‐negligible minority of older adults continue to report recent use.
+
+Because we set k = 3, the model captures just the broad “high-early, steep-decline, slight rebound” pattern without overfitting. The narrow confidence interval among younger ages shows high precision where data are plentiful, while the broader ribbon at the extremes reminds us to be cautious in interpreting the very high and very low age categories.
+
+```{r gam_eda_plot_age_edu, echo=FALSE, cache=TRUE,fig.width=12, fig.height=10, dpi=125}
+education_levels <- c(
+  "Not Provided",
+  "Left school before 16",
+  "Left school at 16",
+  "Left school at 17",
+  "Left school at 18",
+  "College/University student",
+  "Professional certificate/diploma",
+  "University degree",
+  "Masters degree",
+  "Doctorate degree"
+)
+df_cnb <- df_cnb %>%
+  mutate(
+    Education = factor(
+      Education,
+      levels = 1:10,
+      labels = education_levels
+    )
+  )
+ggplot(df_cnb, 
+       aes(x = Age, 
+           y = cnb_past_year)) +   
+  geom_point(alpha = 0.3) +
+  stat_smooth(
+    method      = "gam",
+    formula     = y ~ s(x, k = 3),
+    method.args = list(family = binomial),
+    se          = TRUE
+  ) +
+  facet_wrap(~ Education, ncol = 3) +
+  labs(
+    title = "Past-Year Cannabis Use vs. Age, by Education Level",
+    x     = "Age",
+    y     = "Probability of Past-Year Use"
+  ) +
+  theme_minimal(base_size = 17)
+```
+
+The “less‐educated” group (e.g. “Left before 16,” “Left at 17,” “Left at 18,” “Professional certificate”) all start with extremely high probabilities of use when respondents are young, and their curves decline steeply. By midlife, those groups still often have somewhat higher past‐year use than the more‐educated strata. Whereas, the highest‐education respondent group (“University degree,” “Masters,” “Doctorate”) start at a lower baseline in the youngest age bracket, decline more gradually, and by the oldest ages are clustered down near 10–25%. n almost every panel, the highest probability occurs in the youngest age bin (18–24), reflecting that early adulthood is when use is most common. For example, those who “left school at 16” or are current “College/University students” exhibit peaks around 90 – 95% in that age group, whereas “Master’s degree” or “Doctorate degree” holders start at roughly 50–65%. As age increases from the early-20s toward the mid-40s, all panels show a steep drop
+
+The one outlier in shape is “College/University student.” That group has a very high probability at the youngest (freshman/first‐year) ages, dips in the middle (around 35-40), then rebounds at older ages. Almost every other “education” stratum shows a decline.
+
+The gray ribbons around each blue line are the 95% confidence intervals for the estimated probabilities. Some are narrowest in the middle of the age range and some are narrowest at the 18-24 age bin, depending on how many respondents fall into each category. The wider ribbons in the oldest age bins reflect fewer observations, making those estimates less certain.
+
+Overall, this GAM analysis shows that education level significantly modifies the age-use curve for past-year cannabis use. Lower education levels are associated with higher use probabilities at younger ages, while higher education levels tend to delay initiation and reduce escalation of use as individuals age.
+
+```{r gam_fit_summary, echo=FALSE, cache=TRUE}
+set.seed(123)
+gam.1 <- gam(
+  cnb_past_year ~ 
+    Education + 
+    s(Age, by = Education, k = 5),
+  family = binomial(link = "logit"),
+  data   = df_cnb,
+)
+summary(gam.1)
+```
+
+The “Parametric coefficients” table shows one row for the intercept (the reference category, here “Not Provided”) and one row for each of the other education levels. The intercept row can be seen as “the starting probability of past‐year use for the ‘Not Provided’ group”, and other row tells how much higher or lower that starting probability is for each education level compared to “Not Provided.”
+
+(Intercept) = 0.3230 (p = 0.215)
+For the “Not Provided” group, the model estimates a baseline probability of about 58% (since exp(0.3230)/(1 + exp(0.3230)) = 0.58005). p = 0.215 is not significant.
+
+Left school before 16: +1.289 (p = 0.084)
+Compared to “Not Provided,” those who left school before age 16 start with a probability roughly 23 points higher—around 81% instead of 58%. The p‐value of 0.084 is just above the usual threshold of 0.05, so this is a somewhat weak signal. There is some indication that early dropouts have a higher starting chance of past‐year use, but it isn’t quite strong enough to be certain.
+
+Left school at 17: +0.526 (p = 0.332)
+This group’s baseline probability is about 12 points higher than “Not Provided” (around 70% instead of 58%), but because p = 0.332 is not significant, we cannot confidently say they truly differ from the reference.
+
+Left school at 18: +0.028 (p = 0.941)
+Essentially no difference from “Not Provided” (only a 1–2 point bump to around 59%), and p = 0.941 confirms there is no evidence of a real shift.
+
+College/University student: +0.704 (p = 0.0148)
+Students start with about an 18‐point higher probability than “Not Provided” (around 76% vs. 58%), and p = 0.0148 is below 0.05. In other words, being a current student is significantly associated with a higher baseline chance of past‐year use.
+
+Professional certificate/diploma: –0.0003 (p = 0.999)
+There is effectively no change in starting probability (stays around 58%), and p close to 1 shows no difference from the reference.
+
+University degree: –0.578 (p = 0.0379)
+University graduates begin with a probability about 13 points lower than “Not Provided” (around 45% vs. 58%). Because p = 0.0379 is below 0.05, this lower baseline is statistically significant.
+
+Masters degree: –1.069 (p = 0.00026)
+Master’s holders start with about a 27‐point lower probability at baseline (roughly 31% instead of 58%). The p‐value is very small, so this is a highly significant finding: master’s graduates are much less likely to report past‐year use at the reference age.
+
+Doctorate degree: –0.130 (p = 0.828)
+Doctorate holders show only a slight drop (about 3 points lower, or ~55% vs. 58%), and p = 0.828 indicates no significant difference from “Not Provided.”
+
+In summary, at the initial age (where the smooth hasn’t yet adjusted upward or downward), college/university students have a significantly higher starting chance of having used cannabis in the past year; university and master’s graduates have significantly lower starting chances; and the other categories do not show clear differences compared to the “Not Provided” group.
+
+Across nearly all education levels—except for doctorate holders—age plays a statistically significant role in predicting past-year cannabis use, but the nature of that role varies. Some groups (“Not Provided,” “Left school before 16,” and “Master’s degree”) exhibit a simple, linear decline (edf close to 1, p < 0.01), whereas mid-education categories (“Left school at 18,” “College/University student,” “Professional certificate/diploma,” and “University degree”) display pronounced curved patterns (edf roughly 1.9–2.9, p < 0.001), peaking in early adulthood before falling. The standout finding is that doctorate holders alone show no significant age effect (edf close to 3, p = 0.3427), implying their probability of past-year use remains essentially flat across all age bins.
+
+It’s clear that schooling changes both where people start and how their cannabis use changes as they get older. For example, among 18–24 year‐olds, college and university students stand out as the most likely to report past‐year use, while those with bachelor’s or master’s degrees are far less likely. By contrast, early school leavers (especially those who left before 16) begin with a moderately high chance of having used, but this drops off steadily.
+
+As people move into their late 20s and beyond, almost every education group demosntrates a real decline in use—except doctorate holders, whose already‐low probability stays nearly flat across all age bins. But the way that drop happens isn’t the same for everyone: some groups (like master’s graduates or those without any schooling info) simply decline in a straight line, while others (like those who left school at 18, certificate holders, or current students) have a noticeable “hump” in their late teens or early 20s before their use tails off. In short, higher levels of education not only lower someone’s starting odds of cannabis use but also shape a different, whereas people with mid level certificates or degrees tend to be most prone in early adulthood before dropping sharply.
 
 ## Neural Network
 
