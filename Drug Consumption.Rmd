@@ -771,6 +771,7 @@ model_summary_table <- create_model_summary_table(results_list)
 #---------------------------------------------------------------
 
 # Function to create a visually appealing coefficient plot
+# MODIFIED to display only a specific list of predictors
 plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
   # Extract model coefficients
   coefs <- summary(model)$coefficients
@@ -788,15 +789,36 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
                                ifelse(coef_df$PValue < 0.01, "p < 0.01",
                                     ifelse(coef_df$PValue < 0.05, "p < 0.05", "Not significant")))
   
-  # Sort by absolute value of estimate
+  # --- START MODIFICATION: Filter for specific predictors ---
+  # Define the specific predictors (raw model variable names) to display
+  target_predictors_raw_names <- c("Age", "Gender", "Education", 
+                                   "Nscore", "Escore", "Oscore", 
+                                   "Ascore", "Cscore", "Impulsive", "SS")
+  
+  # Filter coef_df to include only these target predictors
+  # This ensures only the specified variables appear on the y-axis
+  coef_df <- coef_df[coef_df$Variable %in% target_predictors_raw_names, ]
+  
+  # If no target predictors are found in the model (e.g., model is empty or different),
+  # prevent errors by stopping if coef_df is empty.
+  if(nrow(coef_df) == 0) {
+    warning(paste("No target predictors found in the model for:", title, ". Plot will be empty or may error."))
+    # Optionally, return an empty plot or a message plot
+    # return(ggplot() + labs(title = title, subtitle = "No target predictors to display") + theme_void())
+  }
+  # --- END MODIFICATION ---
+
+  # Sort by absolute value of estimate (among the selected predictors)
   coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
   
-  # Keep only top 15 predictors for visualization clarity
-  if(nrow(coef_df) > 15) {
-    coef_df <- coef_df[1:15, ]
-  }
+  # The line to keep only top 15 predictors is removed as we are explicitly selecting.
+  # if(nrow(coef_df) > 15) {
+  #   coef_df <- coef_df[1:15, ]
+  # }
   
   # Clean up variable names for display
+  # This mapping should ideally only contain the target_predictors_raw_names for clarity,
+  # but the filtering above is the primary control.
   var_display_mapping <- c(
     "Age" = "Age",
     "Gender" = "Gender (Male=1)",
@@ -808,32 +830,29 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
     "Cscore" = "Conscientiousness",
     "Impulsive" = "Impulsivity",
     "SS" = "Sensation Seeking"
+    # Country and Ethnicity mappings are still here but won't be used
+    # if those variables are filtered out by target_predictors_raw_names.
   )
   
   # Function to clean up variable names
   clean_var_names <- function(var_name) {
-    # First check exact matches in our mapping
     if (var_name %in% names(var_display_mapping)) {
       return(var_display_mapping[var_name])
     }
-    
-    # Handle country variables
+    # Fallback for other variable types (e.g., one-hot encoded if they were part of the target list)
     if (grepl("^Country", var_name)) {
       return(gsub("Country", "Country: ", var_name))
     }
-    
-    # Handle ethnicity variables
     if (grepl("^Ethnicity", var_name)) {
       return(gsub("Ethnicity", "Ethnicity: ", var_name))
     }
-    
-    return(var_name)
+    return(var_name) # Return original name if no mapping found
   }
   
   # Apply name cleaning
   coef_df$DisplayName <- sapply(coef_df$Variable, clean_var_names)
   
-  # Reorder factor levels for plotting
+  # Reorder factor levels for plotting (so highest absolute estimate among selected is at the top)
   coef_df$DisplayName <- factor(coef_df$DisplayName, levels = rev(coef_df$DisplayName))
   
   # Define significance color palette
@@ -846,30 +865,30 @@ plot_factor_importance_enhanced <- function(model, title, color_scheme = "viridi
   }
   
   # Plot with enhanced aesthetics
-  ggplot(coef_df, aes(x = Estimate, y = DisplayName, color = Significance)) +
+  p <- ggplot(coef_df, aes(x = Estimate, y = DisplayName, color = Significance)) +
     geom_point(aes(size = abs(Estimate)), alpha = 0.8) +
     geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
                        xmax = Estimate + 1.96 * StdError), 
                    height = 0.2, alpha = 0.7) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
     scale_color_manual(values = sig_colors) +
-    scale_size_continuous(range = c(2, 6), guide = "none") +
+    scale_size_continuous(range = c(2, 6), guide = "none") + # guide="none" hides size legend
     labs(title = title,
          x = "Effect Size (Coefficient Estimate)",
-         y = "",
+         y = "", # Y-axis label not needed as variable names are clear
          color = "Statistical\nSignificance") +
     theme_minimal() +
     theme(
       plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
       axis.title.x = element_text(size = 12, face = "bold"),
-      axis.text.y = element_text(size = 10),
+      axis.text.y = element_text(size = 10), # Ensure y-axis text is readable
       legend.position = "top",
       legend.title = element_text(face = "bold"),
       panel.grid.minor = element_blank(),
-      panel.grid.major.y = element_blank()
+      panel.grid.major.y = element_blank() # Removing horizontal grid lines for cleaner look
     )
+  return(p)
 }
-
 ```
 
 ### Personality Traits as Predictors of Substance Use
@@ -1386,9 +1405,145 @@ Poisson regression models revealed significant associations between personality,
 
 Among demographic factors, Age generally showed a negative association with use frequency, especially for illicit drugs. Being Male was often linked to higher use frequency. Model fit statistics (Pseudo R² and significant Model chi 2) confirmed that the predictors collectively explained usage frequency significantly better than chance. Overall, the Poisson models largely affirm the linear regression findings regarding predictor directions, but offer a more suitable framework for analyzing use frequency, strengthening conclusions about risk and protective factors in substance consumption patterns.
 
-### Predictor Effects Visualization  
+### Analysis of Personality Traits as Predictors of Cannabis Use
 
-Visualizations of predictor effects from the Poisson model illustrate the non-linear relationships. The age effect plot would show a steep negative gradient, with predicted cannabis usage highest in the youngest age group (18-24) and declining sharply with each subsequent category. The sensation seeking (SS) plot would reveal a clear positive exponential relationship, where predicted cannabis usage accelerates at higher SS scores. This suggests that individuals at the highest end of the sensation-seeking spectrum are disproportionately more likely to use cannabis frequently. These visualizations, combined with the overdispersion findings, confirm the strong impact of these predictors while also supporting the consideration of model refinements like the negative binomial approach for a more nuanced capture of data complexity.
+```{r pios6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+plot_glm_factor_importance_enhanced <- function(model, title, color_scheme = "viridis") {
+  coefs_summary <- summary(model)$coefficients
+  coef_df <- data.frame(
+    Variable = rownames(coefs_summary)[-1],  
+    Estimate = coefs_summary[-1, "Estimate"],
+    StdError = coefs_summary[-1, "Std. Error"],
+    PValue = coefs_summary[-1, "Pr(>|z|)"] 
+  )
+  
+  # Add significance markers and categories
+  coef_df$Significance <- ifelse(coef_df$PValue < 0.001, "p < 0.001", 
+                               ifelse(coef_df$PValue < 0.01, "p < 0.01",
+                                    ifelse(coef_df$PValue < 0.05, "p < 0.05", "Not significant")))
+  
+  # Sort by absolute value of estimate for better visualization
+  coef_df <- coef_df[order(abs(coef_df$Estimate), decreasing = TRUE), ]
+  
+  # Keep only top 15 predictors for visualization
+  if(nrow(coef_df) > 15) {
+    coef_df <- coef_df[1:15, ]
+  }
+  
+  # Clean up variable names for display using a predefined mapping
+  var_display_mapping <- c(
+    "Age" = "Age",
+    "Gender" = "Gender (Male=1)",
+    "Education" = "Education Level",
+    "Nscore" = "Neuroticism",
+    "Escore" = "Extraversion",
+    "Oscore" = "Openness",
+    "Ascore" = "Agreeableness",
+    "Cscore" = "Conscientiousness",
+    "Impulsive" = "Impulsivity",
+    "SS" = "Sensation Seeking"
+    )
+  
+  # Function to clean up variable names
+  clean_var_names <- function(var_name) {
+    if (var_name %in% names(var_display_mapping)) {
+      return(var_display_mapping[var_name])
+    }
+    if (grepl("^Country", var_name)) {
+      return(gsub("Country", "Country: ", var_name))
+    }
+    if (grepl("^Ethnicity", var_name)) {
+      return(gsub("Ethnicity", "Ethnicity: ", var_name))
+    }
+    return(var_name) # Return original name if no mapping found
+  }
+  
+  # Apply name cleaning
+  coef_df$DisplayName <- sapply(coef_df$Variable, clean_var_names)
+  
+  # Reorder factor levels for plotting (so highest absolute estimate is at the top)
+  coef_df$DisplayName <- factor(coef_df$DisplayName, levels = rev(coef_df$DisplayName))
+  
+  # Define significance color palette based on the chosen scheme
+  if (color_scheme == "viridis") {
+    sig_colors <- c("p < 0.001" = "#440154", "p < 0.01" = "#21908C", 
+                    "p < 0.05" = "#5DC863", "Not significant" = "#CCCCCC")
+  } else { # Default to a blue-ish scheme if not viridis
+    sig_colors <- c("p < 0.001" = "#0072B2", "p < 0.01" = "#009E73", 
+                    "p < 0.05" = "#56B4E9", "Not significant" = "#CCCCCC")
+  }
+  
+  # Create the plot using ggplot2
+  p <- ggplot(coef_df, aes(x = Estimate, y = DisplayName, color = Significance)) +
+    geom_point(aes(size = abs(Estimate)), alpha = 0.8) +
+    geom_errorbarh(aes(xmin = Estimate - 1.96 * StdError, 
+                       xmax = Estimate + 1.96 * StdError), 
+                   height = 0.2, alpha = 0.7) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "darkgray", linewidth = 0.7) +
+    scale_color_manual(values = sig_colors) +
+    scale_size_continuous(range = c(2, 6), guide = "none") +
+    labs(title = title,
+         x = "Effect Size",
+         y = "",
+         color = "Statistical\nSignificance") +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+      axis.title.x = element_text(size = 12, face = "bold"),
+      axis.text.y = element_text(size = 10),
+      legend.position = "top",
+      legend.title = element_text(face = "bold"),
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_blank()
+    )
+  
+  return(p)
+}
+
+
+if (exists("models") && "Cannabis" %in% names(models) && !is.null(models[["Cannabis"]])) {
+  cannabis_poisson_model_object <- models[["Cannabis"]]
+  
+  # Generate and print the coefficient plot
+  cannabis_poisson_coef_plot <- plot_glm_factor_importance_enhanced(
+    model = cannabis_poisson_model_object, 
+    title = "Predictors of Cannabis (Poisson Model)",
+    color_scheme = "viridis"
+  )
+  
+  print(cannabis_poisson_coef_plot)
+  
+} else {
+  message("Cannabis Poisson model ('models[[\"Cannabis\"]]') not found or is NULL. \nPlease ensure it has been fitted correctly, typically in a chunk like 'pois3'.")
+}
+
+```
+
+The coefficient plot derived from the Poisson regression model provides insights into the factors influencing the frequency of cannabis usage. The estimates represent changes in the log of the expected count of cannabis use occasions. Several personality traits and demographic factors emerge as significant predictors:
+
+Sensation Seeking (SS): Consistent with findings from other models, Sensation Seeking stands out as the most potent positive predictor of cannabis usage frequency (p < 0.001). Individuals with higher Sensation Seeking scores are associated with a substantially higher expected frequency of cannabis use. This suggests a strong link between the pursuit of novel and intense experiences and more regular cannabis consumption.
+
+Age: Age demonstrates a strong, statistically significant negative association with the frequency of cannabis use (p < 0.001). As age increases, the expected frequency of cannabis use tends to decrease markedly. This is a common finding in substance use research, indicating that cannabis use is often more frequent in younger individuals.
+
+Openness to Experience (Oscore): Openness is another significant positive predictor (p < 0.001). Higher scores on Openness are linked to a higher expected frequency of cannabis use. This aligns with the idea that individuals who are more curious, imaginative, and open to new experiences may engage in cannabis use more frequently.
+
+Conscientiousness (Cscore): Conversely, Conscientiousness is a strong negative predictor of cannabis usage frequency (p < 0.001). Individuals exhibiting higher levels of organization, self-discipline, and dutifulness tend to use cannabis less frequently. This trait appears to act as a protective factor against more regular use.
+
+Impulsivity: Impulsivity shows a positive association with cannabis usage frequency (p < 0.001). Those who score higher on impulsivity, indicating a tendency to act without full forethought, are expected to use cannabis more frequently.
+
+Gender (Male=1): Being male (coded as 1) is positively and significantly associated with a higher frequency of cannabis use (p < 0.001) compared to females, holding other factors constant.
+
+Neuroticism (Nscore): Neuroticism also shows a statistically significant positive relationship with cannabis usage frequency (p < 0.001), suggesting that individuals with a higher tendency towards negative emotions like anxiety and moodiness may use cannabis more frequently.
+
+Education Level: Higher levels of education are significantly associated with a lower frequency of cannabis use (p < 0.001). This negative relationship suggests that increased educational attainment may be a protective factor against frequent cannabis consumption.
+
+Agreeableness (Ascore): Agreeableness is negatively associated with cannabis usage frequency (p < 0.001). Individuals who are more cooperative, empathetic, and considerate of others tend to report using cannabis less frequently.
+
+Extraversion (Escore): Extraversion displays a statistically significant negative association with the frequency of cannabis use (p < 0.05). This suggests that more outgoing and sociable individuals, in this model, tend to use cannabis less frequently, which is an interesting contrast to some substance use patterns where extraversion might be linked to more social use.
+
+Summary of Poisson Model Findings for Cannabis Usage Frequency:
+
+The Poisson model for cannabis usage frequency highlights a clear pattern of predictors. High Sensation Seeking, Openness, Impulsivity, Neuroticism, and being male are associated with an increased expected frequency of use. Conversely, older Age, higher Conscientiousness, higher Education levels, greater Agreeableness, and higher Extraversion are linked to a decreased expected frequency. These findings provide a nuanced view of how personality and demographics relate not just to ever using cannabis, but to the regularity of its consumption. The strong effects of Sensation Seeking, Age, Openness, and Conscientiousness are particularly notable and largely consistent in direction with models predicting general cannabis use, but this model specifically quantifies their impact on usage frequency.
 
 ### Analysis of Poisson Models with Interaction Terms for Cannabis Usage
 
