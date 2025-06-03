@@ -1924,215 +1924,138 @@ if (exists("cannabis_poisson_model") && !is.null(cannabis_poisson_model)) {
 
 **Conclusion** The diagnostic analysis of the Cannabis Poisson model highlights probable overdispersion and some non-random patterns in residuals, suggesting the basic Poisson structure may not fully capture the data's complexity. These issues, particularly overdispersion, can affect standard errors and p-values, indicating that while predictor directions might be informative, model refinements (like Negative Binomial regression, as explored in the Rmd) are crucial for more accurate inference and robust conclusions.
 
-Null Deviance: This value (likely around 4800-5200) represents the deviance when only an intercept is included. It serves as a baseline against which to evaluate the full model's performance.
-Residual Deviance: This value (likely around 3200-3700) represents the unexplained deviance after including all predictors. The substantial reduction from the null deviance confirms that the predictors collectively have significant explanatory power for cannabis usage patterns.
-Degrees of Freedom: The ratio of residual deviance to residual degrees of freedom would likely be around 1.2-1.4, which aligns with the overdispersion findings from pois7 and confirms mild to moderate overdispersion.
-
-AIC and Pseudo R²:
-
-AIC Value: The model's AIC (likely around 8000-9000) provides a measure of relative model quality, balancing fit and complexity. This value becomes meaningful when compared to alternative models, as was done in pois8 with the negative binomial comparison.
-McFadden's Pseudo R²: This value (likely around 0.25-0.35) represents the proportional reduction in deviance achieved by the full model compared to the intercept-only model. This indicates that the included predictors explain approximately 25-35% of the variation in cannabis usage, which is quite substantial for behavioral data.
-
-Overdispersion Parameter:
-The function calculates the dispersion parameter (likely around 1.2-1.4), which quantifies the degree to which the variance in cannabis usage exceeds what would be expected under a perfect Poisson distribution. This mild to moderate overdispersion confirms earlier findings and supports the exploration of negative binomial alternatives.
-Significant Predictors Analysis
-The function identifies and orders significant predictors by effect size:
-Expected Significant Predictors:
-
-Primary Predictors: Sensation Seeking (SS) would appear as the strongest positive predictor, while Age would emerge as the strongest negative predictor. These effects likely show very small p-values (p < 0.001).
-Secondary Predictors: Openness (Oscore) would show a moderate positive effect, while Conscientiousness (Cscore) would show a moderate negative effect. Gender (male) would likely show a positive association with cannabis use.
-Tertiary Predictors: Education might show a negative relationship, while Impulsivity would likely show a positive but smaller effect than Sensation Seeking.
-
-Effect Size Ordering:
-The function orders predictors by the absolute magnitude of their effect sizes, creating a clear hierarchy of importance. This ordering would likely place Sensation Seeking and Age at the top, followed by Openness, Conscientiousness, and Gender, with other personality dimensions and demographic factors showing smaller effects.
-Potential Outliers and Influential Points
-While the function includes code placeholders for identifying outliers through Pearson residuals, this analysis would likely reveal:
-
-Residual Distribution: A minority of cases (perhaps 5-7%) would show standardized residuals exceeding ±2, indicating observations where the model's predictions substantially differ from observed cannabis usage.
-Potential Outliers: A very small number of cases (perhaps 1-2%) might show extremely large residuals (exceeding ±3), representing unusual cannabis usage patterns that the model fails to capture accurately.
-Influential Observations: Cases combining unusual predictor values with unexpected cannabis usage levels would be identified as potentially influential. However, in a large dataset (n=1885), individual influential points rarely substantially alter overall conclusions.
-
-Model Improvement Suggestions
-The function concludes with recommendations for model refinement:
-Addressing Overdispersion:
-Given the confirmed overdispersion (likely around 1.2-1.4), the function recommends considering a negative binomial model. This aligns with the model comparison in pois8 and would provide more accurate standard errors and significance tests.
-Exploring Interaction Terms:
-The function suggests examining interaction effects, particularly:
-
-Age × Education: This interaction would test whether the effect of education on cannabis use differs across age groups. For example, education might have a stronger protective effect among younger individuals.
-Gender × Sensation Seeking (SS): This interaction would examine whether the relationship between sensation seeking and cannabis use differs between males and females. The thrill-seeking pathway to cannabis use might be stronger in one gender than the other.
-
-Non-Linear Relationships:
-The function recommends considering polynomial terms for continuous predictors to capture potential non-linear relationships. This suggestion aligns with the patterns observed in the diagnostic plots from pois11, which showed systematic curvature in the residuals versus fitted values plot.
-Integrated Analysis and Implications
-Combining all the diagnostics provided by the analyze_cannabis_model() function yields several integrated insights:
-Model Adequacy:
-
-Overall Performance: The substantial reduction in deviance from null to residual (likely around 30-35%) indicates that the model captures meaningful patterns in cannabis usage. The Pseudo R² value confirms that the predictors collectively explain a substantial portion of the variance.
-Statistical Significance: The highly significant predictors (particularly Sensation Seeking and Age) demonstrate robust associations with cannabis usage that cannot be attributed to chance.
-Limitations: The identified overdispersion, while modest, indicates that the data show more variability than a standard Poisson model expects, suggesting a need for more flexible modeling approaches.
-
-Substantive Findings:
-
-Personality Pathways: The significance and effect size ordering confirms distinct personality pathways to cannabis use, with sensation seeking and openness to experience promoting usage, while conscientiousness serves as a protective factor.
-Demographic Influences: The strong negative age effect, combined with gender differences and potential education effects, demonstrates that cannabis use is shaped by both psychological predispositions and social-demographic factors.
-Complex Interplay: The suggestion to explore interaction terms acknowledges that demographic and personality factors likely operate in concert rather than independently, with effects that may differ across subgroups.
-
-Methodological Next Steps:
-
-Model Refinement Path: The function outlines a clear path for model improvement, moving from the basic Poisson model to more sophisticated specifications that address overdispersion and potential non-linearities.
-Balanced Approach: The recommendations strike a balance between statistical rigor (addressing overdispersion) and substantive exploration (examining interaction effects that might have theoretical significance).
-Incremental Strategy: By suggesting specific focused improvements rather than a complete model overhaul, the function acknowledges that the current model, despite limitations, provides valuable insights that can be incrementally enhanced.
-
-Conclusion
-The detailed diagnostic analysis in chunk pois14 provides a comprehensive evaluation of the cannabis model's performance, confirming its substantial explanatory power while identifying specific areas for refinement. The McFadden's Pseudo R² value (likely 0.25-0.35) indicates that the model explains a meaningful portion of the variation in cannabis usage, which is quite impressive for behavioral data. The modest overdispersion (around 1.2-1.4) confirms the findings from earlier chunks and justifies the negative binomial comparison.
-Most importantly, the function's ordering of significant predictors by effect size would confirm the central finding that emerged across previous chunks: cannabis usage is most strongly associated with high sensation seeking, younger age, greater openness to experience, and lower conscientiousness. This consistent pattern across different analytical approaches strengthens confidence in these core findings.
-The suggested model improvements provide a roadmap for further refinement, particularly through exploring interaction effects that might reveal how personality and demographic factors work together to influence cannabis consumption patterns. These suggestions bridge statistical considerations (addressing overdispersion) with substantive exploration (examining theoretically meaningful interactions), demonstrating how methodological rigor and substantive inquiry can reinforce each other in the analysis of complex behavioral phenomena like substance use.
-
-```{R pois15, echo=FALSE, cache=TRUE}
-# Compare model fit statistics with kable formatting
-model_comparison <- data.frame(
-  Drug = character(),
-  AIC = numeric(),
-  BIC = numeric(),
-  LogLik = numeric(),
-  Deviance = numeric(),
-  PseudoR2 = numeric(),
-  stringsAsFactors = FALSE
-)
-
-for (drug in names(models)) {
-  model <- models[[drug]]
-
-  # Calculate McFadden's Pseudo R²
-  null_model <- glm(as.formula(paste(drug, "~ 1")), 
-                    data = model_data, 
-                    family = poisson(link = "log"))
-  pseudo_r2 <- 1 - (logLik(model) / logLik(null_model))
-
-  model_comparison <- rbind(model_comparison, data.frame(
-    Drug = drug,
-    AIC = AIC(model),
-    BIC = BIC(model),
-    LogLik = as.numeric(logLik(model)),
-    Deviance = model$deviance,
-    PseudoR2 = as.numeric(pseudo_r2),
-    stringsAsFactors = FALSE
-  ))
-}
-
-# Create the nicely formatted comparison table with kable
-comparison_table <- model_comparison %>%
-  kable(caption = "Poisson Model Comparison for Different Substances", 
-        booktabs = TRUE,
-        col.names = c("Substance", "AIC", "BIC", "Log-Likelihood", "Deviance", "Pseudo R²"),
-        digits = c(0, 2, 2, 2, 2, 4),
-        align = c('l', 'r', 'r', 'r', 'r', 'r')) %>%
-  kable_styling(latex_options = c("striped", "hold_position"), 
-                full_width = FALSE,
-                position = "center") %>%
-  row_spec(0, bold = TRUE) %>%
-  column_spec(1, bold = TRUE) %>%
-  footnote(
-    general = "Lower AIC/BIC values indicate better model fit. Higher Pseudo R² values indicate better explanatory power.",
-    footnote_as_chunk = TRUE
-  )
-
-# Display the table
-comparison_table
-```
-
-#### Analysis of Cannabis Model Extensions and Comparisons
-Chunk pois15 represents the culmination of the Poisson regression analysis for cannabis usage, implementing the detailed analysis function from pois14 and extending the model to include interaction terms. This chunk offers critical insights about both the base model's performance and the value of more complex specifications. Let me analyze what this chunk reveals about cannabis usage patterns.
-Detailed Cannabis Model Analysis
-The first part of pois15 calls the analyze_cannabis_model() function created in pois14, generating a comprehensive summary of the base model's performance:
-Key Model Statistics:
-
-Number of Observations: The function would confirm the full sample size of 1885 observations used in the analysis, providing a robust basis for statistical inference.
-Null and Residual Deviance: The considerable reduction from null deviance (perhaps from ~5000 to ~3500) quantifies the explanatory power of the included predictors. This substantial reduction confirms that the selected personality and demographic variables collectively explain a meaningful portion of the variation in cannabis usage.
-McFadden's Pseudo R²: This value (likely 0.25-0.35) provides a standardized measure of model fit, indicating that the predictors account for approximately 25-35% of the variability in cannabis usage patterns. For behavioral science data, this represents a substantial level of explanatory power.
-Dispersion Parameter: The calculated value (around 1.2-1.4) confirms the earlier finding of mild to moderate overdispersion, providing numerical evidence that the data exhibit more variability than a standard Poisson distribution would predict.
-
-Significant Predictors:
-The function would identify and rank the statistically significant predictors by effect size, likely confirming:
-
-Primary Influences: Sensation Seeking (positive effect) and Age (negative effect) emerge as the strongest predictors of cannabis use, with effect sizes substantially larger than other variables.
-Secondary Influences: Openness to Experience (positive), Conscientiousness (negative), and Gender (males higher) would appear as moderately strong predictors with clear statistical significance.
-Tertiary Influences: Education level (negative), Impulsivity (positive), and possibly Neuroticism would likely show smaller but still significant associations with cannabis usage.
-
-Improvement Recommendations:
-Based on the diagnostic analysis, the function suggests:
-
-Negative Binomial Alternative: Given the confirmed overdispersion, a recommendation to consider negative binomial regression aligns with the comparison conducted in pois8.
-Interaction Exploration: The suggestion to examine interactions between demographic and personality variables acknowledges the likely complex interplay among predictors.
-Non-Linear Terms: A recommendation to consider polynomial terms for continuous predictors would address the non-linear patterns observed in the diagnostic plots.
-
-Interaction Model Implementation and Comparison
-The second part of pois15 moves beyond diagnostics to implement an enhanced model with interaction terms:
-Interaction Terms:
-The extended model includes two theoretically meaningful interactions:
-
-Age × Education: This interaction examines whether the relationship between education and cannabis use varies across age groups. This could reveal whether education has a stronger protective effect among younger individuals or whether its influence diminishes or changes across the lifespan.
-Gender × Sensation Seeking: This interaction tests whether the relationship between sensation seeking and cannabis use differs between males and females. This addresses an important question in substance use research: do personality risk factors operate similarly across genders?
-
-Model Comparison Results:
-The ANOVA comparison between the base model and the interaction model would likely show:
-
-Chi-Square Significance: The likelihood ratio test would likely yield a statistically significant improvement (p < 0.05), indicating that the addition of interaction terms meaningfully enhances the model's fit to the data.
-Deviance Reduction: The interaction model would show a reduction in residual deviance compared to the base model, quantifying the improved explanatory power achieved by allowing for more complex relationships among predictors.
-AIC Comparison: The interaction model would likely show a lower AIC value, confirming that the gain in fit outweighs the penalty for increased model complexity.
-
-Substantive Interpretation of Interaction Effects
-Beyond statistical improvements, the interaction terms reveal important substantive insights:
-Age × Education Interaction:
-This interaction would likely show:
-
-Differential Educational Effects: The protective effect of education against cannabis use is likely stronger among younger age groups (perhaps 18-34) and diminishes in older cohorts.
-Life Course Dynamics: This pattern suggests that education creates divergent developmental trajectories for cannabis use, with effects that manifest early in the life course and persist but weaken over time.
-Cohort Interpretation: Alternatively, the interaction might reflect cohort differences rather than aging effects, with education having stronger effects in more recent cohorts due to changing attitudes and information about cannabis.
-
-Gender × Sensation Seeking Interaction:
-This interaction would likely reveal:
-
-Gender-Specific Risk Pathways: The relationship between sensation seeking and cannabis use may be stronger among males than females, suggesting that this personality dimension creates greater vulnerability for males.
-Threshold Effects: The interaction might indicate different thresholds at which sensation seeking translates into substance use behavior across genders, possibly reflecting social or normative differences.
-Motivational Differences: The interaction could suggest that high sensation seeking manifests differently across genders, perhaps leading to substance use in males but finding alternative expressions among females.
-
-Integrated Analysis and Broader Implications
-Combining the detailed diagnostics with the interaction model results provides several integrated insights:
-Model Evolution:
-
-Progressive Refinement: The analysis shows a principled progression from basic model evaluation to targeted enhancements based on both statistical diagnostics and substantive theory.
-Balanced Approach: The enhancement strategy balances statistical considerations (addressing overdispersion) with theoretical exploration (examining meaningful interactions), demonstrating how methodological and substantive concerns can be jointly addressed.
-Empirical Validation: The significant improvement from adding interactions validates the intuition that demographic and personality factors interact in complex ways rather than operating independently.
-
-Theoretical Implications:
-
-Personality-Context Interplay: The significant interactions support theoretical perspectives that emphasize how personality traits operate differently across demographic contexts, rather than having universal effects.
-Developmental Considerations: The Age × Education interaction highlights the importance of developmental timing in understanding risk factors for cannabis use, suggesting that protective factors may have age-graded effects.
-Gender-Specific Vulnerability: The Gender × Sensation Seeking interaction contributes to understanding gender differences in substance use, suggesting that the same personality trait may create differential risk based on gender context.
-
-Practical Applications:
-
-Targeted Prevention: The identified interactions suggest that prevention efforts might be most effective when tailored to specific combinations of risk factors – for example, focusing particular attention on young males with high sensation seeking.
-Educational Interventions: The interaction between age and education supports early educational interventions, suggesting that educational protective effects may be strongest when established early in the life course.
-Risk Assessment Refinement: The model suggests that risk assessment for cannabis use should consider configurations of factors rather than simply adding up independent risks, acknowledging the complex interplay among predictors.
-
-Statistical Sophistication
-The analysis in pois15 demonstrates several elements of statistical sophistication:
-
-Hypothesis-Driven Modeling: Rather than indiscriminately testing all possible interactions, the analysis focuses on theoretically meaningful interactions that address specific questions about how risk factors operate across different groups.
-Formal Model Comparison: The use of likelihood ratio tests (ANOVA with Chi-Square test) provides a rigorous statistical framework for evaluating whether the added complexity of interaction terms is justified by improved fit.
-Progressive Complexity: The analysis follows a principled progression from simpler to more complex models, ensuring that baseline effects are well-established before exploring more nuanced patterns.
-
-Conclusion
-Chunk pois15 represents the culmination of the Poisson regression analysis for cannabis usage, moving from detailed diagnostic assessment to theoretically informed model enhancement. The analysis confirms the base model's substantial explanatory power while demonstrating that accounting for interactions among predictors further improves understanding of cannabis use patterns.
-The significant interactions discovered – particularly between age and education, and between gender and sensation seeking – reveal that risk factors for cannabis use operate in context-dependent ways rather than having universal effects. These findings have important implications for both theoretical understanding of substance use and practical approaches to prevention and intervention.
-Most importantly, the analysis demonstrates how statistical sophistication and substantive theory can reinforce each other in the study of complex behavioral phenomena. The model enhancements are simultaneously justified by statistical diagnostics (addressing non-linear patterns observed in residuals) and informed by theoretical questions about how demographic and personality factors interact to influence substance use behavior. This integration of methodological rigor and substantive insight represents the hallmark of high-quality behavioral science research.
 
 ## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
+```{r glmbi_intro1, echo=FALSE, cache=TRUE}
+
+# Load the dataset
+df <- read.csv("Data/model_data.csv")
+
+#Remove the first column index X
+df_cnb <- df[,-1]
+
+# Create a column to flag if ever used cannabis
+df_cnb <- df_cnb %>%
+  mutate(
+    cnb_use = if_else(Cannabis == 0, 0, 1)
+  )
+
+```
+
+
+
+```{r glmbi_boxplot2, echo=FALSE, cache=TRUE}
+# Boxplots by use status
+trait_labs <- c(
+  Nscore = "Neuroticism",
+  Escore = "Extraversion",
+  Oscore = "Openness",
+  Ascore = "Agreeableness",
+  Cscore = "Conscientiousness"
+)
+df_cnb %>%
+  gather(trait, score, Nscore:Cscore) %>%
+  ggplot(aes(x = factor(cnb_use), y = score)) +
+    geom_boxplot() +
+    facet_wrap(
+      ~ trait, 
+      scales = "free_y", 
+      ncol = 5, 
+      labeller = labeller(trait = trait_labs)) +
+    scale_x_discrete(labels = c("Never", "Ever")) +
+    labs(x = "Marijuana Use", y = "Trait Score",
+         title = "Personality Traits by Marijuana Use")
+```
+
+The boxplots show a clear pattern across several traits when comparing people who’ve never tried marijuana to those who have. Most striking is Openness: ever-users sit noticeably higher on the openness scale, with a higher median and more values in the upper range, suggesting they’re more curious, imaginative, or receptive to new experiences. In contrast, Conscientiousness and Agreeableness both trend lower for ever-users—their medians are down and there’s a thicker cluster of low scores—implying less self-discipline and cooperation. Extraversion shows a slight dip for users, but the overlap is substantial. Neuroticism distributions observes higher score user in this trait try marijuana, indicating emotional instability and a tendency to experience negative affect make people more likely to initiate and escalate cannabis use. Overall, higher openness, neuroticism alongside lower conscientiousness and agreeableness seem to mark those more likely to have tried cannabis.
+
+```{r glmbi_corrmatrix3, echo=FALSE, cache=TRUE}
+# Correlation matrix
+df_cnb %>%
+  select(Nscore:Cscore, cnb_use) %>%
+  ggpairs(
+    columns = 1:5,
+    mapping = aes(color = factor(`cnb_use`), alpha = 0.7),
+    upper = list(
+      continuous = wrap("cor", size = 4, digits = 2)
+    ),
+    lower = list(
+      continuous = wrap("smooth", se = FALSE, size = 0.3)
+    ),
+    diag = list(
+      continuous = wrap("densityDiag", alpha = 0.5)
+    ),
+    axisLabels = "show"
+  ) +
+  scale_color_brewer(
+    type    = "qual",
+    palette = "Set1",
+    name    = "Cannabis\nUse"
+  ) +
+  labs(
+    title    = "Pairwise Relationships & Correlations of Personality Traits",
+    subtitle = "Colored by Cannabis-use indicator",
+    caption  = "Note: Correlation coefficients rounded to two decimals"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    legend.position   = "bottom",
+    legend.title.align= 0.5,
+    plot.title        = element_text(face = "bold", size = 16),
+    plot.subtitle     = element_text(size = 12),
+    strip.text        = element_text(face = "bold"),
+    panel.grid.minor  = element_blank()
+  )
+```
+
 ```{r glmbi_model, echo=FALSE, cache=TRUE}
+# Fit the model 
+
+model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
+summary(model)
+
+cnb_model <- broom::tidy(model) %>%
+  mutate(
+    raw_p = p.value,
+    p.value = round(p.value, 3),
+    p.value = ifelse(p.value < 0.001, sprintf("%.2e", raw_p), p.value),
+    OR = round(exp(estimate), 2),
+    lower_CI = round(exp(estimate - 1.96 * std.error), 2),
+    upper_CI = round(exp(estimate + 1.96 * std.error), 2),
+        term     = recode(term,
+               `(Intercept)` = "Intc.",
+               Nscore        = "Neuroticism",
+               Escore        = "Extraversion",
+               Oscore        = "Openness",
+               Ascore        = "Agreeableness",
+               Cscore        = "Conscientiousness"
+             )
+  ) %>%
+  select(term, estimate, OR, lower_CI, upper_CI, p.value)
+
+kable(cnb_model, 
+      col.names = c("Term", "Estimate", "OR", "Lower 95%", "Upper 95%", "p-value"),
+      digits = c( NA, 3, 2, 2, 2, NA),
+      caption = "Logistic Regression (Binomial GLM) Results") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width        = FALSE,
+    position          = "center",
+    font_size         = 12
+  ) %>%
+  row_spec(0, bold = TRUE) %>%        
+  column_spec(1, width = "4cm") %>%   
+  column_spec(2:5, width = "2.5cm") %>%
+  column_spec(6, width = "3cm")      
+```
+
+The logistic regression shows that, of the five personality traits, Openness is by far the strongest predictor of having ever tried marijuana: each one-point increase in Openness more than doubles the odds of experimentation (OR = 2.51, 95% CI 2.18–2.89, p < 0.001). Conscientiousness and Agreeableness both work in the opposite direction: higher scores on these traits substantially reduce the odds of use (Conscientiousness OR = 0.57, 95% CI 0.49–0.66, p < 0.001; Agreeableness OR = 0.74, 95% CI 0.65–0.85, p < 0.001), suggesting that more disciplined and cooperative individuals are less likely to experiment. Extraversion also shows a modest but statistically significant negative effect (OR = 0.83, 95% CI 0.71–0.96, p = 0.012), whereas Neuroticism does not significantly influence marijuana use (OR = 0.92, 95% CI 0.80–1.07, p = 0.28). In sum, greater curiosity and openness to new experiences strongly increase the likelihood of having tried marijuana, while higher conscientiousness, agreeableness—and to a lesser extent extraversion—decrease it, and neuroticism appears unrelated in this sample.
+
+
+## Generalised Linear Model with family set to Binomial (Nhat Bui)
+
+```{r glmbi_model5, echo=FALSE, cache=TRUE}
 # Fit the model 
 
 model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
@@ -2233,7 +2156,7 @@ Beyond middle age, the decline slows and even reverses slightly: in the 55–64 
 
 Because we set k = 3, the model captures just the broad “high-early, steep-decline, slight rebound” pattern without overfitting. The narrow confidence interval among younger ages shows high precision where data are plentiful, while the broader ribbon at the extremes reminds us to be cautious in interpreting the very high and very low age categories.
 
-```{r gam_eda_plot_age_edu, echo=FALSE, cache=TRUE,fig.width=12, fig.height=10, dpi=125}
+```{r gam_eda_plot_age_edu3, echo=FALSE, cache=TRUE,fig.width=12, fig.height=10, dpi=125}
 education_levels <- c(
   "Not Provided",
   "Left school before 16",
