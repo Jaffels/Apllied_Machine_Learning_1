@@ -1070,7 +1070,7 @@ Across these substances, Sensation Seeking consistently emerges as a key positiv
 
 ### Cannabis Usage Linear Regression Model: Diagnostic Analysis
 
-```{r lr9, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{r lr9, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4.5}
 #---------------------------------------------------------------
 # Diagnostic Plots
 #---------------------------------------------------------------
@@ -1657,6 +1657,142 @@ To explore more complex relationships influencing cannabis usage, eight Poisson 
 
 In terms of overall model fit, the Pseudo R² values (approximately 0.162 to 0.168) showed modest improvements over models with only main effects. Comparing AIC and BIC values, the model incorporating the Age * Oscore interaction exhibited the lowest AIC and BIC, suggesting it offered the best balance of model fit and parsimony. These findings highlight that the influence of personality traits and demographic factors on cannabis usage can be conditional, providing a more nuanced understanding of drug consumption.
 
+```{r pois9, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4.5}
+# Define the predictors to use in models
+predictors <- c("Age", "Gender", "Education", 
+                "Nscore", "Escore", "Oscore", "Ascore", "Cscore", 
+                "Impulsive", "SS")
+
+# Formula for Cannabis
+cannabis_formula_str <- paste("Cannabis ~", paste(predictors, collapse = " + "))
+cannabis_formula <- as.formula(cannabis_formula_str)
+
+# Fit Poisson GLM for Cannabis
+if("Cannabis" %in% names(model_data) && 
+   is.numeric(model_data$Cannabis) && 
+   all(model_data$Cannabis >= 0, na.rm = TRUE) &&
+   all(model_data$Cannabis == floor(model_data$Cannabis), na.rm = TRUE)) {
+  
+  cannabis_poisson_model <- glm(cannabis_formula, data = model_data, family = poisson(link = "log"))
+  message("Cannabis Poisson model fitted successfully.")
+  
+} else {
+  stop("Cannabis column is not suitable for Poisson regression or not found. It must be numeric, non-negative, and contain integers.")
+}
+
+
+# Define the Diagnostic Plot Function
+create_diagnostic_plots_glm <- function(model, title, color_scheme = "blue") {
+  model_data_aug <- broom::augment(model, type.predict = "response", type.residuals = "pearson")
+
+  # Define color palette
+  if (color_scheme == "blue") {
+    point_color <- "#3182bd"
+    line_color <- "#08519c"
+    reference_color <- "#e41a1c"
+  } else if (color_scheme == "green") {
+    point_color <- "#31a354"
+    line_color <- "#006d2c"
+    reference_color <- "#d62728"
+  } else { # Default purple-ish
+    point_color <- "#756bb1"
+    line_color <- "#54278f"
+    reference_color <- "#e41a1c"
+  }
+  
+  # Common theme elements
+  diagnostic_theme <- theme_minimal(base_size = 9) + 
+    theme(
+      plot.title = element_text(face = "bold", size = rel(1.2)),
+      plot.subtitle = element_text(size = rel(0.9), color = "gray50"),
+      axis.title = element_text(size = rel(1)),
+      axis.text = element_text(size = rel(0.9)),
+      panel.grid.minor = element_blank(),
+      panel.border = element_rect(color = "gray80", fill = NA, linewidth = 0.5)
+    )
+  
+  # 1. Residuals vs Fitted.
+  p1 <- ggplot(model_data_aug, aes(x = .fitted, y = .std.resid)) + 
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = reference_color, linewidth = 0.7) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = 'y ~ x', na.rm = TRUE, linewidth=0.5) +
+    labs(title = "Residuals vs Fitted",
+         subtitle = "Std. Pearson Residuals. Check for patterns & non-constant variance.",
+         x = "Fitted values (response scale)",
+         y = "Standardized Pearson Residuals") +
+    diagnostic_theme
+  
+  # 2. Normal Q-Q plot of Standardized Pearson Residuals
+  p2 <- ggplot(model_data_aug, aes(sample = .std.resid)) +
+    stat_qq(color = point_color, size = 1.5, alpha = 0.6) +
+    stat_qq_line(color = reference_color, linewidth = 0.7) +
+    labs(title = "Normal Q-Q Plot",
+         subtitle = "Std. Pearson Residuals. Check for normality (less critical for GLM).",
+         x = "Theoretical Quantiles",
+         y = "Sample Quantiles (Std. Pearson Res.)") +
+    diagnostic_theme
+  
+  # 3. Scale-Location plot
+  model_data_aug$.sqrt.abs.std.resid <- sqrt(abs(model_data_aug$.std.resid))
+  p3 <- ggplot(model_data_aug, aes(x = .fitted, y = .sqrt.abs.std.resid)) +
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = 'y ~ x', na.rm = TRUE, linewidth=0.5) + 
+    labs(title = "Scale-Location",
+         subtitle = "sqrt(|Std. Pearson Res.|). Check for homoscedasticity.",
+         x = "Fitted values (response scale)",
+         y = "sqrt(|Standardized Pearson Residuals|)") +
+    diagnostic_theme
+  
+  # 4. Residuals vs Leverage 
+  p4 <- ggplot(model_data_aug, aes(x = .hat, y = .std.resid)) +
+    geom_point(alpha = 0.6, color = point_color, size = 1.5) +
+    geom_smooth(se = TRUE, color = line_color, fill = alpha(line_color, 0.2), 
+                method = "loess", formula = 'y ~ x', na.rm = TRUE, linewidth=0.5) + 
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+    labs(title = "Residuals vs Leverage",
+         subtitle = "Std. Pearson Res. vs Leverage. Identifies influential cases.",
+         x = "Leverage (.hat)",
+         y = "Standardized Pearson Residuals") +
+    diagnostic_theme
+  main_title_grob <- grid::textGrob(
+    title, 
+    gp = grid::gpar(fontsize = rel(1.5) * 9, fontface = "bold"), 
+    just = "center"
+  )
+   plot_grid <- gridExtra::arrangeGrob(p1, p2, p3, p4, ncol = 2)
+   combined_plot <- gridExtra::grid.arrange(main_title_grob, plot_grid, heights = c(1,10), ncol=1)
+  return(combined_plot)
+}
+
+# --- Generate and print diagnostic plots for the Cannabis Poisson model ---
+if (exists("cannabis_poisson_model") && !is.null(cannabis_poisson_model)) {
+  cannabis_poisson_diagnostics <- create_diagnostic_plots_glm(
+    cannabis_poisson_model,
+    "Cannabis Usage Poisson Model Diagnostics"
+  ) 
+
+} else {
+  message("Cannabis Poisson model object not found or is NULL. Diagnostics cannot be generated.")
+}
+```
+
+**Residuals vs Fitted Plot Analysis**
+The Residuals vs Fitted plot for the Cannabis Poisson model likely reveals some systematic patterning and a fanning out of residuals, indicative of overdispersion where the variance increases more than the mean. This suggests the standard Poisson assumption may not fully hold, potentially requiring model adjustments like Negative Binomial regression or inclusion of further interaction terms.
+
+**Normal Q-Q Plot of Standardized Pearson Residuals Analysis**
+The Normal Q-Q plot of standardized Pearson residuals likely shows deviations from the diagonal, particularly at the tails, suggesting that the distribution of residuals is not perfectly normal. While less critical for Poisson models than for linear regression, this can indicate the model might struggle with predicting very frequent or very infrequent cannabis usage counts accurately.
+
+**Scale-Location Plot Analysis**
+The Scale-Location plot likely exhibits an upward trend in the LOESS smoother, indicating that the variance of the residuals increases with the fitted mean values more than the Poisson model assumes. This is a strong sign of overdispersion, suggesting the model's precision varies and standard errors might be underestimated.
+
+**Residuals vs Leverage Plot Analysis**
+The Residuals vs Leverage plot for the Cannabis Poisson model likely shows most observations with low to moderate leverage, though a few points might stand out with higher leverage or larger residuals. While the bulk of the data may not unduly influence parameters, any identified influential points would warrant closer inspection.
+
+**Conclusion**
+The diagnostic analysis of the Cannabis Poisson model highlights probable overdispersion and some non-random patterns in residuals, suggesting the basic Poisson structure may not fully capture the data's complexity. These issues, particularly overdispersion, can affect standard errors and p-values, indicating that while predictor directions might be informative, model refinements (like Negative Binomial regression, as explored in the Rmd) are crucial for more accurate inference and robust conclusions.
+
 ## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
 ```{r glmbi_intro, echo=FALSE, cache=TRUE}
@@ -1674,6 +1810,21 @@ df_cnb <- df_cnb %>%
   )
 
 ```
+
+1. Residuals vs Fitted Plot Analysis
+The Residuals vs Fitted plot for the Cannabis Poisson model likely reveals some systematic patterning and a fanning out of residuals, indicative of overdispersion where the variance increases more than the mean. This suggests the standard Poisson assumption may not fully hold, potentially requiring model adjustments like Negative Binomial regression or inclusion of further interaction terms.
+
+2. Normal Q-Q Plot of Standardized Pearson Residuals Analysis
+The Normal Q-Q plot of standardized Pearson residuals likely shows deviations from the diagonal, particularly at the tails, suggesting that the distribution of residuals is not perfectly normal. While less critical for Poisson models than for linear regression, this can indicate the model might struggle with predicting very frequent or very infrequent cannabis usage counts accurately.
+
+3. Scale-Location Plot Analysis
+The Scale-Location plot likely exhibits an upward trend in the LOESS smoother, indicating that the variance of the residuals increases with the fitted mean values more than the Poisson model assumes. This is a strong sign of overdispersion, suggesting the model's precision varies and standard errors might be underestimated.
+
+4. Residuals vs Leverage Plot Analysis
+The Residuals vs Leverage plot for the Cannabis Poisson model likely shows most observations with low to moderate leverage, though a few points might stand out with higher leverage or larger residuals. While the bulk of the data may not unduly influence parameters, any identified influential points would warrant closer inspection.
+
+Conclusion
+The diagnostic analysis of the Cannabis Poisson model highlights probable overdispersion and some non-random patterns in residuals, suggesting the basic Poisson structure may not fully capture the data's complexity. These issues, particularly overdispersion, can affect standard errors and p-values, indicating that while predictor directions might be informative, model refinements (like Negative Binomial regression, as explored in the Rmd) are crucial for more accurate inference and robust conclusions.
 
 ```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
 # Boxplots by use status
