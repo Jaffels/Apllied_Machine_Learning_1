@@ -545,7 +545,7 @@ df_cnb <- df_cnb %>%
   )
 ```
 
-```{r glmbi_boxplot, echo=FALSE, cache=TRUE}
+```{r glmbi_boxplot, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 # Boxplots by use status
 trait_labs <- c(
   Nscore = "Neuroticism",
@@ -595,7 +595,8 @@ df_cnb_gam <- df_cl %>%
     cnb_use = factor(cnb_use, levels = c("No","Yes"))
   )
 ```
-```{r edu_dist_plot, echo=FALSE, cache=TRUE}
+
+```{r edu_dist_plot, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 # Summarise into a data frame
 edu_summary <- df_cnb_gam %>%
   group_by(Education) %>%
@@ -638,7 +639,7 @@ It is striking to see how education seems to go hand-in-hand with cannabis habit
 
 ## Overall age-use curve
 
-```{r age-use curve, echo=FALSE, cache=TRUE}
+```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
 # define your age‐bins (adjust to your exact labels!)
 age_levels <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
 df_cnb_gam <- df_cnb_gam %>%
