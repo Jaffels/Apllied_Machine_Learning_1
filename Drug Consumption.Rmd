@@ -64,6 +64,7 @@ library(dplyr)
 library(janitor)
 library(GGally)
 library(mgcv)
+library(tibble)
 
 # Suppresses all warnings
 options(warn = -1)
@@ -572,8 +573,30 @@ The boxplots show a clear pattern across several traits when comparing people wh
 
 ## Overall age-use curve
 
-```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
-# define your age‐bins (adjust to your exact labels!)
+```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=10, fig.height=10}
+# Load cleaned dataset
+df_cl <- read.csv("Data/cleaned.csv")
+# Remove the X column
+if("X" %in% names(df_cl)) df_cl <- df_cl %>% select(-X)
+# Classify past-year cannabis use: if use cannabis in the past year, then 1, otherwise 0 
+past_year_labels <- c(
+  "Used in Last Year",
+  "Used in Last Month",
+  "Used in Last Week",
+  "Used in Last Day"
+)
+df_cnb_gam <- df_cl %>%
+  mutate(
+    cnb_use = case_when(
+      Cannabis %in% past_year_labels           ~ "Yes",
+      Cannabis %in% c("Never Used",
+                      "Used over a Decade Ago",
+                      "Used in Last Decade")  ~ "No",
+      TRUE                                     ~ NA_character_
+    ),
+    cnb_use = factor(cnb_use, levels = c("No","Yes"))
+  )
+
 age_levels <- c("18-24", "25-34", "35-44", "45-54", "55-64", "65+")
 df_cnb_gam <- df_cnb_gam %>%
   mutate(
@@ -1860,12 +1883,13 @@ if (exists("cannabis_poisson_model") && !is.null(cannabis_poisson_model)) {
 
 ## Generalised Linear Model with family set to Binomial (Nhat Bui)
 
-```{r glmbi_model5, echo=FALSE, cache=TRUE}
+```{r glmbi_model5, echo=FALSE, cache=TRUE, results ='hide'}
 # Fit the model 
 
 model <- glm(cnb_use ~ Nscore + Escore + Oscore + Ascore + Cscore, family = binomial, data = df_cnb)
 summary(model)
-
+```
+```{r glmbi_model5_kable, echo=FALSE, cache=TRUE}
 cnb_model <- broom::tidy(model) %>%
   mutate(
     raw_p = p.value,
@@ -1901,7 +1925,13 @@ kable(cnb_model,
   column_spec(6, width = "3cm")      
 ```
 
-The logistic regression shows that, of the five personality traits, Openness is by far the strongest predictor of having ever tried marijuana: each one-point increase in Openness more than doubles the odds of experimentation (OR = 2.51, 95% CI 2.18–2.89, p < 0.001). Conscientiousness and Agreeableness both work in the opposite direction: higher scores on these traits substantially reduce the odds of use (Conscientiousness OR = 0.57, 95% CI 0.49–0.66, p < 0.001; Agreeableness OR = 0.74, 95% CI 0.65–0.85, p < 0.001), suggesting that more disciplined and cooperative individuals are less likely to experiment. Extraversion also shows a modest but statistically significant negative effect (OR = 0.83, 95% CI 0.71–0.96, p = 0.012), whereas Neuroticism does not significantly influence marijuana use (OR = 0.92, 95% CI 0.80–1.07, p = 0.28). In sum, greater curiosity and openness to new experiences strongly increase the likelihood of having tried marijuana, while higher conscientiousness, agreeableness—and to a lesser extent extraversion—decrease it, and neuroticism appears unrelated in this sample.
+People who score high in Openness are more than twice as likely to have ever tried cannabis (OR = 2.51; 95 % CI 2.18–2.89; p < 0.001). In plain terms, each one‐point increase in openness roughly doubles someone’s odds of experimentation. On the flip side, those higher in Conscientiousness are about half as likely to try it (OR = 0.57; 95 % CI 0.49–0.66; p < 0.001). That means a one‐point bump in conscientiousness cuts the odds of ever using cannabis by roughly 43 %. When you combine these two traits, someone who is extremely curious but also extremely disciplined might face an internal tug‐of‐war—yet the numbers show that conscientiousness carries a similarly strong protective effect as openness carries a strong risk factor.
+
+Extraversion shows a significant protective effect as well (OR = 0.83; 95 % CI 0.71–0.96; p = 0.012). In other words, being more outgoing is linked with a roughly 17 % lower odds of having tried cannabis. That counters to the idea that extroverts would be more exposed to peer‐driven experimentation. Instead, it suggests extroverts may socialize in sports teams, clubs, family events—that do not revolve around drug use.
+
+Meanwhile, Agreeableness also reduces the odds of having tried cannabis (OR = 0.74; 95 % CI 0.65–0.85; p = 0.000006). A one‐point rise in agreeableness leads to about a 26 % lower chance of ever using. This implies that more cooperative, trustful, and conflict‐averse people tend to avoid experimentation. Conversely, Neuroticism does not show a significant effect here (OR = 0.92; 95 % CI 0.80–1.07; p = 0.284), indicating that anxiety or emotional volatility neither attracts people toward their first try.
+
+Putting these results together, it becomes clear that Openness and Conscientiousness are the dominant forces: curious, open‐minded individuals are most at risk, while disciplined, rule‐oriented people are much less likely to experiment. Extraversion and agreeableness offer smaller but still meaningful protection of drugs, while neuroticism appears unrelated in this sample. 
 
 ## Generalised Additive Model (Nhat Bui)
 
@@ -1928,13 +1958,13 @@ ggplot(df_cnb, aes(x = Education,
   theme_minimal(base_size = 14)
 ```
 
-This GAM‐derived curve describes how the probability of past-year cannabis use (vertical axis) changes as education rises from level 1 (“Not Provided/left before 16”) through level 10 (“Doctorate”). A few key takeaways emerge:
+This GAM‐derived curve describes how the probability of past-year cannabis use (vertical axis) changes as education rises from level 1 (“Not Provided/left before 16”) through level 10 (“Doctorate”).
 
 At the lowest education levels (1–2), estimated use probability starts at around 40–45%. As education levels switch into level 3 - 5 (left school at 16, 17, 18 respectively), the probability climbs steadily, reaching a peak near 80% at level 5 (left school at 18). Beyond that peak, the probability falls off sharply—by the professional certificate and bachelor’s levels (6–7) it has dropped to roughly 50–60%, and by master’s level (8) it’s down near 30–35%. Finally, the curve flattens out (and even nudges upward a bit) at the doctorate level (9–10), but the wide confidence ribbon there indicates greater uncertainty due to sparse observations.
 
-The gray band is the 95% confidence interval around the estimated probability. It is narrowest in the middle education bands (levels 3–7), where most of your data lie—so those estimates are quite precise. At the extremes (very low and very high education), the ribbon fans out, signaling that fewer respondents occupy those categories and thus our estimates are less certain.
+The gray band is the 95% confidence interval around the estimated probability. It is narrowest in the middle education bands (levels 3–7), where most of the data lies, so those estimates are quite precise. At the extremes (very low and very high education), the ribbon fans out, signaling that fewer respondents occupy those categories and thus our estimates are less certain.
 
-Taken together, this non-linear relationship shows that cannabis use probability does not simply rise or fall with education. Instead, it increases sharply through those that left school at 16, 17, 18 reflecting experimentation during teenage-age—and then declines among individuals with higher degrees, suggesting that the highest educational attainments are associated with lower recent use.
+Taken together, this non-linear relationship shows that cannabis use probability does not simply rise or fall with education. Instead, it increases sharply through those that left school at 16, 17, 18 reflecting experimentation during teenage age and then declines among individuals with higher degrees, suggesting that the highest educational positions are associated with lower recent use.
 
 ```{r gam_eda_plot_age, echo=FALSE, cache=TRUE}
 ggplot(df_cnb, aes(x = Age,
@@ -1961,7 +1991,7 @@ Beyond middle age, the decline slows and even reverses slightly: in the 55–64 
 
 Because we set k = 3, the model captures just the broad “high-early, steep-decline, slight rebound” pattern without overfitting. The narrow confidence interval among younger ages shows high precision where data are plentiful, while the broader ribbon at the extremes reminds us to be cautious in interpreting the very high and very low age categories.
 
-```{r gam_eda_plot_age_edu3, echo=FALSE, cache=TRUE,fig.width=12, fig.height=10, dpi=125}
+```{r gam_eda_plot_age_edu3, echo=FALSE, cache=TRUE,fig.width=6, fig.height=4, dpi=125}
 education_levels <- c(
   "Not Provided",
   "Left school before 16",
@@ -1998,7 +2028,7 @@ ggplot(df_cnb,
     x     = "Age",
     y     = "Probability of Past-Year Use"
   ) +
-  theme_minimal(base_size = 17)
+  theme_minimal(base_size = 10)
 ```
 
 The “less‐educated” group (e.g. “Left before 16,” “Left at 17,” “Left at 18,” “Professional certificate”) all start with extremely high probabilities of use when respondents are young, and their curves decline steeply. By midlife, those groups still often have somewhat higher past‐year use than the more‐educated strata. Whereas, the highest‐education respondent group (“University degree,” “Masters,” “Doctorate”) start at a lower baseline in the youngest age bracket, decline more gradually, and by the oldest ages are clustered down near 10–25%. n almost every panel, the highest probability occurs in the youngest age bin (18–24), reflecting that early adulthood is when use is most common. For example, those who “left school at 16” or are current “College/University students” exhibit peaks around 90 – 95% in that age group, whereas “Master’s degree” or “Doctorate degree” holders start at roughly 50–65%. As age increases from the early-20s toward the mid-40s, all panels show a steep drop
@@ -2017,8 +2047,47 @@ gam.1 <- gam(
     s(Age, by = Education, k = 5),
   family = binomial(link = "logit"),
   data   = df_cnb,
+  method = "REML"
 )
-summary(gam.1)
+
+# 3) Capture the summary
+sum_gam1 <- summary(gam.1)
+
+# 4) Extract and tidy the parametric coefficients table
+param_df <- as.data.frame(sum_gam1$p.table) %>%
+  rownames_to_column(var = "Term") %>%
+  rename(
+    Estimate   = Estimate,
+    Std_Error  = `Std. Error`,
+    z_value    = `z value`,
+    p_value    = `Pr(>|z|)`
+  )
+
+# 5) Print the parametric coefficients table with kable()
+kable(
+  param_df,
+  caption = "Parametric Coefficients (gam.1)",
+  digits  = c(0, 4, 4, 4, 4)
+)
+
+# 6) Extract and tidy the smooth‐terms table
+smooth_df <- as.data.frame(sum_gam1$s.table) %>%
+  rownames_to_column(var = "Smooth_Term") %>%
+  rename(
+    edf        = edf,
+    Ref_df     = Ref.df,
+    Chi_sq     = Chi.sq,
+    p_value_s  = `p-value`
+  )
+
+# 7) Print the smooth‐term statistics table with kable()
+cat("\n\n")  # blank line between tables
+
+kable(
+  smooth_df,
+  caption = "Approximate Significance of Smooth Terms (gam.1)",
+  digits  = c(0, 3, 3, 4, 4)
+)
 ```
 
 The “Parametric coefficients” table shows one row for the intercept (the reference category, here “Not Provided”) and one row for each of the other education levels. The intercept row can be seen as “the starting probability of past‐year use for the ‘Not Provided’ group”, and other row tells how much higher or lower that starting probability is for each education level compared to “Not Provided.”
@@ -2052,11 +2121,11 @@ Doctorate holders show only a slight drop (about 3 points lower, or ~55% vs. 58%
 
 In summary, at the initial age (where the smooth hasn’t yet adjusted upward or downward), college/university students have a significantly higher starting chance of having used cannabis in the past year; university and master’s graduates have significantly lower starting chances; and the other categories do not show clear differences compared to the “Not Provided” group.
 
-Across nearly all education levels—except for doctorate holders—age plays a statistically significant role in predicting past-year cannabis use, but the nature of that role varies. Some groups (“Not Provided,” “Left school before 16,” and “Master’s degree”) exhibit a simple, linear decline (edf close to 1, p < 0.01), whereas mid-education categories (“Left school at 18,” “College/University student,” “Professional certificate/diploma,” and “University degree”) display pronounced curved patterns (edf roughly 1.9–2.9, p < 0.001), peaking in early adulthood before falling. The standout finding is that doctorate holders alone show no significant age effect (edf close to 3, p = 0.3427), implying their probability of past-year use remains essentially flat across all age bins.
+Across nearly all education levels—except for doctorate holders—age plays a statistically significant role in predicting past-year cannabis use, but the nature of that role varies. Some groups (“Not Provided,” “Left school before 16,” and “Master’s degree”) show a simple, linear decline (edf close to 1, p < 0.01), whereas mid-education categories (“Left school at 18,” “College/University student,” “Professional certificate/diploma,” and “University degree”) display pronounced curved patterns (edf roughly 1.9–2.9, p < 0.001), peaking in early adulthood before falling. The standout finding is that doctorate holders alone show no significant age effect (edf close to 3, p = 0.3427), implying their probability of past-year use remains flat across all age bins.
 
 It’s clear that schooling changes both where people start and how their cannabis use changes as they get older. For example, among 18–24 year‐olds, college and university students stand out as the most likely to report past‐year use, while those with bachelor’s or master’s degrees are far less likely. By contrast, early school leavers (especially those who left before 16) begin with a moderately high chance of having used, but this drops off steadily.
 
-As people move into their late 20s and beyond, almost every education group demosntrates a real decline in use—except doctorate holders, whose already‐low probability stays nearly flat across all age bins. But the way that drop happens isn’t the same for everyone: some groups (like master’s graduates or those without any schooling info) simply decline in a straight line, while others (like those who left school at 18, certificate holders, or current students) have a noticeable “hump” in their late teens or early 20s before their use tails off. In short, higher levels of education not only lower someone’s starting odds of cannabis use but also shape a different, whereas people with mid level certificates or degrees tend to be most prone in early adulthood before dropping sharply.
+As people move into their late 20s and beyond, almost every education group demosntrates a real decline in use, except for doctorate holders, whose already‐low probability stays nearly flat across all age bins. But the way that drop happens is not the same for everyone: some groups (like master’s graduates or those without any schooling info) simply decline in a straight line, while others (like those who left school at 18, certificate holders, or current students) have a “hump” in their late teens or early 20s before their use tails off. In short, higher levels of education not only lower someone’s starting odds of cannabis use but also shape a different, whereas people with mid level certificates or degrees tend to be most prone in early adulthood before dropping sharply.
 
 ## Neural Network
 
