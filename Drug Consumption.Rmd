@@ -400,7 +400,7 @@ Male respondents, on average, are shown to exhibit higher scores in Sensation Se
 
 ## Comparing Education Level with Behavioral Measures
 
-```{r da3, fig.width=5, fig.height=8.5, dev="pdf", echo=FALSE, cache=TRUE}
+```{r da3, fig.width=5, fig.height=7, dev="pdf", echo=FALSE, cache=TRUE}
 ###############################################################################
 # Education comparison
 ###############################################################################
@@ -446,7 +446,8 @@ education_plot_data <- education_means %>%
 
 # Simplified visualization approach with more space for the title
 # Set up the plotting parameters
-par(mfrow = c(4, 2), mar = c(8, 4, 2, 1), oma = c(0, 0, 3, 0))
+# MODIFICATION: Reduced the top and bottom margins in mar c(bottom, left, top, right)
+par(mfrow = c(3, 3), mar = c(5, 3, 1, 0.5), oma = c(0, 0, 2.5, 0))
 
 # Define the trait columns and their display names
 trait_cols <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
@@ -568,74 +569,6 @@ df_cnb %>%
          title = "Personality Traits by Marijuana Use")
 ```
 The boxplots show a clear pattern across several traits when comparing people who’ve never tried marijuana to those who have. Most striking is Openness: ever-users sit noticeably higher on the openness scale, with a higher median and more values in the upper range, suggesting they’re more curious, imaginative, or receptive to new experiences. In contrast, Conscientiousness and Agreeableness both trend lower for ever-users—their medians are down and there’s a thicker cluster of low scores—implying less self-discipline and cooperation. Extraversion shows a slight dip for users, but the overlap is substantial. Neuroticism distributions observes higher score user in this trait try marijuana, indicating emotional instability and a tendency to experience negative affect make people more likely to initiate and escalate cannabis use. Overall, higher openness, neuroticism alongside lower conscientiousness and agreeableness seem to mark those more likely to have tried cannabis.
-
-## Past-year cannabis use by Education levels
-
-```{r edu_distribute, echo=FALSE, cache=TRUE}
-# Load cleaned dataset
-df_cl <- read.csv("Data/cleaned.csv")
-# Remove the X column
-if("X" %in% names(df_cl)) df_cl <- df_cl %>% select(-X)
-# Classify past-year cannabis use: if use cannabis in the past year, then 1, otherwise 0 
-past_year_labels <- c(
-  "Used in Last Year",
-  "Used in Last Month",
-  "Used in Last Week",
-  "Used in Last Day"
-)
-df_cnb_gam <- df_cl %>%
-  mutate(
-    cnb_use = case_when(
-      Cannabis %in% past_year_labels           ~ "Yes",
-      Cannabis %in% c("Never Used",
-                      "Used over a Decade Ago",
-                      "Used in Last Decade")  ~ "No",
-      TRUE                                     ~ NA_character_
-    ),
-    cnb_use = factor(cnb_use, levels = c("No","Yes"))
-  )
-```
-
-```{r edu_dist_plot, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
-# Summarise into a data frame
-edu_summary <- df_cnb_gam %>%
-  group_by(Education) %>%
-  summarise(
-    n    = n(),
-    prev = mean(cnb_use == "Yes") * 100
-  ) %>%
-  arrange(prev) %>%            
-  mutate(
-    prev  = round(prev, 1),
-    label = paste0(n, " (", prev, "%)")
-  )
-#Show the same table with kable
-edu_summary %>%
-  select(Education, n, prev) %>%
-  kable(
-    col.names = c("Education Level", "Count", "Past-Year Use (%)"),
-    caption   = "Cannabis Use Prevalence by Education Level",
-    align     = c("l","r","r"),
-    digits    = c(0,0,1)
-  ) %>%
-  kable_styling(bootstrap_options = c("striped","hover","condensed"))
-#Plot a horizontal bar chart
-ggplot(edu_summary, aes(x = prev, y = reorder(Education, prev))) +
-  geom_col(fill = "steelblue", width = 0.6) +
-  geom_text(aes(label = label), hjust = -0.05, size = 3) +
-  scale_x_continuous(
-    expand = expansion(mult = c(0, .1))
-  ) +
-  labs(
-    x       = "Past-Year Cannabis Use (%)",
-    y       = "Education Level",
-    title   = "Prevalence of Past-Year Cannabis Use\nby Education Level",
-    caption = "Counts in parentheses"
-  ) +
-  theme_minimal(base_size = 12)
-```
-
-It is striking to see how education seems to go hand-in-hand with cannabis habits: people who started college but didn’t finish top the chart at about 80% past-year use, while those who walked away before age 18 still hover around two-thirds. But as you climb the credential ladder—bachelor’s, professional diplomas, then master’s and doctorates—the rate steadily falls into the 30–45% range. Sure, some of that drop comes simply because graduate students tend to be older, but even among older adults you see lower use in the highest-degree groups. That makes you wonder: does the discipline and structure of finishing a degree actually delay trying cannabis or keep use from ramping up? A GAM that fits its own smooth age-use curve for each education level will help us untangle whether a college diploma really pushes that peak of use later and tames its rise, or if it’s mostly just reflecting who’s in which age bracket.
 
 ## Overall age-use curve
 
