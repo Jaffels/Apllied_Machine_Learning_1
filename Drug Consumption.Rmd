@@ -2050,10 +2050,8 @@ gam.1 <- gam(
   method = "REML"
 )
 
-# 3) Capture the summary
 sum_gam1 <- summary(gam.1)
 
-# 4) Extract and tidy the parametric coefficients table
 param_df <- as.data.frame(sum_gam1$p.table) %>%
   rownames_to_column(var = "Term") %>%
   rename(
@@ -2063,14 +2061,12 @@ param_df <- as.data.frame(sum_gam1$p.table) %>%
     p_value    = `Pr(>|z|)`
   )
 
-# 5) Print the parametric coefficients table with kable()
 kable(
   param_df,
   caption = "Parametric Coefficients (gam.1)",
   digits  = c(0, 4, 4, 4, 4)
 )
 
-# 6) Extract and tidy the smooth‐terms table
 smooth_df <- as.data.frame(sum_gam1$s.table) %>%
   rownames_to_column(var = "Smooth_Term") %>%
   rename(
@@ -2080,7 +2076,6 @@ smooth_df <- as.data.frame(sum_gam1$s.table) %>%
     p_value_s  = `p-value`
   )
 
-# 7) Print the smooth‐term statistics table with kable()
 cat("\n\n")  # blank line between tables
 
 kable(
