@@ -573,7 +573,7 @@ The boxplots show a clear pattern across several traits when comparing people wh
 
 ## Overall age-use curve
 
-```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=10, fig.height=10}
+```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
 # Load cleaned dataset
 df_cl <- read.csv("Data/cleaned.csv")
 # Remove the X column
