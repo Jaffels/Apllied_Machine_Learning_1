@@ -1,0 +1,655 @@
+---
+title: "Drug Consumption"
+author: "Nhat Bui, Johan Ferreira, Thilo Holstein"
+date: "2025-03-06"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    fig_width: 7
+    fig_height: 5
+    fig_caption: true
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  cache = TRUE,
+  fig.align = "center"
+)
+```
+
+```{r install ANN, eval=FALSE}
+install.packages(c("tidyverse", "neuralnet", "caret", "lattice", "here"))
+```
+
+```{r libraries ANN}
+library(here)
+library(tidyverse)
+library(neuralnet)
+library(caret)
+library(ggplot2)
+library(lattice)
+library(NeuralNetTools)
+library(grid)
+```
+
+```{r data}
+# Load your data
+data <- read.csv("model_data.csv")
+```
+
+```{r model}
+# Convert key drugs to binary (used in last year or more recently = 1, else 0)
+data <- data %>%
+  mutate(
+    LSD_bin      = as.integer(LSD     %in% c(3, 4, 5, 6)),
+    Ecstasy_bin  = as.integer(Ecstasy %in% c(3, 4, 5, 6)),
+    Coke_bin     = as.integer(Coke    %in% c(3, 4, 5, 6)),
+    Cannabis_user = Cannabis %in% c(3, 4, 5, 6)
+  ) %>%
+  filter(Cannabis_user)  # Focus only on Cannabis users
+
+# Scale numeric predictors (important for NN training)
+data_scaled <- as.data.frame(scale(data[, c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS", "Age")]))
+
+data_scaled$Gender    <- as.numeric(data$Gender)
+data_scaled$Education <- as.numeric(data$Education)
+
+data_scaled$LSD_bin     <- data$LSD_bin
+data_scaled$Ecstasy_bin <- data$Ecstasy_bin
+data_scaled$Coke_bin    <- data$Coke_bin
+
+# Define formula
+formula <- LSD_bin + Ecstasy_bin + Coke_bin ~ 
+  Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS + 
+  Age + Gender + Education
+
+# Train-test split
+set.seed(123)
+indices <- createDataPartition(data_scaled$LSD_bin, p = 0.8, list = FALSE)
+train <- data_scaled[indices, ]
+
+test  <- data_scaled[-indices, ]
+
+# Train neural network
+drug_net <- neuralnet(
+  formula,
+  data          = train,
+  hidden        = 3,               # three hidden neurons
+  linear.output = FALSE,           # classification
+  threshold     = 0.01,
+  stepmax       = 1e6
+)
+
+
+```
+
+```{r plot_net, fig.height=6, fig.width=11, fig.cap="Neural network with three hidden neurons"}
+plotnet(drug_net,
+        rel.ranking = TRUE,
+        cex.val     = 1.2,
+        col.hidden  = "lightblue",
+        col.hidden.syn = "black",
+        alpha       = 0.7,
+        lwd         = 5)
+```
+
+```{r error_steps, echo=FALSE}
+cat("Error:", round(drug_net$result.matrix["error", ], 2), "
+")
+cat("Steps:", drug_net$result.matrix["steps", ], "
+")
+```
+
+```{r predictions_evaluation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
+# Make predictions
+after_vars <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore",
+                "Impulsive", "SS", "Age", "Gender", "Education")
+
+pred_results <- neuralnet::compute(drug_net, test %>% select(all_of(after_vars)))
+
+# Probabilities for each drug
+probs <- as.data.frame(pred_results$net.result)
+colnames(probs) <- c("LSD_prob", "Ecstasy_prob", "Coke_prob")
+
+# Predicted classes (1 if prob > 0.5)
+pred_classes <- as.data.frame(probs > 0.5)
+
+# Actual labels
+actual <- test %>% select(LSD_bin, Ecstasy_bin, Coke_bin)
+
+# Confusion matrix for LSD
+conf_matrix_lsd <- confusionMatrix(
+  factor(as.integer(pred_classes$LSD_prob), levels = c(0, 1)),
+  factor(actual$LSD_bin, levels = c(0, 1))
+)
+
+# Display confusion matrix table
+knitr::kable(conf_matrix_lsd$table,
+             caption = "Confusion Matrix: LSD Prediction",
+             align   = 'c',
+             row.names = TRUE)
+
+# Prepare data for heatmap
+cm_df <- as.data.frame(conf_matrix_lsd$table)
+colnames(cm_df) <- c("Predicted", "Actual", "Freq")
+cm_df <- cm_df %>% mutate(
+  Predicted = factor(Predicted, levels = c(0, 1)),
+  Actual    = factor(Actual,    levels = c(0, 1))
+)
+
+# Heatmap of confusion matrix
+library(ggplot2)
+
+ggplot(cm_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 6) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(title = "Confusion Matrix: LSD Prediction", x = "Actual", y = "Predicted") +
+  theme_minimal()
+
+# Rule‑based segmentation
+probs <- probs %>%
+  mutate(RuleGroup = case_when(
+    LSD_prob > 0.7 & Ecstasy_prob > 0.7 ~ "Multi-Risk",
+    LSD_prob > 0.7                     ~ "Psychedelic-Inclined",
+    Ecstasy_prob > 0.7                 ~ "Party-Prone",
+    LSD_prob < 0.3 & Ecstasy_prob < 0.3 & Coke_prob < 0.3 ~ "Low Risk",
+    TRUE                               ~ "Other"
+  ))
+
+# Scatter plot of segments
+ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = RuleGroup)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Rule-Based Segmentation of Cannabis Users",
+       x = "LSD Probability", y = "Ecstasy Probability") +
+  theme_minimal()
+```
+
+```{r kmeans_segmentation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
+# K‑means clustering on ANN probabilities
+set.seed(123)
+km <- kmeans(probs[, c("LSD_prob", "Ecstasy_prob", "Coke_prob")], centers = 4)
+
+# Attach cluster labels
+probs$Cluster <- paste("Cluster", km$cluster)
+
+# Summary of average probabilities per cluster
+cluster_summary <- probs %>%
+  group_by(Cluster) %>%
+  summarise(
+    LSD_avg      = mean(LSD_prob),
+    Ecstasy_avg  = mean(Ecstasy_prob),
+    Coke_avg     = mean(Coke_prob),
+    .groups      = "drop"
+  )
+
+# Display summary table
+knitr::kable(cluster_summary,
+             caption = "Average predicted probabilities by k‑means cluster",
+             align   = 'c')
+
+# Manual descriptive labels for each cluster (adjust if needed)
+probs <- probs %>%
+  mutate(ClusterLabel = case_when(
+    Cluster == "Cluster 1" ~ "Psychedelic-Inclined",
+    Cluster == "Cluster 2" ~ "Multi-Risk",
+    Cluster == "Cluster 3" ~ "Low Risk",
+    Cluster == "Cluster 4" ~ "Party-Prone",
+    TRUE                   ~ "Other"
+  ))
+
+# Scatter plot of clusters
+library(ggplot2)
+
+ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Labeled Cannabis User Clusters by Risk Type",
+       x = "LSD Probability", y = "Ecstasy Probability") +
+  theme_minimal()
+```
+
+```{r trait_visuals, echo=FALSE, results='asis', fig.show='hold', fig.width=8, fig.height=6}
+# Required libraries
+library(fmsb)
+library(tibble)   # for column_to_rownames
+
+# Trait columns to include
+trait_cols <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore", "Impulsive", "SS", "Age", "Gender", "Education")
+
+# Combine probabilities with corresponding trait values
+traits_with_probs <- cbind(
+  probs,
+  test[, trait_cols]
+)
+
+# Average traits by rule‑based profile
+radar_data <- traits_with_probs %>%
+  group_by(RuleGroup) %>%
+  summarise(across(all_of(trait_cols), mean), .groups = "drop") %>%
+  column_to_rownames("RuleGroup")
+
+# Scale 0–1 for radar plot
+radar_scaled <- as.data.frame(t(apply(radar_data, 2, function(x) (x - min(x)) / (max(x) - min(x)))))
+radar_scaled <- as.data.frame(t(radar_scaled))
+radar_scaled <- rbind(rep(1, length(trait_cols)), rep(0, length(trait_cols)), radar_scaled)
+colnames(radar_scaled) <- trait_cols
+rownames(radar_scaled)[1:2] <- c("Max", "Min")
+
+# Display average traits table
+knitr::kable(radar_data, caption = "Average personality traits by rule‑based profile", align = 'c')
+
+# Radar chart
+radarchart(radar_scaled,
+           axistype = 1,
+           pcol     = rainbow(nrow(radar_data)),
+           plwd     = 2,
+           plty     = 1,
+           title    = "Personality Traits by Profile")
+
+# Shift legend slightly right, outside plot
+par(xpd = TRUE)
+legend(x = 1.25, y = 1.25,
+       legend = rownames(radar_data),
+       col    = rainbow(nrow(radar_data)),
+       lty    = 1, lwd = 2, bty = "n")
+par(xpd = FALSE)
+```
+
+```{r trait_heatmap, echo=FALSE, fig.width=14, fig.height=10.5, fig.cap='Trait–Drug Correlation Heatmap'}
+# Correlation heatmap (traits on X‑axis, drugs on Y‑axis)
+library(reshape2)
+library(ggplot2)
+
+corr_matrix <- cor(data_scaled[, c(trait_cols, "LSD_bin", "Ecstasy_bin", "Coke_bin")])
+heat_data <- melt(corr_matrix[trait_cols, c("LSD_bin", "Ecstasy_bin", "Coke_bin")])
+
+# Swap axes: traits on x, drugs on y
+heat_data$Var1 <- factor(heat_data$Var1, levels = trait_cols)
+heat_data$Var2 <- factor(heat_data$Var2, levels = c("LSD_bin", "Ecstasy_bin", "Coke_bin"))
+
+ggplot(heat_data, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(value, 2)), size = 5) +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1, 1), space = "Lab",
+                       name = "Correlation") +
+  theme_minimal() +
+  labs(x = "Trait", y = "Drug") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed()
+```
+
+```{r install, eval=FALSE}
+install.packages(c("e1071", "DALEX", "iml", "ggplot2", "dplyr", "parallel", "factoextra", "FactoMineR"))
+```
+
+```{r libraries}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(e1071)
+library(parallel)
+library(DALEX)
+library(iml)
+library(factoextra)
+library(FactoMineR)
+```
+
+# Data Preparation
+
+```{r data_prep}
+model_data <- read.csv("model_data.csv")
+
+# Convert drug usage columns to numeric
+drug_cols <- c("Coke", "LSD", "Ecstasy", "Ketamine", "Cannabis", "Alcohol", "Amphet")
+model_data[drug_cols] <- lapply(model_data[drug_cols], as.numeric)
+
+# Create binary and multi‑class targets
+model_data <- model_data %>%
+  mutate(
+    drug_count   = rowSums(select(., all_of(drug_cols)) >= 3),
+    PolyDrugUser = factor(ifelse(drug_count >= 3, "Yes", "No")),
+    PolyDrugClass = case_when(
+      drug_count == 0  ~ "None",
+      drug_count < 3   ~ "Moderate",
+      drug_count >= 3  ~ "Poly"
+    ) %>% factor(levels = c("None", "Moderate", "Poly"))
+  )
+
+# Predictor set
+predictors <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore",
+                "Impulsive", "SS", "Age", "Gender", "Education",
+                "Alcohol", "Cannabis")
+
+# Remove missing values
+data_clean <- model_data %>% drop_na(all_of(c(predictors, "PolyDrugUser", "PolyDrugClass")))
+
+# Train/test split (consistent for both tasks)
+set.seed(123)
+split_idx <- sample(seq_len(nrow(data_clean)), size = 0.8 * nrow(data_clean))
+train_bin <- data_clean[split_idx, ]
+train_mc  <- train_bin
+
+test_bin  <- data_clean[-split_idx, ]
+test_mc   <- test_bin
+```
+
+# Binary SVM Model
+
+```{r svm_binary}
+svm_bin <- svm(
+  as.formula(paste("PolyDrugUser ~", paste(predictors, collapse = "+"))),
+  data   = train_bin,
+  kernel = "radial",
+  cost   = 1,
+  scale  = TRUE,
+  probability = TRUE
+)
+
+pred_bin_labels <- predict(svm_bin, test_bin)
+prob_bin        <- attr(predict(svm_bin, test_bin, probability = TRUE), "probabilities")[, "Yes"]
+
+test_bin <- test_bin %>% mutate(PredictedClass = pred_bin_labels,
+                                PredictedProb  = prob_bin)
+
+cm_bin <- table(Predicted = pred_bin_labels, Actual = test_bin$PolyDrugUser)
+acc_bin <- mean(pred_bin_labels == test_bin$PolyDrugUser)
+```
+
+```{r svm_binary_results, results='asis', fig.show='hold'}
+library(kableExtra)
+
+# Confusion matrix table with accuracy in the caption
+knitr::kable(cm_bin,
+             caption = sprintf("Binary SVM Confusion Matrix (Accuracy = %.3f)", acc_bin),
+             align = 'c') %>%
+  kable_styling(latex_options = c("hold_position"))
+
+# Heatmap of the confusion matrix
+cm_df <- as.data.frame(cm_bin)
+colnames(cm_df) <- c("Predicted", "Actual", "Freq")
+cm_df <- cm_df %>% mutate(Predicted = factor(Predicted, levels = c("No", "Yes")),
+                          Actual    = factor(Actual,    levels = c("No", "Yes")))
+
+ggplot(cm_df, aes(Actual, Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 6) +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(title = "Binary SVM Confusion Matrix", x = "Actual", y = "Predicted") +
+  theme_minimal()
+```
+
+# Multi‑class SVM Model
+
+```{r svm_multiclass}
+# Multi-class SVM (3 classes: None / Moderate / Poly)
+svm_mc <- svm(
+  as.formula(paste("PolyDrugClass ~", paste(predictors, collapse = "+"))),
+  data   = train_mc,
+  kernel = "radial",
+  cost   = 1,
+  scale  = TRUE   # scaling numeric predictors is safe here
+)
+
+# Predictions on the held-out set
+pred_mc <- predict(svm_mc, test_mc)
+
+# Ensure factor levels are consistent for confusion matrix
+pred_mc  <- factor(pred_mc,  levels = levels(test_mc$PolyDrugClass))
+actual_mc <- factor(test_mc$PolyDrugClass, levels = levels(test_mc$PolyDrugClass))
+
+cm_mc  <- table(Predicted = pred_mc, Actual = actual_mc)
+acc_mc <- mean(pred_mc == actual_mc)
+```
+
+```{r svm_multiclass_results, results='asis'}
+knitr::kable(cm_mc,
+             caption = sprintf("Multi‑class SVM Confusion Matrix (Accuracy = %.3f)", acc_mc),
+             align = 'c')
+```
+
+# Top‑Risk Profile Simulation
+
+```{r simulate_profiles, echo=FALSE, results='asis', fig.show='hold'}
+library(parallel)     # parallel utilities
+library(kableExtra)   # nicer, scalable tables
+
+# -------- Helper to sample realistic values --------
+sample_trait_values <- function(trait, n = 1e5) {
+  q <- quantile(trait, probs = c(0.25, 0.75), na.rm = TRUE)
+  vals <- runif(n, q[1], q[2]) + rnorm(n, sd = 0.1)
+  pmin(pmax(vals, q[1]), q[2])
+}
+
+n_samples <- 100000  # adjust if memory constrained
+
+levels_moderate <- list(
+  Nscore    = sample_trait_values(data_clean$Nscore, n_samples),
+  Cscore    = sample_trait_values(data_clean$Cscore, n_samples),
+  Oscore    = sample_trait_values(data_clean$Oscore, n_samples),
+  Ascore    = sample_trait_values(data_clean$Ascore, n_samples),
+  Escore    = sample_trait_values(data_clean$Escore, n_samples),
+  Impulsive = sample_trait_values(data_clean$Impulsive, n_samples),
+  SS        = sample_trait_values(data_clean$SS, n_samples),
+  Age       = sample(1:6, n_samples, replace = TRUE),
+  Gender    = sample(c(0, 1), n_samples, replace = TRUE, prob = c(0.4, 0.6)),
+  Education = sample(c(2, 4, 5, 6, 7, 8), n_samples, replace = TRUE,
+                     prob = c(0.05, 0.15, 0.3, 0.25, 0.15, 0.1)),
+  Alcohol   = sample_trait_values(data_clean$Alcohol, n_samples),
+  Cannabis  = sample_trait_values(data_clean$Cannabis, n_samples)
+)
+
+sampled_data <- as.data.frame(levels_moderate)
+
+predict_svm <- function(model, newdata) as.numeric(predict(model, newdata) == "Yes")
+
+# -------- Use predicted probabilities as risk --------
+
+set.seed(1234)  # reproducible synthetic sampling
+
+predict_prob <- function(model, newdata) {
+  attr(predict(model, newdata, probability = TRUE), "probabilities")[, "Yes"]
+}
+
+cl <- parallel::makeCluster(max(1, parallel::detectCores() - 1))
+parallel::clusterExport(cl, varlist = c("svm_bin", "predict_prob", "sampled_data"))
+invisible(parallel::clusterEvalQ(cl, {library(e1071); NULL}))
+
+predicted_risks <- parallel::parApply(cl, sampled_data, 1, function(row) {
+  predict_prob(svm_bin, as.data.frame(t(row)))
+})
+parallel::stopCluster(cl)
+
+sampled_data$PredictedRisk <- predicted_risks
+
+# -------- Top‑3 profiles --------
+
+top_profiles <- sampled_data %>%
+  arrange(desc(PredictedRisk)) %>%
+  head(3) %>%
+  mutate(
+    Gender_label = ifelse(Gender == 1, "Male", "Female"),
+    Education_label = case_when(
+      Education == 1 ~ "<16 years",
+      Education == 2 ~ "16 years",
+      Education == 3 ~ "17 years",
+      Education == 4 ~ "18 years",
+      Education == 5 ~ "Some college",
+      Education == 6 ~ "Prof. diploma",
+      Education == 7 ~ "University",
+      Education == 8 ~ "Masters",
+      Education == 9 ~ "Doctorate",
+      TRUE ~ "Unknown"
+    ),
+    Profile = paste("Profile", row_number())
+  )
+
+# Smaller font & scaled table so all columns fit
+knitr::kable(top_profiles, caption = "Top 3 Highest‑Risk Synthetic Profiles", align = 'c') %>%
+  kable_styling(latex_options = c("scale_down"), font_size = 6)
+```
+
+```{r shap_individual, echo=FALSE, fig.show='hold', fig.width=7, fig.height=5}
+# Synthetic profile built from 95th-percentile (or last factor level) values
+high_percentiles <- lapply(train_bin[, predictors], function(x) {
+  if (is.numeric(x))      quantile(x, 0.95, na.rm = TRUE)
+  else if (is.factor(x))  tail(levels(x), 1)
+  else if (is.character(x)) unique(x)[1]
+  else NA
+})
+high_risk_profile <- as.data.frame(high_percentiles, stringsAsFactors = FALSE)
+
+for (col in predictors) {
+  if (is.factor(train_bin[[col]])) {
+    high_risk_profile[[col]] <- factor(high_risk_profile[[col]],
+                                       levels = levels(train_bin[[col]]))
+  }
+}
+
+# Probability-returning predict function (define once if absent)
+if (!exists("predict_svm")) {
+  predict_svm <- function(model, newdata) {
+    attr(predict(model, newdata, probability = TRUE),
+         "probabilities")[, "Yes"]
+  }
+}
+
+explainer_ind <- Predictor$new(
+  model            = svm_bin,
+  data             = train_bin[, predictors],
+  y                = train_bin$PolyDrugUser,
+  predict.function = predict_svm,
+  type             = "prob"
+)
+
+shap_ind <- Shapley$new(explainer_ind, x.interest = high_risk_profile)
+plot(shap_ind)
+```
+
+# Feature Importance (Single‑Feature Accuracy)
+
+```{r single_feature_accuracy, fig.height=4, fig.width=8}
+features <- c("SS", "Impulsive", "Age", "Alcohol", "Nscore", "Cscore",
+              "Oscore", "Ascore", "Escore", "Gender", "Education", "Cannabis")
+accs <- sapply(features, function(f) {
+  m <- svm(as.formula(paste("PolyDrugUser ~", f)), data = train_bin, kernel = "radial", cost = 1)
+  mean(predict(m, test_bin) == test_bin$PolyDrugUser)
+})
+
+barplot(accs, names.arg = features, las = 2, ylab = "Accuracy",
+        main = "Prediction Accuracy by Single Feature")
+```
+
+# Model Confidence Histogram
+
+```{r confidence_hist, fig.height=4, fig.width=7}
+all_probs <- prob_bin  # from earlier
+
+ggplot(test_bin, aes(all_probs, fill = PolyDrugUser)) +
+  geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.6) +
+  labs(title = "Model Confidence Distribution", x = "Predicted Probability of 'Yes'", y = "Count") +
+  theme_minimal()
+```
+
+# PCA Visualization of SVM Output
+
+```{r pca_plot, fig.height=5, fig.width=7}
+# PCA on numeric predictors
+pca_res <- PCA(train_bin[, predictors], graph = FALSE)
+coords  <- as.data.frame(pca_res$ind$coord[, 1:2])
+colnames(coords) <- c("PC1", "PC2")
+coords$Prediction <- pred_bin_labels[1:nrow(coords)]
+
+ggplot(coords, aes(PC1, PC2, color = Prediction)) +
+  geom_point(alpha = 0.7, size = 3) +
+  labs(title = "SVM Output in PCA‑Reduced Feature Space",
+       x = "Principal Component 1", y = "Principal Component 2") +
+  theme_minimal()
+```
+
+```{r SVM Confusion Heatmap, echo=FALSE, results='asis'}
+library(ggplot2)
+
+ggplot(test_bin, aes(x = Impulsive, color = PolyDrugUser)) +
+  geom_density() +
+  labs(title = "Impulsiveness by Predicted PolyDrugUser Class",
+       x = "Impulsive Score", y = "Density") +
+  theme_minimal()
+```
+
+# Interpretation: Comparing ANN and SVM Predictions
+
+```{r interpretation_compare, echo=FALSE, results='asis'}
+
+library(kableExtra)
+
+# Try to bring in ANN probabilities if not already loaded
+if (!exists("probs") && file.exists("ann_probs.csv")) {
+  probs <- read.csv("ann_probs.csv")
+}
+
+if (exists("probs")) {
+  if (!"Profile" %in% colnames(probs)) {
+    probs$Profile <- paste0("User", seq_len(nrow(probs)))
+  }
+  probs <- probs %>%
+    mutate(ANN_CombinedRisk = rowMeans(select(., LSD_prob, Ecstasy_prob, Coke_prob), na.rm = TRUE))
+
+  svm_probs <- test_bin %>% mutate(SVM_PredProb = prob_bin)
+  svm_probs_subset <- svm_probs[1:nrow(probs), ]
+  svm_probs_subset$Profile <- probs$Profile
+
+  svm_summary <- svm_probs_subset %>% group_by(Profile) %>% summarise(MeanProb_SVM = mean(SVM_PredProb, na.rm = TRUE), .groups="drop")
+  ann_summary <- probs %>% group_by(Profile) %>% summarise(MeanProb_ANN = mean(ANN_CombinedRisk, na.rm = TRUE), .groups="drop")
+  comparison  <- left_join(svm_summary, ann_summary, by = "Profile")
+
+  knitr::kable(comparison, caption = "Mean ANN vs. SVM Probabilities by Profile", align = 'c') %>%
+    kable_styling(latex_options = c("scale_down"), font_size = 7)
+
+  correlation <- cor(comparison$MeanProb_SVM, comparison$MeanProb_ANN, use = "complete.obs")
+  cat(sprintf("
+**Pearson correlation between SVM and ANN mean probabilities:** %.3f", correlation))
+} else {
+  cat("ANN prediction object 'probs' not found; interpretation skipped. If you have ANN predictions saved (e.g., 'ann_probs.csv'), place the file in the project folder or knit the ANN document first.")
+}
+```
+
+# Explainability with SHAP Logic
+
+```{r shap_explain, echo=FALSE, fig.show='asis'}
+if (exists("prob_bin")) {
+  predict_prob <- function(model, newdata) {
+    attr(predict(model, newdata, probability = TRUE), "probabilities")[, "Yes"]
+  }
+
+  explainer <- Predictor$new(
+    model = svm_bin,
+    data  = train_bin[, predictors],
+    y     = train_bin$PolyDrugUser,
+    predict.function = predict_prob,
+    type  = "prob"
+  )
+
+  idx  <- which.max(prob_bin)
+  shap <- Shapley$new(explainer, x.interest = test_bin[idx, predictors])
+
+  # Ensure the ggplot object is printed so it appears in the document
+  print(plot(shap) + ggtitle("SHAP Explanation for Highest-Risk Individual"))
+
+  cat("
+**Highest-Risk Individual (test set):**
+")
+  print(test_bin[idx, predictors])
+  cat(sprintf("
+Predicted SVM risk probability: %.3f
+", prob_bin[idx]))
+} else {
+  cat("SVM probability vector 'prob_bin' not found; SHAP section skipped.")
+}
+```
