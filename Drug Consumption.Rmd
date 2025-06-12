@@ -2280,6 +2280,7 @@ knitr::kable(cluster_summary_named,
 ```
 
 **Interpretation of Clusters**
+
 - Cluster 1 (“Psychedelic-Inclined”) shows elevated predicted risk for LSD and Ecstasy but lower for Cocaine, indicating a focus on psychedelic and party drugs.
 - Cluster 2 (“Low Risk”) has the lowest average probabilities, representing individuals with relatively minimal predicted follow-up use of these substances.
 - Cluster 3 (“Multi-Risk”) exhibits the highest average probabilities across all three substances, identifying a high-risk subgroup with broad susceptibility to polysubstance use.
