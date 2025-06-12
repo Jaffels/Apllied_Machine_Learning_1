@@ -2109,13 +2109,26 @@ As people move into their late 20s and beyond, almost every education group demo
 
 ## Neural Network Modeling (Thilo Holstein)
 
+## Neural Network (Thilo Holstein)
+
+Cannabis users often represent a critical group for studying patterns of progression to other drug use due to both social and biological factors. Research indicates that Cannabis use can act as a gateway, increasing the probability of trying other substances such as LSD, Ecstasy, or Cocaine. However, this progression is neither uniform nor deterministic; individual personality traits and demographic factors play significant roles in influencing this behavior.
+
+The core idea behind the ANN modeling approach is to identify which characteristics most strongly predict whether a Cannabis user will likely engage in subsequent use of other illicit substances, for instance LSD. Drug use data were binarized to indicate recent use (within the past year), continuous predictors (personality traits and age) were standardized via z-score normalization to ensure balanced model training, while categorical variables (gender, education) were numerically encoded.
+
+Personality traits like impulsiveness and sensation seeking are strong predictors of risk-taking and substance use. Impulsive individuals tend to experiment spontaneously, while sensation seekers pursue novel experiences, including illicit drugs. Traits such as conscientiousness and neuroticism influence susceptibility to progressing from Cannabis to other substances. Demographics – age, gender, and education – reflect social and developmental contexts affecting drug use patterns through exposure, peer influence, and life priorities.
+\vspace{0.5cm}
+
+
+### Neural Network Modeling
+
+
 To investigate the risk of progressing from cannabis use to other substances, we leveraged a multi-output Artificial Neural Network to predict the probability of recent LSD, Ecstasy, and Cocaine use among cannabis consumers. The ANN was trained on scaled personality traits and demographic variables, capturing complex, nonlinear relationships.
 
 As a first step, the model was trained on a three-layer feedforward network on an 80/20 stratified split to balance complexity and prevent overfitting, using a classification loss with a strict convergence threshold and sufficient training steps.
 
 ```{r data, echo=FALSE}
 # Load your data
-data <- read.csv("Data/model_data.csv")
+data <- read.csv("model_data.csv")
 ```
 
 ```{r model, echo=FALSE, cache=TRUE}
@@ -2162,6 +2175,7 @@ drug_net <- neuralnet(
   threshold     = 0.01,
   stepmax       = 1e6
 )
+
 
 ```
 
@@ -2262,6 +2276,8 @@ conf_matrix_lsd <- confusionMatrix(
 
 knitr::kable(head(probs, 10), caption = "Predicted Probabilities (Top 10 Test Cases)")
 ```
+
+
 
 ```{r predictions_evaluation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
 # Automatically print model performance metrics
@@ -2383,6 +2399,7 @@ The plot visualizes cannabis users grouped into four distinct clusters based on 
 
 This cluster structure highlights heterogeneous trajectories of drug use among cannabis consumers and underscores the importance of tailored prevention strategies. For instance, interventions for Cluster 3 should address multiple substance risks simultaneously, while Cluster 4 might benefit from targeted education on stimulant-related harms.
 
+
 To complement the neural network predictions and confusion matrix analysis, we performed a rule-based segmentation of cannabis users based on their predicted probabilities for LSD, Ecstasy and Cocaine use. This segmentation divided users into distinct risk profiles, reflecting different patterns of potential drug follow-up behaviors.
 
 First, predicted probabilities from the neural network were merged with each user’s personality and demographic traits, maintaining row alignment. Based on rule-based thresholds, users were assigned to one of the following categories:
@@ -2479,6 +2496,9 @@ ggplot(heat_data, aes(Var1, Var2, fill = value)) +
   labs(title = "Trait–Drug Correlation Heatmap", x = "Trait", y = "Drug") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   coord_fixed()
+
+
+
 ```
 
 Key insights from the heatmap:
@@ -2490,15 +2510,16 @@ Key insights from the heatmap:
 - Other personality traits display mostly weak or neutral correlations, indicating a complex interplay where certain traits contribute variably to risk profiles.
 
 
-## Support Vector Machine (Thilo Holstein)
+## Support Vector Machine
 
 By focusing specifically on recent Cannabis users (within the past year or more recent), we narrow through a SVM model the analysis to a population at elevated risk for multi-drug use, thereby improving the model’s relevance and accuracy and ultimately revealing nuanced risk profiles.
 
 This analysis employs support vector machines (SVM) to classify individuals based on their polydrug consumption patterns, focusing on identifying and profiling users according to the severity of their drug use.
 
 ```{r data_prep, echo=FALSE}
+library(dplyr)
 
-model_data <- read.csv("Data/model_data.csv")
+model_data <- read.csv("model_data.csv")
 
 # Define drug usage columns
 drug_cols <- c("Coke", "LSD", "Ecstasy", "Ketamine", "Cannabis", "Alcohol", "Amphet")
@@ -2616,6 +2637,8 @@ Key demographic and behavioral features—such as personality traits (e.g., Neur
 
 
 ```{r simulate_profiles, echo=FALSE, results='asis', fig.show='hold'}
+library(parallel)     # parallel utilities
+library(kableExtra)   # nicer, scalable tables
 
 # -------- Helper to sample realistic values --------
 sample_trait_values <- function(trait, n = 1e5) {
@@ -2687,9 +2710,17 @@ top_profiles <- sampled_data %>%
     Profile = paste("Profile", row_number())
   )
 
-# Smaller font & scaled table so all columns fit
-knitr::kable(top_profiles, caption = "Top 3 Highest‑Risk Synthetic Profiles", align = 'c') %>%
-  kable_styling(latex_options = c("scale_down"), font_size = 6)
+# Split into traits and demographics
+traits <- dplyr::select(top_profiles, Nscore, Cscore, Oscore, Ascore, Escore, Impulsive, SS, PredictedRisk)
+demographics <- dplyr::select(top_profiles, Age, Gender, Education, Alcohol, Cannabis)
+
+# Output both tables with styling
+knitr::kable(traits, caption = "Top 3 High-Risk Profiles – Traits and Risk", align = 'c') %>%
+  kable_styling(latex_options = "hold_position", font_size = 7)
+
+knitr::kable(demographics, caption = "Top 3 High-Risk Profiles – Demographics and Substance Use", align = 'c') %>%
+  kable_styling(latex_options = "hold_position", font_size = 7)
+
 ```
 
 The top three profiles identified by the model share several notable characteristics:
@@ -2704,57 +2735,13 @@ Each profile shows a predicted probability of poly-drug use exceeding 94.9%, und
 This sampling and profiling method transcends simple point predictions by simulating a nuanced population distribution, enabling the identification of high-risk multi-drug users that might be missed in direct observational studies. Such insights allow for targeted prevention strategies tailored to demographic and personality profiles most vulnerable to poly-drug behaviors. Moreover, the use of parallel computing ensures scalability and efficiency in handling large simulated datasets, making this approach robust for practical deployment.
 
 
-### Feature Importance (Single‑Feature Accuracy)
-
-To understand the individual predictive power of each variable, we trained separate Support Vector Machine (SVM) models using only one predictor at a time. This approach reveals how well each feature alone can classify poly-drug user status on unseen test data.
-
-The bar plot visualizes the prediction accuracy of each single-feature model, with the y-axis representing the proportion of correct classifications (ranging from 0 to 1). A higher value indicates better performance and stronger predictive capability for that feature.
-
-```{r single_feature_accuracy, echo=FALSE, fig.height=4, fig.width=8}
-features <- c("SS", "Impulsive", "Age", "Alcohol", "Nscore", "Cscore",
-              "Oscore", "Ascore", "Escore", "Gender", "Education", "Cannabis")
-accs <- sapply(features, function(f) {
-  m <- svm(as.formula(paste("PolyDrugUser ~", f)), data = train_bin, kernel = "radial", cost = 1)
-  mean(predict(m, test_bin) == test_bin$PolyDrugUser)
-})
-
-barplot(accs, names.arg = features, las = 2, ylab = "Accuracy",
-        main = "Prediction Accuracy by Single Feature")
-```
-
-Key observations include:
-
-- Cannabis use shows the highest accuracy (~0.82), indicating its strong direct relationship with poly-drug user status.
-- Personality traits such as Sensation Seeking (SS) and Impulsiveness also demonstrate considerable predictive strength, reinforcing their role as psychological risk factors.
-- Age surprisingly contributes substantially to prediction, reflecting developmental or social factors in drug use patterns.
-- Other personality traits (e.g., Neuroticism, Conscientiousness) and demographic features like Gender and Education have moderate predictive power, suggesting multifaceted influences.
-
-This analysis highlights the importance of combining multiple factors in a comprehensive predictive model, but also shows which individual traits carry the most signal regarding poly-drug use risk.
-
-
-### Model Confidence Histogram
-
-To complement classification performance, we examined the distribution of the SVM model’s predicted probabilities to assess confidence levels in individual predictions. For this, we implemented a histogram of predicted probabilities. This histogram from our SVM classifier illustrates how confidently the model distinguishes poly-drug users from non-users. Individuals predicted as non-users predominantly cluster near zero probability, indicating strong model confidence in their classification. Conversely, poly-drug users generally exhibit predicted probabilities near one, confirming effective detection. Notably, the overlap between groups in the intermediate probability range (around 0.4 to 0.6) highlights cases where the model’s certainty decreases, suggesting a “gray zone” of ambiguous predictions. This nuanced insight into model confidence enables targeted focus on borderline cases, potentially guiding more personalized intervention strategies. Overall, the bimodal distribution underscores the classifier’s capability to robustly separate users and non-users while revealing opportunities for refinement in uncertain areas.
-
-```{r confidence_hist, echo=FALSE, fig.height=4, fig.width=7}
-all_probs <- prob_bin  # from earlier
-
-ggplot(test_bin, aes(all_probs, fill = PolyDrugUser)) +
-  geom_histogram(binwidth = 0.05, position = "identity", alpha = 0.6) +
-  labs(title = "Model Confidence Distribution", x = "Predicted Probability of 'Yes'", y = "Count") +
-  theme_minimal()
-```
-
-
 ### Explainability with SHAP Logic
 
 To interpret the predictive drivers behind the model’s classification, we applied SHAP (Shapley Additive Explanations) values to a single high-risk individual identified by the SVM model with the highest predicted probability (0.96) of poly-drug use. The SHAP plot visually decomposes this prediction into contributions from each feature, revealing the relative importance and direction of effect on the risk score.
 
-Notably, recent Cannabis use (coded as 6) is the most influential factor, strongly elevating the predicted risk. This aligns with its known role as a gateway substance. Age = 1, representing the youngest age group in the dataset, is the next most significant contributor, suggesting younger individuals face higher risk. Elevated Alcohol consumption (5) also adds substantially to risk, highlighting polysubstance tendencies. Personality traits like Sensation Seeking (SS = 0.77) and Impulsiveness (0.88) further amplify risk, consistent with psychological theories linking these traits to substance experimentation and abuse.
-Conversely, some traits such as Agreeableness (-1.48) and Gender (0) have minor negative contributions, slightly mitigating risk in this profile. Overall, this SHAP breakdown affords a transparent understanding of the complex interplay of demographics, personality, and substance use behaviors driving individual risk predictions.
-This analysis underscores the value of explainable AI techniques in elucidating “why” a person is flagged as high-risk, facilitating targeted interventions tailored to specific risk factors rather than a “black box” prediction. By quantifying and visualizing feature-level impacts, it also aids researchers and clinicians in validating model findings against domain knowledge.
+\vspace{0.5cm}
 
-```{r shap_explain, echo=FALSE, fig.show='asis'}
+```{r shap_explain, echo=FALSE, fig.width=4, fig.height=3, fig.show='asis'}
 if (exists("prob_bin")) {
   predict_prob <- function(model, newdata) {
     attr(predict(model, newdata, probability = TRUE), "probabilities")[, "Yes"]
@@ -2771,24 +2758,52 @@ if (exists("prob_bin")) {
   idx  <- which.max(prob_bin)
   shap <- Shapley$new(explainer, x.interest = test_bin[idx, predictors])
 
-  # Ensure the ggplot object is printed so it appears in the document
+  # Plot SHAP explanation
   print(plot(shap) + ggtitle("SHAP Explanation for Highest-Risk Individual"))
-  
-    cat("
-**Highest-Risk Individual (test set):**
-")
-  print(test_bin[idx, predictors])
-  cat(sprintf("
-Predicted SVM risk probability: %.3f
-", prob_bin[idx]))
-} else {
-  cat("SVM probability vector 'prob_bin' not found; SHAP section skipped.")
 }
 ```
 
+Notably, recent Cannabis use (coded as 6) is the most influential factor, strongly elevating the predicted risk. This aligns with its known role as a gateway substance. Age = 1, representing the youngest age group in the dataset, is the next most significant contributor, suggesting younger individuals face higher risk. Elevated Alcohol consumption (5) also adds substantially to risk, highlighting polysubstance tendencies. Personality traits like Sensation Seeking (SS = 0.77) and Impulsiveness (0.88) further amplify risk, consistent with psychological theories linking these traits to substance experimentation and abuse.
+Conversely, some traits such as Agreeableness (-1.48) and Gender (0) have minor negative contributions, slightly mitigating risk in this profile. Overall, this SHAP breakdown affords a transparent understanding of the complex interplay of demographics, personality, and substance use behaviors driving individual risk predictions.
+This analysis underscores the value of explainable AI techniques in elucidating “why” a person is flagged as high-risk, facilitating targeted interventions tailored to specific risk factors rather than a “black box” prediction. By quantifying and visualizing feature-level impacts, it also aids researchers and clinicians in validating model findings against domain knowledge.
 
-Highest-Risk Individual (Test Set Analysis)
-This individual was flagged by the SVM classifier as the highest-risk poly-drug user, with a predicted probability of 0.9568, indicating very high model confidence.
+
+**Highest-Risk Individual (Test Set Analysis)**
+
+```{r shap_explain2, echo=FALSE, fig.width=4, fig.height=3, fig.show='asis'}
+# Index of the highest-risk individual
+idx <- which.max(prob_bin)
+
+# Full profile
+individual_row <- test_bin[idx, predictors, drop = FALSE]
+individual_row$PredictedRisk <- round(prob_bin[idx], 4)
+
+# Traits and demographics subsets
+trait_cols <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore", "Impulsive", "SS")
+demo_cols  <- c("Age", "Gender", "Education", "Alcohol", "Cannabis", "PredictedRisk")
+
+# Tables
+traits_table <- individual_row[, trait_cols, drop = FALSE]
+demo_table   <- individual_row[, demo_cols, drop = FALSE]
+
+# Table 1: Traits
+knitr::kable(traits_table,
+             caption = "Psychological Traits of the Highest-Risk Individual",
+             align   = 'c') %>%
+  kableExtra::kable_styling(latex_options = "hold_position", font_size = 8)
+
+# Table 2: Demographics & Risk
+knitr::kable(demo_table,
+             caption = "Demographic Attributes and Predicted Risk",
+             align   = 'c') %>%
+  kableExtra::kable_styling(latex_options = "hold_position", font_size = 8)
+
+```
+
+
+\vspace{0.5cm}
+
+Above's individual was flagged by the SVM classifier as the highest-risk poly-drug user, with a predicted probability of 0.9568, indicating very high model confidence.
 
 Trait Profile:
 
