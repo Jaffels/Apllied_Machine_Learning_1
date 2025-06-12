@@ -2284,6 +2284,7 @@ knitr::kable(cluster_summary_named,
 - Cluster 3 (“Multi-Risk”) exhibits the highest average probabilities across all three substances, identifying a high-risk subgroup with broad susceptibility to polysubstance use.
 - Cluster 4 (“Psychedelic-Inclined”) shows elevated predicted risk for LSD and Ecstasy but lower for Cocaine, indicating a focus on psychedelic and party drugs.
 
+\vspace{0.5cm}
 
 ```{r kmeans_segmentation2, echo=FALSE, results='asis', fig.show='hold', fig.width=5, fig.height=4}
 # Cluster scatter plot
