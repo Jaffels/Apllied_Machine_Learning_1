@@ -1827,7 +1827,7 @@ Putting these results together, it becomes clear that Openness and Conscientious
 
 ## Generalised Additive Model (Nhat Bui)
 
-```{r gam_eda_plot_edu, echo=FALSE, cache=TRUE}
+```{r gam_eda_plot_edu, echo=FALSE, cache=TRUE, fig.width=5, fig.height=2.5}
 df_cnb <- df_cnb %>%
   mutate(
     cnb_past_year = if_else(Cannabis >= 3, 1, 0)
@@ -1847,7 +1847,7 @@ ggplot(df_cnb, aes(x = Education,
     x     = "Education",
     y     = "Past-Year Cannabis Use (0/1)"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 8)
 ```
 
 This GAM‐derived curve describes how the probability of past-year cannabis use (vertical axis) changes as education rises from level 1 (“Not Provided/left before 16”) through level 10 (“Doctorate”).
@@ -1858,7 +1858,7 @@ The gray band is the 95% confidence interval around the estimated probability. I
 
 Taken together, this non-linear relationship shows that cannabis use probability does not simply rise or fall with education. Instead, it increases sharply through those that left school at 16, 17, 18 reflecting experimentation during teenage age and then declines among individuals with higher degrees, suggesting that the highest educational positions are associated with lower recent use.
 
-```{r gam_eda_plot_age, echo=FALSE, cache=TRUE}
+```{r gam_eda_plot_age, echo=FALSE, cache=TRUE, fig.width=5, fig.height=2.5}
 ggplot(df_cnb, aes(x = Age,
                    y = cnb_past_year,
                    group = 1)) +          
@@ -1874,7 +1874,7 @@ ggplot(df_cnb, aes(x = Age,
     x     = "Age",
     y     = "Past-Year Cannabis Use (0/1)"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 8)
 ```
 
 The GAM‐smoothed curve reveals a clear, non‐linear decline in the probability of past‐year cannabis use as people age. At the youngest age category (18–24), use is highest—around 80–85%. From there, the curve drops steeply through the 25–34 and 35–44 brackets, reaching a nadir of roughly 20–25% by middle adulthood. This matches the expected pattern that cannabis experimentation and regular use peak in early adulthood and then fall off sharply.
