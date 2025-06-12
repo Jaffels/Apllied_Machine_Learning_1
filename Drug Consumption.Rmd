@@ -2637,7 +2637,7 @@ Each profile shows a predicted probability of poly-drug use exceeding 94.9%, und
 
 This sampling and profiling method transcends simple point predictions by simulating a nuanced population distribution, enabling the identification of high-risk multi-drug users that might be missed in direct observational studies. Such insights allow for targeted prevention strategies tailored to demographic and personality profiles most vulnerable to poly-drug behaviors. Moreover, the use of parallel computing ensures scalability and efficiency in handling large simulated datasets, making this approach robust for practical deployment.
 
-
+\newpage
 ### Explainability with SHAP Logic
 
 To interpret the predictive drivers behind the model’s classification, we applied SHAP (Shapley Additive Explanations) values to a single high-risk individual identified by the SVM model with the highest predicted probability (0.96) of poly-drug use. The SHAP plot visually decomposes this prediction into contributions from each feature, revealing the relative importance and direction of effect on the risk score.
