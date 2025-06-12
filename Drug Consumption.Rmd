@@ -2414,7 +2414,7 @@ Key insights from the heatmap:
 - Other personality traits display mostly weak or neutral correlations, indicating a complex interplay where certain traits contribute variably to risk profiles.
 
 
-## Support Vector Machine
+## Support Vector Machine (Thilo Holstein)
 
 By focusing specifically on recent Cannabis users (within the past year or more recent), we narrow through a SVM model the analysis to a population at elevated risk for multi-drug use, thereby improving the model’s relevance and accuracy and ultimately revealing nuanced risk profiles.
 
@@ -2699,7 +2699,6 @@ knitr::kable(traits_table,
              caption = "Psychological Traits of the Highest-Risk Individual",
              align   = 'c') %>%
   kableExtra::kable_styling(latex_options = "hold_position", font_size = 8)
-
 # Table 2: Demographics & Risk
 knitr::kable(demo_table,
              caption = "Demographic Attributes and Predicted Risk",
