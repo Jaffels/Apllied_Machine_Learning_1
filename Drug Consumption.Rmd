@@ -2107,8 +2107,7 @@ It’s clear that schooling changes both where people start and how their cannab
 
 As people move into their late 20s and beyond, almost every education group demosntrates a real decline in use, except for doctorate holders, whose already‐low probability stays nearly flat across all age bins. But the way that drop happens is not the same for everyone: some groups (like master’s graduates or those without any schooling info) simply decline in a straight line, while others (like those who left school at 18, certificate holders, or current students) have a “hump” in their late teens or early 20s before their use tails off. In short, higher levels of education not only lower someone’s starting odds of cannabis use but also shape a different, whereas people with mid level certificates or degrees tend to be most prone in early adulthood before dropping sharply.
 
-##### Neural Network Modeling
-
+## Neural Network Modeling (Thilo Holstein)
 
 To investigate the risk of progressing from cannabis use to other substances, we leveraged a multi-output Artificial Neural Network to predict the probability of recent LSD, Ecstasy, and Cocaine use among cannabis consumers. The ANN was trained on scaled personality traits and demographic variables, capturing complex, nonlinear relationships.
 
@@ -2163,7 +2162,6 @@ drug_net <- neuralnet(
   threshold     = 0.01,
   stepmax       = 1e6
 )
-
 
 ```
 
@@ -2264,8 +2262,6 @@ conf_matrix_lsd <- confusionMatrix(
 
 knitr::kable(head(probs, 10), caption = "Predicted Probabilities (Top 10 Test Cases)")
 ```
-
-
 
 ```{r predictions_evaluation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
 # Automatically print model performance metrics
@@ -2387,7 +2383,6 @@ The plot visualizes cannabis users grouped into four distinct clusters based on 
 
 This cluster structure highlights heterogeneous trajectories of drug use among cannabis consumers and underscores the importance of tailored prevention strategies. For instance, interventions for Cluster 3 should address multiple substance risks simultaneously, while Cluster 4 might benefit from targeted education on stimulant-related harms.
 
-
 To complement the neural network predictions and confusion matrix analysis, we performed a rule-based segmentation of cannabis users based on their predicted probabilities for LSD, Ecstasy and Cocaine use. This segmentation divided users into distinct risk profiles, reflecting different patterns of potential drug follow-up behaviors.
 
 First, predicted probabilities from the neural network were merged with each user’s personality and demographic traits, maintaining row alignment. Based on rule-based thresholds, users were assigned to one of the following categories:
@@ -2484,9 +2479,6 @@ ggplot(heat_data, aes(Var1, Var2, fill = value)) +
   labs(title = "Trait–Drug Correlation Heatmap", x = "Trait", y = "Drug") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   coord_fixed()
-
-
-
 ```
 
 Key insights from the heatmap:
@@ -2498,7 +2490,7 @@ Key insights from the heatmap:
 - Other personality traits display mostly weak or neutral correlations, indicating a complex interplay where certain traits contribute variably to risk profiles.
 
 
-## Support Vector Machine
+## Support Vector Machine (Thilo Holstein)
 
 By focusing specifically on recent Cannabis users (within the past year or more recent), we narrow through a SVM model the analysis to a population at elevated risk for multi-drug use, thereby improving the model’s relevance and accuracy and ultimately revealing nuanced risk profiles.
 
@@ -2624,8 +2616,6 @@ Key demographic and behavioral features—such as personality traits (e.g., Neur
 
 
 ```{r simulate_profiles, echo=FALSE, results='asis', fig.show='hold'}
-library(parallel)     # parallel utilities
-library(kableExtra)   # nicer, scalable tables
 
 # -------- Helper to sample realistic values --------
 sample_trait_values <- function(trait, n = 1e5) {
@@ -2756,7 +2746,7 @@ ggplot(test_bin, aes(all_probs, fill = PolyDrugUser)) +
 ```
 
 
-# Explainability with SHAP Logic
+### Explainability with SHAP Logic
 
 To interpret the predictive drivers behind the model’s classification, we applied SHAP (Shapley Additive Explanations) values to a single high-risk individual identified by the SVM model with the highest predicted probability (0.96) of poly-drug use. The SHAP plot visually decomposes this prediction into contributions from each feature, revealing the relative importance and direction of effect on the risk score.
 
