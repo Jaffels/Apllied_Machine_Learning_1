@@ -413,99 +413,6 @@ The bar chart illustrates mean differences in seven standardized behavioral trai
 
 Male respondents, on average, are shown to exhibit higher scores in Sensation Seeking, Impulsivity, and Openness to Experience. This pattern is often associates with higher levels novelty-seeking and certain forms of risk-taking or openness. Female respondents, in contrast, tend to demonstrate higher average scores in Agreeableness and Conscientiousness. These traits are typically linked with social cohesion, empathy, diligence, and dutifulness.
 
-## Comparing Education Level with Behavioral Measures
-
-```{r da3, fig.width=5, fig.height=7, dev="pdf", echo=FALSE, cache=TRUE}
-###############################################################################
-# Education comparison
-###############################################################################
-# Order education levels
-education_order <- c(
-  "Left school before 16 years",
-  "Left school at 16 years",
-  "Left school at 17 years",
-  "Left school at 18 years",
-  "Some college or university, no certificate or degree",
-  "Professional certificate/diploma",
-  "University degree",
-  "Masters degree",
-  "Doctorate degree",
-  "Not Provided"
-)
-
-# Calculate means by education level
-education_means <- drug_data %>%
-  group_by(Education) %>%
-  summarize(
-    n = n(),
-    across(all_of(numeric_cols), ~mean(.x, na.rm = TRUE))
-  ) %>%
-  arrange(match(Education, education_order))
-
-# Create a clean table view of the data
-education_display <- education_means %>%
-  dplyr::select(-n) %>% # Corrected line: Now uses dplyr::select
-  rename(
-    "Neuroticism" = Nscore,
-    "Extraversion" = Escore,
-    "Openness" = Oscore,
-    "Agreeableness" = Ascore,
-    "Conscientiousness" = Cscore,
-    "Impulsivity" = Impulsive,
-    "Sensation Seeking" = SS
-  )
-
-# Create a data frame for plotting
-education_plot_data <- education_means %>%
-  select(-n)
-
-# Simplified visualization approach with more space for the title
-# Set up the plotting parameters
-# MODIFICATION: Reduced the top and bottom margins in mar c(bottom, left, top, right)
-par(mfrow = c(3, 3), mar = c(5, 3, 1, 0.5), oma = c(0, 0, 2.5, 0))
-
-# Define the trait columns and their display names
-trait_cols <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore", "Impulsive", "SS")
-trait_names <- c("Neuroticism", "Extraversion", "Openness", "Agreeableness", 
-                "Conscientiousness", "Impulsivity", "Sensation Seeking")
-
-# Plot each trait separately
-for (i in 1:length(trait_cols)) {
-  col <- trait_cols[i]
-  trait_name <- trait_names[i]
-  
-  # Create a simple barplot
-  bp <- barplot(education_plot_data[[col]], 
-          names.arg = rep("", nrow(education_plot_data)),
-          col = ifelse(education_plot_data[[col]] > 0, "salmon", "lightblue"),
-          main = trait_name,
-          border = NA,
-          las = 2,
-          ylim = c(min(education_plot_data[[col]]) - 0.05, 
-                  max(education_plot_data[[col]]) + 0.05),
-          cex.main = 0.9,
-          cex.axis = 0.8)
-  
-  # Add a reference line at y=0
-  abline(h = 0, lty = 2, col = "gray")
-  
-  # Add abbreviated education labels
-  edu_labels <- c("Before 16", "At 16", "At 17", "At 18", "Some college", 
-                 "Prof cert", "University", "Masters", "Doctorate", "Not Provided")
-  edu_labels <- edu_labels[1:length(bp)]  # Ensure we have the right number of labels
-  
-  # Add text labels at the bottom
-  text(bp, par("usr")[3] - 0.02, srt = 45, adj = 1, labels = edu_labels, 
-       xpd = TRUE, cex = 0.7)
-}
-
-# Add a title for the entire set of plots with more space
-mtext("Personality Traits by Education Level", side = 3, line = 1, 
-      outer = TRUE, cex = 1.2, font = 2)
-```
-
-The charts which compare education levels with behavioral measures, revealing an inverse relationship between the level of education and the prevalence of certain personality traits. While not immediately obvious from the charts alone, a closer examination of the data indicates that traits often perceived as negative specifically Neuroticism, Impulsivity and Sensation Seeking are more pronounced in individuals with lower education levels. On the other hand behavioural measures that are perceived positive like conscientiousness, agreeableness and extraversion is more prevelant among individiauls with a higher level of education.
-
 ## Analysis of Seremon Usage
 
 ```{r da4, echo=FALSE, cache=TRUE}
@@ -2109,18 +2016,12 @@ As people move into their late 20s and beyond, almost every education group demo
 
 ## Neural Network Modeling (Thilo Holstein)
 
-## Neural Network (Thilo Holstein)
-
 Cannabis users often represent a critical group for studying patterns of progression to other drug use due to both social and biological factors. Research indicates that Cannabis use can act as a gateway, increasing the probability of trying other substances such as LSD, Ecstasy, or Cocaine. However, this progression is neither uniform nor deterministic; individual personality traits and demographic factors play significant roles in influencing this behavior.
 
 The core idea behind the ANN modeling approach is to identify which characteristics most strongly predict whether a Cannabis user will likely engage in subsequent use of other illicit substances, for instance LSD. Drug use data were binarized to indicate recent use (within the past year), continuous predictors (personality traits and age) were standardized via z-score normalization to ensure balanced model training, while categorical variables (gender, education) were numerically encoded.
 
 Personality traits like impulsiveness and sensation seeking are strong predictors of risk-taking and substance use. Impulsive individuals tend to experiment spontaneously, while sensation seekers pursue novel experiences, including illicit drugs. Traits such as conscientiousness and neuroticism influence susceptibility to progressing from Cannabis to other substances. Demographics – age, gender, and education – reflect social and developmental contexts affecting drug use patterns through exposure, peer influence, and life priorities.
-\vspace{0.5cm}
-
-
-### Neural Network Modeling
-
+\vspace{0.5cm}\
 
 To investigate the risk of progressing from cannabis use to other substances, we leveraged a multi-output Artificial Neural Network to predict the probability of recent LSD, Ecstasy, and Cocaine use among cannabis consumers. The ANN was trained on scaled personality traits and demographic variables, capturing complex, nonlinear relationships.
 
@@ -2128,7 +2029,7 @@ As a first step, the model was trained on a three-layer feedforward network on a
 
 ```{r data, echo=FALSE}
 # Load your data
-data <- read.csv("model_data.csv")
+data <- read.csv("Data/model_data.csv")
 ```
 
 ```{r model, echo=FALSE, cache=TRUE}
@@ -2516,10 +2417,9 @@ By focusing specifically on recent Cannabis users (within the past year or more 
 
 This analysis employs support vector machines (SVM) to classify individuals based on their polydrug consumption patterns, focusing on identifying and profiling users according to the severity of their drug use.
 
-```{r data_prep, echo=FALSE}
-library(dplyr)
+```{r data_prep, echo=FALSE, cache=TRUE}
 
-model_data <- read.csv("model_data.csv")
+model_data <- read.csv("Data/model_data.csv")
 
 # Define drug usage columns
 drug_cols <- c("Coke", "LSD", "Ecstasy", "Ketamine", "Cannabis", "Alcohol", "Amphet")
