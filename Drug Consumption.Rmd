@@ -1120,7 +1120,7 @@ if (length(drug_names_for_table) > 0) {
 
 Statistical analysis of the drug consumption dataset revealed significant patterns between personality traits and substance use. Linear regression models for substances like Cannabis, Alcohol, and Nicotine showed that Cannabis had the most robust predictive model (highest adjusted R²). Sensation Seeking (SS) and Impulsivity consistently showed strong positive correlations with multi-drug use, while Conscientiousness and Agreeableness had significant negative relationships. Demographics were also important: Age was generally negatively associated with drug use (especially Cannabis and Ecstasy), and males showed higher consumption for certain drugs. Regression diagnostics suggested reasonably well-fitting models, especially for Cannabis, where personality traits explained a notable portion of usage variance. These results align with suggestions that certain personality profiles, particularly high Sensation Seeking, predispose individuals to substance use.
 
-### Analysis of Personality Traits as Predictors of Substance Use
+### Analysis of Personality Traits for Cannabis use
 
 ```{r lr6, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
 
@@ -1137,35 +1137,6 @@ if ("Cannabis" %in% names(results_list)) {
 The first plot presents the predictors of cannabis usage, showing estimated coefficients with 95% confidence intervals. Several key observations emerge:
 
 The coefficient plot for cannabis usage shows Sensation Seeking (SS) as the strongest positive predictor (p < 0.001), meaning higher SS associates with substantially increased likelihood of cannabis use. Age has a strong negative association (p < 0.001), with use decreasing significantly as age increases. Openness (Oscore) is another significant positive predictor (p < 0.001), linking intellectual curiosity to higher cannabis use. Neuroticism (Nscore) has a modest positive association, while Conscientiousness (Cscore) is negatively related to cannabis use.
-
-
-```{r lr7, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
-if ("Alcohol" %in% names(results_list)) {
-  alcohol_model <- results_list[["Alcohol"]]$model
-  alcohol_coef_plot <- plot_factor_importance_enhanced(alcohol_model, "Predictors of Alcohol Usage")
-  print(alcohol_coef_plot)
-}
-```
-
-**Alcohol Usage Predictors**
-
-For alcohol, Sensation Seeking remains a significant positive predictor, though its effect is smaller than for cannabis. Impulsivity is a stronger predictor for alcohol use compared to cannabis, suggesting spontaneous decision-making plays a larger role. Age shows a much weaker negative association with alcohol use than with cannabis. Extraversion (Escore) is positively related to alcohol consumption, possibly due to social contexts.
-
-```{r lr8, echo=FALSE, cache=TRUE, fig.width=6, fig.height=3.5}
-if ("Nicotine" %in% names(results_list)) {
-  nicotine_model <- results_list[["Nicotine"]]$model
-  nicotine_coef_plot <- plot_factor_importance_enhanced(nicotine_model, "Predictors of Nicotine Usage")
-  print(nicotine_coef_plot)
-}
-```
-
-**Nicotine Usage Predictors**
-
-Nicotine usage patterns show Conscientiousness (Cscore) as a strong negative predictor, meaning more disciplined individuals are less likely to use nicotine. Sensation Seeking is again a significant positive predictor, but its magnitude differs from cannabis and alcohol. Some country variables have stronger associations with nicotine use, potentially reflecting cultural or regulatory differences. Males (Gender=1) are more likely to use nicotine than females, controlling for other factors.
-
-**Cross-Substance Comparison**
-
-Across these substances, Sensation Seeking consistently emerges as a key positive predictor of use, while Conscientiousness is consistently a negative predictor, acting as a protective factor. Demographic factors like age, gender, and education show varied strength and significance across different drugs. Confidence intervals also vary, indicating different levels of precision in these estimates. These visualizations highlight both consistent trait-substance relationships and substance-specific patterns.
 
 ### Cannabis Usage Linear Regression Model: Diagnostic Analysis
 
