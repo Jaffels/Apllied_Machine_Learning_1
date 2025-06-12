@@ -10,8 +10,8 @@ Data folder also contains file Column_Description.txt that has a detailed
 explenation of all the columns in the raw data.
 
 Our Rmd file called Drug Consumption.Rmd and pdf file called
-Drug-Consumption.pdf is contained in the same folder as this
-README.md file
+Drug-Consumption.pdf is contained in the same directory as this
+README.md file.
 
 Required Packages:
 library(MASS)
