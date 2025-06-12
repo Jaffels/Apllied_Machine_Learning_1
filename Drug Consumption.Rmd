@@ -2103,6 +2103,8 @@ We applied generative AI throughout our R-based group work, asking it to craft t
 
 # Conclusion
 
+Overall, our analyses concludes that cannabis use is most strongly driven by individual differences in Sensation Seeking and Openness, with higher scores on these traits associated with both greater likelihood of ever trying cannabis and more frequent use. Conscientiousness and Agreeableness demonstrate consistently as protective factors: more disciplined individuals are less likely to initiate or regularly consume cannabis. Age has a pronounced negative main effect, cannabis use peaks in early adulthood and declines afterwards. Men report higher frequency of use than women, even after accounting for personality, and impulsivity plays a stronger role. Educational level shapes both the baseline probability of use and its age trajectory: the education groups (e.g., those leaving school at 18 or current students) show early‐adult peaks, whereas higher‐degree holders exhibit lower initiation rates and flatter age curves. Interaction tests further indicate that the influence of Sensation Seeking and Openness varies by age and gender, underscoring the conditional nature of these risk factors. In sum, cannabis consumption is best understood as the product used most by traits Sensation Seeking and Openess. Not only that, but also have a impact based on the educational position as well as stages of lifeline.
+
 # Source
 
 <https://archive.ics.uci.edu/dataset/373/drug+consumption+quantified>
