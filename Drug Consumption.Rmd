@@ -2205,12 +2205,13 @@ cat("```\n")
 
 The neural network achieved an accuracy of 68.3%, slightly above the no-information rate of 66.8%, but with a non-significant p-value (p = 0.3561), suggesting limited statistical confidence that the model outperforms random guessing. The sensitivity of 81.2% indicates that the model correctly identifies the majority of actual non-users (positive class: 0), while the specificity of 42.4% reflects a weaker ability to detect users.
 
+\vspace{0.5cm}
+
 The LSD confusion matrix heatmap assesses the predictive performance of the neural network for LSD use classification on the test set:
 The positive predictive value of 73.9% suggests that most individuals predicted as non-users are indeed non-users, while the negative predictive value of 52.8% shows moderate accuracy in identifying users. The Kappa statistic of 0.25 indicates fair agreement beyond chance, and the balanced accuracy of 61.8% highlights the model's unequal performance between the two classes. Overall, the model performs reasonably well in identifying non-users but may require refinement to better capture true users.
 
-\vspace{0.5cm}
 
-```{r predictions_evaluation2, echo=FALSE, results='asis', fig.show='hold', fig.width=4, fig.height=3, fig.cap="Confusion Matrix LSD Prediction"}
+```{r predictions_evaluation2, echo=FALSE, results='asis', fig.show='hold', fig.width=3, fig.height=2}
 # Prepare for heatmap
 cm_df <- as.data.frame(conf_matrix_lsd$table)
 colnames(cm_df) <- c("Predicted", "Actual", "Freq")
@@ -2229,11 +2230,10 @@ ggplot(cm_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal()
 ```
 
-The LSD confusion matrix heatmap further assesses the predictive performance of the neural network for LSD use classification on the test set:
 The confusion matrix reveals 25 false positives (non-users predicted as users) and 38 false negatives (users predicted as non-users), reflecting room for improvement in classification balance.
-The moderate Kappa (0.25) suggests only fair agreement beyond chance between predicted and actual classes.
 
 Together, these results underscore the neural network’s ability to capture relevant patterns but also the challenges in accurately distinguishing non-users from users, likely due to the complex behavioral and psychological factors involved.
+
 
 ### Risk Group Identification
 
@@ -2296,9 +2296,12 @@ ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
 ```
 
 
-The plot visualizes cannabis users grouped into four distinct clusters based on their predicted probabilities for LSD and Ecstasy use. The “Low Risk” group (blue) is concentrated in the bottom-left, indicating low probabilities for both substances. The “Multi-Risk” cluster (green) shows moderate risk for all drugs but remains below the 0.5 threshold. The “Psychedelic-Inclined” group (red) has higher LSD probabilities with moderate Ecstasy risk, while the “Party-Prone” cluster (purple) shows high Ecstasy risk despite low LSD involvement. These clusters reflect varying risk profiles and suggest differentiated behavioral patterns among cannabis users.
+The plot visualizes cannabis users grouped into four distinct clusters based on their predicted probabilities of LSD and Ecstasy use. The “Low Risk” group (red) clusters around the center with moderate but generally sub-threshold probabilities for both substances. The “Party-Prone” cluster (green) is concentrated in the bottom-left corner, showing low LSD probability and low-to-moderate Ecstasy probability. The “Multi-Risk” group (cyan) trends upward and to the right, indicating rising probabilities for both LSD and Ecstasy, reflecting elevated overall risk. Meanwhile, the “Psychedelic-Inclined” cluster (purple) is distinguished by high LSD involvement and moderate-to-high Ecstasy probability, emphasizing preference for hallucinogenic experiences.
 
-This cluster structure highlights heterogeneous trajectories of drug use among cannabis consumers and underscores the importance of tailored prevention strategies. For instance, interventions for Cluster 3 should address multiple substance risks simultaneously, while Cluster 4 might benefit from targeted education on stimulant-related harms.
+This clustering structure reveals diverse drug-use trajectories among cannabis users and emphasizes the need for differentiated prevention strategies. For instance, Cluster 3 (Multi-Risk) may require broad-spectrum interventions targeting poly-substance risks, whereas Cluster 4 (Psychedelic-Inclined) could benefit from education focused on hallucinogen-specific effects and risks. Tailored responses based on cluster profiles can improve the efficacy of public health initiatives.
+
+
+\vspace{1cm}
 
 
 To complement the neural network predictions and confusion matrix analysis, we performed a rule-based segmentation of cannabis users based on their predicted probabilities for LSD, Ecstasy and Cocaine use. This segmentation divided users into distinct risk profiles, reflecting different patterns of potential drug follow-up behaviors.
@@ -2641,7 +2644,7 @@ To interpret the predictive drivers behind the model’s classification, we appl
 
 \vspace{0.5cm}
 
-```{r shap_explain, echo=FALSE, fig.width=4, fig.height=3, fig.show='asis'}
+```{r shap_explain, echo=FALSE, fig.width=3.5, fig.height=2.5, fig.show='asis'}
 if (exists("prob_bin")) {
   predict_prob <- function(model, newdata) {
     attr(predict(model, newdata, probability = TRUE), "probabilities")[, "Yes"]
@@ -2658,8 +2661,13 @@ if (exists("prob_bin")) {
   idx  <- which.max(prob_bin)
   shap <- Shapley$new(explainer, x.interest = test_bin[idx, predictors])
 
-  # Plot SHAP explanation
-  print(plot(shap) + ggtitle("SHAP Explanation for Highest-Risk Individual"))
+  # Plot with smaller title
+  library(ggplot2)
+  shap_plot <- plot(shap) +
+    ggtitle("SHAP Explanation for Highest-Risk Individual") +
+    theme(plot.title = element_text(size = 9))  # <- Adjust title size here
+
+  print(shap_plot)
 }
 ```
 
