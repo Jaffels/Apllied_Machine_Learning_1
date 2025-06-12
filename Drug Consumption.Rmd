@@ -2143,7 +2143,7 @@ Practically, this approach supports personalized interventions by identifying in
 \vspace{0.5cm}
 
 
-### Prediciton and Classification Insights
+### Predictions, Evaluation and Classification Insights
 
 To assess the predictive performance of the trained neural network, we generated probabilistic outputs for each individual in the test set across the three target substances: LSD, Ecstasy, and Cocaine. These probabilities reflect the model’s confidence in recent drug use and were subsequently binarized using a 0.5 threshold. Individuals with predicted probabilities above this threshold were classified as likely users, while those below were classified as non-users.
 
@@ -2367,7 +2367,6 @@ legend(x = 1.1, y = 1.1,
        lty    = 1, lwd = 2, bty = "n")
 par(xpd = FALSE)
 ```
-
 **Interpretation**
 
 The radar plot offers a clear, multi-dimensional snapshot of how psychological and demographic characteristics vary across risk profiles:
