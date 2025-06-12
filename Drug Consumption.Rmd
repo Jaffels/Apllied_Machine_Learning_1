@@ -468,7 +468,7 @@ df_cnb <- df_cnb %>%
   )
 ```
 
-```{r glmbi_boxplot, echo=FALSE, cache=TRUE, fig.width=5, fig.height=4}
+```{r glmbi_boxplot, echo=FALSE, cache=TRUE, fig.width=5, fig.height=3}
 # Boxplots by use status
 trait_labs <- c(
   Nscore = "Neuroticism",
@@ -494,7 +494,7 @@ The boxplots show a clear pattern across several traits when comparing people wh
 
 ## Overall age-use curve
 
-```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=6, fig.height=4}
+```{r age-use curve, echo=FALSE, cache=TRUE, fig.width=4.5, fig.height=3}
 # Load cleaned dataset
 df_cl <- read.csv("Data/cleaned.csv")
 # Remove the X column
@@ -2021,7 +2021,6 @@ Cannabis users often represent a critical group for studying patterns of progres
 The core idea behind the ANN modeling approach is to identify which characteristics most strongly predict whether a Cannabis user will likely engage in subsequent use of other illicit substances, for instance LSD. Drug use data were binarized to indicate recent use (within the past year), continuous predictors (personality traits and age) were standardized via z-score normalization to ensure balanced model training, while categorical variables (gender, education) were numerically encoded.
 
 Personality traits like impulsiveness and sensation seeking are strong predictors of risk-taking and substance use. Impulsive individuals tend to experiment spontaneously, while sensation seekers pursue novel experiences, including illicit drugs. Traits such as conscientiousness and neuroticism influence susceptibility to progressing from Cannabis to other substances. Demographics – age, gender, and education – reflect social and developmental contexts affecting drug use patterns through exposure, peer influence, and life priorities.
-\vspace{0.5cm}\
 
 To investigate the risk of progressing from cannabis use to other substances, we leveraged a multi-output Artificial Neural Network to predict the probability of recent LSD, Ecstasy, and Cocaine use among cannabis consumers. The ANN was trained on scaled personality traits and demographic variables, capturing complex, nonlinear relationships.
 
@@ -2136,12 +2135,7 @@ Key personality traits like Neuroticism, Openness, and Sensation Seeking strongl
 
 Practically, this approach supports personalized interventions by identifying individuals at high risk for specific substances, enabling targeted prevention and tailored messaging. Overall, it advances predictive analytics by integrating psychological and demographic factors to better understand and address substance use trajectories.
 
-\vspace{0.5cm}
-
 **Note:** While magnitude of weights gives insight, the activation functions (e.g., sigmoid or tanh) and input scaling affect final output, hence making interpretation more qualitative rather than exact.
-
-\vspace{0.5cm}
-
 
 ### Predictions, Evaluation and Classification Insights
 
@@ -2204,8 +2198,6 @@ cat("```\n")
 ```
 
 The neural network achieved an accuracy of 68.3%, slightly above the no-information rate of 66.8%, but with a non-significant p-value (p = 0.3561), suggesting limited statistical confidence that the model outperforms random guessing. The sensitivity of 81.2% indicates that the model correctly identifies the majority of actual non-users (positive class: 0), while the specificity of 42.4% reflects a weaker ability to detect users.
-
-\vspace{0.5cm}
 
 The LSD confusion matrix heatmap assesses the predictive performance of the neural network for LSD use classification on the test set:
 The positive predictive value of 73.9% suggests that most individuals predicted as non-users are indeed non-users, while the negative predictive value of 52.8% shows moderate accuracy in identifying users. The Kappa statistic of 0.25 indicates fair agreement beyond chance, and the balanced accuracy of 61.8% highlights the model's unequal performance between the two classes. Overall, the model performs reasonably well in identifying non-users but may require refinement to better capture true users.
@@ -2284,8 +2276,6 @@ knitr::kable(cluster_summary_named,
 - Cluster 3 (“Multi-Risk”) exhibits the highest average probabilities across all three substances, identifying a high-risk subgroup with broad susceptibility to polysubstance use.
 - Cluster 4 (“Psychedelic-Inclined”) shows elevated predicted risk for LSD and Ecstasy but lower for Cocaine, indicating a focus on psychedelic and party drugs.
 
-\vspace{0.5cm}
-
 ```{r kmeans_segmentation2, echo=FALSE, results='asis', fig.show='hold', fig.width=5, fig.height=4}
 # Cluster scatter plot
 ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
@@ -2299,10 +2289,6 @@ ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
 The plot visualizes cannabis users grouped into four distinct clusters based on their predicted probabilities of LSD and Ecstasy use. The “Low Risk” group (red) clusters around the center with moderate but generally sub-threshold probabilities for both substances. The “Party-Prone” cluster (green) is concentrated in the bottom-left corner, showing low LSD probability and low-to-moderate Ecstasy probability. The “Multi-Risk” group (cyan) trends upward and to the right, indicating rising probabilities for both LSD and Ecstasy, reflecting elevated overall risk. Meanwhile, the “Psychedelic-Inclined” cluster (purple) is distinguished by high LSD involvement and moderate-to-high Ecstasy probability, emphasizing preference for hallucinogenic experiences.
 
 This clustering structure reveals diverse drug-use trajectories among cannabis users and emphasizes the need for differentiated prevention strategies. For instance, Cluster 3 (Multi-Risk) may require broad-spectrum interventions targeting poly-substance risks, whereas Cluster 4 (Psychedelic-Inclined) could benefit from education focused on hallucinogen-specific effects and risks. Tailored responses based on cluster profiles can improve the efficacy of public health initiatives.
-
-
-\vspace{1cm}
-
 
 To complement the neural network predictions and confusion matrix analysis, we performed a rule-based segmentation of cannabis users based on their predicted probabilities for LSD, Ecstasy and Cocaine use. This segmentation divided users into distinct risk profiles, reflecting different patterns of potential drug follow-up behaviors.
 
@@ -2636,12 +2622,9 @@ Each profile shows a predicted probability of poly-drug use exceeding 94.9%, und
 
 This sampling and profiling method transcends simple point predictions by simulating a nuanced population distribution, enabling the identification of high-risk multi-drug users that might be missed in direct observational studies. Such insights allow for targeted prevention strategies tailored to demographic and personality profiles most vulnerable to poly-drug behaviors. Moreover, the use of parallel computing ensures scalability and efficiency in handling large simulated datasets, making this approach robust for practical deployment.
 
-\newpage
 ### Explainability with SHAP Logic
 
 To interpret the predictive drivers behind the model’s classification, we applied SHAP (Shapley Additive Explanations) values to a single high-risk individual identified by the SVM model with the highest predicted probability (0.96) of poly-drug use. The SHAP plot visually decomposes this prediction into contributions from each feature, revealing the relative importance and direction of effect on the risk score.
-
-\vspace{0.5cm}
 
 ```{r shap_explain, echo=FALSE, fig.width=3.5, fig.height=2.5, fig.show='asis'}
 if (exists("prob_bin")) {
@@ -2705,9 +2688,6 @@ knitr::kable(demo_table,
   kableExtra::kable_styling(latex_options = "hold_position", font_size = 8)
 
 ```
-
-
-\vspace{0.5cm}
 
 Above's individual was flagged by the SVM classifier as the highest-risk poly-drug user, with a predicted probability of 0.9568, indicating very high model confidence.
 
