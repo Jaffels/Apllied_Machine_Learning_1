@@ -2128,9 +2128,7 @@ As people move into their late 20s and beyond, almost every education group demo
 
 # How we used Generative AI in our project
 
-– how you used generative AI in redacting the group work (code-related questions, generate text, explain concepts…)\
-– what was easy/hard/impossible to do with generative AI\
-– what you had to pay attention to/be critical about when using the results obtained through the use of generative AI
+We applied generative AI throughout our R-based group work, asking it to craft tidyverse pipelines, debug “object not found” or “unexpected symbol” errors, and even rewrite ggplot2 calls for cleaner visuals and kable table for a better visual of tables. It was incredibly fast at generating correct snippets and clear explanations of statistical concepts. However, it sometimes scoped out of project-specific data structures or suggested functions that didn’t exist in our library versions—issues we could only catch by running and inspecting the code ourselves. We found it easy to get solutions, harder to adapt those solutions to our unique dataset, and occasionally impossible to force the AI to understand the context of the research questions which could be because of our prompt. To stay on track, we always cross-checked its answers, tested every suggested change in our scripts, and remained skeptical of any fixes that is without a proper logic.
 
 # Conclusion
 
