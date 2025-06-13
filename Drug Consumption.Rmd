@@ -2024,10 +2024,10 @@ Personality traits like impulsiveness and sensation seeking are strong predictor
 
 To investigate the risk of progressing from cannabis use to other substances, we leveraged a multi-output Artificial Neural Network to predict the probability of recent LSD, Ecstasy, and Cocaine use among cannabis consumers. The ANN was trained on scaled personality traits and demographic variables, capturing complex, nonlinear relationships.
 
-As a first step, the model was trained on a three-layer feedforward network on an 80/20 stratified split to balance complexity and prevent overfitting, using a classification loss with a strict convergence threshold and sufficient training steps.
+As a first step, a three-layer feedforward neural network was trained using an 80/20 stratified split, ensuring balanced class representation while managing model complexity and reducing the risk of overfitting. The training dataset was restricted to individuals who reported drug use within the last year to ensure relevance. The ANN was optimized using a classification loss function with a strict convergence threshold and a sufficient number of training steps.
+
 
 ```{r data, echo=FALSE}
-# Load your data
 data <- read.csv("Data/model_data.csv")
 ```
 
@@ -2042,7 +2042,6 @@ data <- data %>%
   ) %>%
   filter(Cannabis_user)  # Focus only on Cannabis users
 
-# Scale predictors and create final dataset
 data_scaled <- data %>%
   mutate(across(c(Nscore, Escore, Oscore, Ascore, Cscore, Impulsive, SS, Age), scale)) %>%
   mutate(
@@ -2055,7 +2054,6 @@ data_scaled <- data %>%
     LSD_bin, Ecstasy_bin, Coke_bin
   )
 
-# Define formula
 formula <- LSD_bin + Ecstasy_bin + Coke_bin ~ 
   Nscore + Escore + Oscore + Ascore + Cscore + Impulsive + SS + 
   Age + Gender + Education
@@ -2145,25 +2143,19 @@ The table below displays the top 10 predicted probabilities for each drug, based
 
 ```{r predictions_table, echo=FALSE, results='asis'}
 
-# Define input variables
 after_vars <- c("Nscore", "Escore", "Oscore", "Ascore", "Cscore",
                 "Impulsive", "SS", "Age", "Gender", "Education")
 
-# Select predictors from test set
 pred_input <- dplyr::select(test, all_of(after_vars))
 
-# Generate predictions from ANN
 pred_results <- neuralnet::compute(drug_net, pred_input)
 probs <- as.data.frame(pred_results$net.result)
 colnames(probs) <- c("LSD_prob", "Ecstasy_prob", "Coke_prob")
 
-# Binarize using threshold 0.5
 pred_classes <- as.data.frame(probs > 0.5)
 
-# Actual test labels
 actual <- dplyr::select(test, LSD_bin, Ecstasy_bin, Coke_bin)
 
-# Confusion matrix for LSD
 conf_matrix_lsd <- confusionMatrix(
   factor(as.integer(pred_classes$LSD_prob), levels = c(0, 1)),
   factor(actual$LSD_bin, levels = c(0, 1))
@@ -2175,7 +2167,6 @@ knitr::kable(head(probs, 10), caption = "Predicted Probabilities (Top 10 Test Ca
 
 
 ```{r predictions_evaluation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
-# Automatically print model performance metrics
 cat("```\n")
 cat(paste0("   Accuracy : ", round(conf_matrix_lsd$overall["Accuracy"], 4), "\n"))
 cat(paste0("   95% CI : (", 
@@ -2202,7 +2193,6 @@ The neural network achieved an accuracy of 68.3%, slightly above the no-informat
 To further evaluate the predictive performance of the neural network on the test set, a confusion matrix heatmap was generated. The matrix below illustrates the model’s classification accuracy for LSD use.
 
 ```{r predictions_evaluation2, echo=FALSE, results='asis', fig.show='hold', fig.width=3, fig.height=2}
-# Prepare for heatmap
 cm_df <- as.data.frame(conf_matrix_lsd$table)
 colnames(cm_df) <- c("Predicted", "Actual", "Freq")
 cm_df <- cm_df %>%
@@ -2211,7 +2201,6 @@ cm_df <- cm_df %>%
     Actual    = factor(Actual,    levels = c(0, 1))
   )
 
-# Plot confusion matrix heatmap
 ggplot(cm_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 6) +
@@ -2237,10 +2226,8 @@ The table summarizes average substance-use probabilities per cluster:
 set.seed(123)
 km <- kmeans(probs[, c("LSD_prob", "Ecstasy_prob", "Coke_prob")], centers = 4)
 
-# Assign cluster numbers
 probs$Cluster <- km$cluster
 
-# Compute mean probabilities by cluster number
 cluster_means <- probs %>%
   group_by(Cluster) %>%
   summarise(
@@ -2250,13 +2237,10 @@ cluster_means <- probs %>%
     .groups     = "drop"
   )
 
-# Manually assign cluster labels based on known characteristics
 label_map <- c("Low Risk", "Party-Prone", "Multi-Risk", "Psychedelic-Inclined")
 
-# Ensure consistent ordering
 probs$ClusterLabel <- factor(label_map[probs$Cluster], levels = label_map)
 
-# Recalculate summary by cluster label
 cluster_summary_named <- probs %>%
   group_by(ClusterLabel) %>%
   summarise(
@@ -2266,7 +2250,6 @@ cluster_summary_named <- probs %>%
     .groups     = "drop"
   )
 
-# Display table
 knitr::kable(cluster_summary_named,
              caption = "Average predicted probabilities by user risk cluster",
              align   = 'c')
@@ -2278,7 +2261,6 @@ knitr::kable(cluster_summary_named,
 - Cluster 4 (“Psychedelic-Inclined”) shows elevated predicted risk for LSD and Ecstasy but lower for Cocaine, indicating a focus on psychedelic and party drugs.
 
 ```{r kmeans_segmentation2, echo=FALSE, results='asis', fig.show='hold', fig.width=5, fig.height=4}
-# Cluster scatter plot
 ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
   geom_point(alpha = 0.7) +
   labs(title = "Labeled Cannabis User Clusters by Risk Type",
@@ -2309,7 +2291,6 @@ To visualize and compare the typical traits associated with each risk group, we 
 
 
 ```{r trait_visuals, echo=FALSE, results='asis', fig.show='hold', fig.width=6, fig.height=5}
-# Trait columns to include
 trait_cols <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore", "Impulsive", "SS", "Age", "Gender", "Education")
 
 probs <- probs %>%
@@ -2321,27 +2302,22 @@ probs <- probs %>%
     TRUE                               ~ "Other"
   ))
 
-
-# Combine probabilities with corresponding trait values
 traits_with_probs <- cbind(
   probs,
   test[, trait_cols]
 )
 
-# Average traits by rule‑based profile
 radar_data <- traits_with_probs %>%
   group_by(RuleGroup) %>%
   summarise(across(all_of(trait_cols), mean), .groups = "drop") %>%
   column_to_rownames("RuleGroup")
 
-# Scale 0–1 for radar plot
 radar_scaled <- as.data.frame(t(apply(radar_data, 2, function(x) (x - min(x)) / (max(x) - min(x)))))
 radar_scaled <- as.data.frame(t(radar_scaled))
 radar_scaled <- rbind(rep(1, length(trait_cols)), rep(0, length(trait_cols)), radar_scaled)
 colnames(radar_scaled) <- trait_cols
 rownames(radar_scaled)[1:2] <- c("Max", "Min")
 
-# Radar chart
 radarchart(radar_scaled,
            axistype = 1,
            pcol     = rainbow(nrow(radar_data)),
@@ -2350,7 +2326,6 @@ radarchart(radar_scaled,
 
 title("Personality Traits by Profile", cex.main = 0.9)
 
-# Adjust legend position slightly closer
 par(xpd = TRUE)
 legend(x = 1.1, y = 1.1,
        legend = rownames(radar_data),
@@ -2376,7 +2351,6 @@ Finally, we implemented a  trait-drug relationship heatmap that visualizes the c
 corr_matrix <- cor(data_scaled[, c(trait_cols, "LSD_bin", "Ecstasy_bin", "Coke_bin")])
 heat_data <- reshape2::melt(corr_matrix[trait_cols, c("LSD_bin", "Ecstasy_bin", "Coke_bin")])
 
-# Swap axes: traits on x, drugs on y
 heat_data$Var1 <- factor(heat_data$Var1, levels = trait_cols)
 heat_data$Var2 <- factor(heat_data$Var2, levels = c("LSD_bin", "Ecstasy_bin", "Coke_bin"))
 
@@ -2414,13 +2388,10 @@ This analysis employs support vector machines (SVM) to classify individuals base
 
 model_data <- read.csv("Data/model_data.csv")
 
-# Define drug usage columns
 drug_cols <- c("Coke", "LSD", "Ecstasy", "Ketamine", "Cannabis", "Alcohol", "Amphet")
 
-# Convert to numeric
 model_data[drug_cols] <- lapply(model_data[drug_cols], as.numeric)
 
-# Create binary and multiclass targets safely
 model_data <- model_data %>%
   mutate(
     drug_count = rowSums(dplyr::select(., all_of(drug_cols)) >= 3, na.rm = TRUE),
@@ -2432,16 +2403,13 @@ model_data <- model_data %>%
     ) %>% factor(levels = c("None", "Moderate", "Poly"))
   )
 
-# Define predictors
 predictors <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore",
                 "Impulsive", "SS", "Age", "Gender", "Education",
                 "Alcohol", "Cannabis")
 
-# Drop rows with missing values in predictors or targets
 data_clean <- model_data %>%
   tidyr::drop_na(all_of(c(predictors, "PolyDrugUser", "PolyDrugClass")))
 
-# Train/test split
 set.seed(123)
 split_idx <- sample(seq_len(nrow(data_clean)), size = 0.8 * nrow(data_clean))
 
@@ -2494,7 +2462,6 @@ To reflect the spectrum of substance use more accurately, a multi-class variable
 
 
 ```{r svm_multiclass, echo=FALSE}
-# Multi-class SVM
 svm_mc <- svm(
   as.formula(paste("PolyDrugClass ~", paste(predictors, collapse = "+"))),
   data   = train_mc,
@@ -2510,7 +2477,6 @@ actual_mc <- factor(test_mc$PolyDrugClass, levels = levels(test_mc$PolyDrugClass
 cm_mc  <- table(Predicted = pred_mc, Actual = actual_mc)
 acc_mc <- mean(pred_mc == actual_mc)
 
-# Multi-class SVM Confusion Matrix Table
 knitr::kable(cm_mc,
              caption = sprintf("Multi‑class SVM Confusion Matrix (Accuracy = %.3f)", acc_mc),
              align = 'c') %>%
@@ -2533,14 +2499,13 @@ Key demographic and behavioral features—such as personality traits (e.g., Neur
 library(parallel)     # parallel utilities
 library(kableExtra)   # nicer, scalable tables
 
-# -------- Helper to sample realistic values --------
 sample_trait_values <- function(trait, n = 1e5) {
   q <- quantile(trait, probs = c(0.25, 0.75), na.rm = TRUE)
   vals <- runif(n, q[1], q[2]) + rnorm(n, sd = 0.1)
   pmin(pmax(vals, q[1]), q[2])
 }
 
-n_samples <- 100000  # adjust if memory constrained
+n_samples <- 100000
 
 levels_moderate <- list(
   Nscore    = sample_trait_values(data_clean$Nscore, n_samples),
@@ -2562,9 +2527,7 @@ sampled_data <- as.data.frame(levels_moderate)
 
 predict_svm <- function(model, newdata) as.numeric(predict(model, newdata) == "Yes")
 
-# -------- Use predicted probabilities as risk --------
-
-set.seed(1234)  # reproducible synthetic sampling
+set.seed(1234)
 
 predict_prob <- function(model, newdata) {
   attr(predict(model, newdata, probability = TRUE), "probabilities")[, "Yes"]
@@ -2580,8 +2543,6 @@ predicted_risks <- parallel::parApply(cl, sampled_data, 1, function(row) {
 parallel::stopCluster(cl)
 
 sampled_data$PredictedRisk <- predicted_risks
-
-# -------- Top‑3 profiles --------
 
 top_profiles <- sampled_data %>%
   arrange(desc(PredictedRisk)) %>%
@@ -2603,11 +2564,9 @@ top_profiles <- sampled_data %>%
     Profile = paste("Profile", row_number())
   )
 
-# Split into traits and demographics
 traits <- dplyr::select(top_profiles, Nscore, Cscore, Oscore, Ascore, Escore, Impulsive, SS, PredictedRisk)
 demographics <- dplyr::select(top_profiles, Age, Gender, Education, Alcohol, Cannabis)
 
-# Output both tables with styling
 knitr::kable(traits, caption = "Top 3 High-Risk Profiles – Traits and Risk", align = 'c') %>%
   kable_styling(latex_options = "hold_position", font_size = 7)
 
@@ -2648,7 +2607,6 @@ if (exists("prob_bin")) {
   idx  <- which.max(prob_bin)
   shap <- Shapley$new(explainer, x.interest = test_bin[idx, predictors])
 
-  # Plot with smaller title
   library(ggplot2)
   shap_plot <- plot(shap) +
     ggtitle("SHAP Explanation for Highest-Risk Individual") +
@@ -2666,27 +2624,22 @@ This analysis underscores the value of explainable AI techniques in elucidating 
 **Highest-Risk Individual (Test Set Analysis)**
 
 ```{r shap_explain2, echo=FALSE, fig.width=4, fig.height=3, fig.show='asis'}
-# Index of the highest-risk individual
 idx <- which.max(prob_bin)
 
-# Full profile
 individual_row <- test_bin[idx, predictors, drop = FALSE]
 individual_row$PredictedRisk <- round(prob_bin[idx], 4)
 
-# Traits and demographics subsets
 trait_cols <- c("Nscore", "Cscore", "Oscore", "Ascore", "Escore", "Impulsive", "SS")
 demo_cols  <- c("Age", "Gender", "Education", "Alcohol", "Cannabis", "PredictedRisk")
 
-# Tables
 traits_table <- individual_row[, trait_cols, drop = FALSE]
 demo_table   <- individual_row[, demo_cols, drop = FALSE]
 
-# Table 1: Traits
 knitr::kable(traits_table,
              caption = "Psychological Traits of the Highest-Risk Individual",
              align   = 'c') %>%
   kableExtra::kable_styling(latex_options = "hold_position", font_size = 8)
-# Table 2: Demographics & Risk
+
 knitr::kable(demo_table,
              caption = "Demographic Attributes and Predicted Risk",
              align   = 'c') %>%
