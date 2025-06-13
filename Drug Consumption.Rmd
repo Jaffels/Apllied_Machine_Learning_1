@@ -27,11 +27,11 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-Drug use is a significant risk behavior with serious health consequences for individuals and society. Multiple factors contribute to initial drug use, including psychological, social, individual, environmental, and economic elements, as well as personality traits. While legal substances like sugar, alcohol, and tobacco cause more premature deaths, illegal recreational drugs still create substantial social and personal problems.
+Cannabis use remains one of the most widespread forms of recreational drug consumption—and while it’s legal in more places than ever, it still carries important health and social implications. In this project, we zero in on what drives people to try or regularly use cannabis, drawing on the same rich survey of 1,885 individuals that captures demographics, three personality inventories (NEO-FFI-R, BIS-11, ImpSS), and self-reported patterns of use.
 
-In this data science project, we aim to identify factors and patterns potentially explaining drug use behaviors through machine learning techniques. By analyzing demographic, psychological, and social variables in our dataset, we'll aim to uncover potential predictors using machine learning methods to understand the complex relationships surrounding drug consumption.
+By recoding cannabis consumption into seven ordered categories—from “Never Used” through “Used in Last Day”—we can treat it as an ordinal outcome and ask which factors tip someone toward experimentation, occasional use, or daily habit. Our predictors include age, gender, education level, country, and ethnicity alongside continuous personality scores for neuroticism, extraversion, openness, agreeableness, conscientiousness, impulsivity, and sensation-seeking.
 
-The database contains records for 1,885 respondents with 12 attributes including personality measurements (NEO-FFI-R, BIS-11, ImpSS), demographics (education, age, gender, country, ethnicity), and self-reported usage of 18 drugs plus one fictitious drug (Semeron). Drug use is classified into seven categories ranging from "Never Used" to "Used in Last Day." All input attributes are quantified as real values, creating 18 distinct classification problems corresponding to each drug. A detailed description of the variables can be found in the Column Decsription text file.
+Through exploratory data analysis and machine-learning models, we’ll trace how cannabis use prevalence shifts across life stages and educational backgrounds, and how individual differences in discipline, thrill-seeking, or social engagement relate to someone’s likelihood of using. Focusing on cannabis lets us illustrate how demographic and psychological dimensions interplay to shape real-world behavior—ultimately guiding more nuanced conversations about public health, policy, and personalized risk factors.
 
 # Personality Traits Explanation
 
