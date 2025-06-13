@@ -35,7 +35,7 @@ The database contains records for 1,885 respondents with 12 attributes including
 
 # Personality Traits Explanation
 
-To better understand the data set we need to have an understanding of what the personality traits are and what they represent, below we have short description of each trait and how to interpret them:
+To better understand the data set we need to have an understanding of what the personality traits are and what they represent, below we have a short description of each trait and how to interpret them:
 
 -   Nscore (Neuroticism): Measures emotional stability vs. instability. Higher scores indicate tendency toward negative emotions like anxiety, depression, vulnerability and mood swings. Lower scores suggest emotional stability and resilience to stress.
 -   Escore (Extraversion): Measures sociability and outgoingness. Higher scores indicate preference for social interaction, assertiveness, and energy in social settings. Lower scores suggest preference for solitude, quieter environments and more reserved behavior.
@@ -2197,11 +2197,9 @@ cat(paste0("   'Positive' Class : ", conf_matrix_lsd$positive, "\n"))
 cat("```\n")
 ```
 
-The neural network achieved an accuracy of 68.3%, slightly above the no-information rate of 66.8%, but with a non-significant p-value (p = 0.3561), suggesting limited statistical confidence that the model outperforms random guessing. The sensitivity of 81.2% indicates that the model correctly identifies the majority of actual non-users (positive class: 0), while the specificity of 42.4% reflects a weaker ability to detect users.
+The neural network achieved an accuracy of 68.3%, slightly above the no-information rate of 66.8%, but with a non-significant p-value (p = 0.3561), suggesting limited statistical confidence that the model outperforms random guessing. The sensitivity of 81.2% indicates that the model correctly identifies the majority of actual non-users (positive class: 0), while the specificity of 42.4% reflects a weaker ability to detect users. The positive predictive value of 73.9% suggests that most individuals predicted as non-users are indeed non-users, while the negative predictive value of 52.8% shows moderate accuracy in identifying users. The Kappa statistic of 0.25 indicates fair agreement beyond chance, and the balanced accuracy of 61.8% highlights the model's unequal performance between the two classes. Overall, the model performs reasonably well in identifying non-users but may require refinement to better capture true users.
 
-The LSD confusion matrix heatmap assesses the predictive performance of the neural network for LSD use classification on the test set:
-The positive predictive value of 73.9% suggests that most individuals predicted as non-users are indeed non-users, while the negative predictive value of 52.8% shows moderate accuracy in identifying users. The Kappa statistic of 0.25 indicates fair agreement beyond chance, and the balanced accuracy of 61.8% highlights the model's unequal performance between the two classes. Overall, the model performs reasonably well in identifying non-users but may require refinement to better capture true users.
-
+To further evaluate the predictive performance of the neural network on the test set, a confusion matrix heatmap was generated. The matrix below illustrates the model’s classification accuracy for LSD use.
 
 ```{r predictions_evaluation2, echo=FALSE, results='asis', fig.show='hold', fig.width=3, fig.height=2}
 # Prepare for heatmap
@@ -2229,7 +2227,10 @@ Together, these results underscore the neural network’s ability to capture rel
 
 ### Risk Group Identification
 
-We applied K-means clustering on the neural network’s predicted probabilities for LSD, Ecstasy, and Cocaine use to identify distinct risk profiles within cannabis users. This unsupervised segmentation revealed four meaningful clusters, each characterized by differing average probabilities for these substances:
+To better understand risk patterns, K-means clustering was applied to the neural network’s predicted probabilities for LSD, Ecstasy, and Cocaine use among cannabis users. This unsupervised approach segmented users into four clusters, each with distinct profiles of predicted drug involvement.
+
+**Cluster Characteristics**
+The table summarizes average substance-use probabilities per cluster:
 
 ```{r kmeans_segmentation, echo=FALSE, results='asis', fig.show='hold', fig.width=7, fig.height=5}
 # K-means clustering on ANN probabilities
@@ -2285,14 +2286,13 @@ ggplot(probs, aes(x = LSD_prob, y = Ecstasy_prob, color = ClusterLabel)) +
   theme_minimal()
 ```
 
-
 The plot visualizes cannabis users grouped into four distinct clusters based on their predicted probabilities of LSD and Ecstasy use. The “Low Risk” group (red) clusters around the center with moderate but generally sub-threshold probabilities for both substances. The “Party-Prone” cluster (green) is concentrated in the bottom-left corner, showing low LSD probability and low-to-moderate Ecstasy probability. The “Multi-Risk” group (cyan) trends upward and to the right, indicating rising probabilities for both LSD and Ecstasy, reflecting elevated overall risk. Meanwhile, the “Psychedelic-Inclined” cluster (purple) is distinguished by high LSD involvement and moderate-to-high Ecstasy probability, emphasizing preference for hallucinogenic experiences.
 
 This clustering structure reveals diverse drug-use trajectories among cannabis users and emphasizes the need for differentiated prevention strategies. For instance, Cluster 3 (Multi-Risk) may require broad-spectrum interventions targeting poly-substance risks, whereas Cluster 4 (Psychedelic-Inclined) could benefit from education focused on hallucinogen-specific effects and risks. Tailored responses based on cluster profiles can improve the efficacy of public health initiatives.
 
-To complement the neural network predictions and confusion matrix analysis, we performed a rule-based segmentation of cannabis users based on their predicted probabilities for LSD, Ecstasy and Cocaine use. This segmentation divided users into distinct risk profiles, reflecting different patterns of potential drug follow-up behaviors.
+**Rule-Based Risk Segmentation and Trait Visualization**
 
-First, predicted probabilities from the neural network were merged with each user’s personality and demographic traits, maintaining row alignment. Based on rule-based thresholds, users were assigned to one of the following categories:
+To reinforce insights from clustering, a rule-based segmentation was performed using threshold logic applied to neural network probabilities. Each user was classified as:
 
 - Multi-Risk: High probability (> 0.7) for both LSD and Ecstasy use — indicating a poly-substance risk profile.
 - Psychedelic-Inclined: High LSD risk (> 0.7), but not Ecstasy.
@@ -2300,7 +2300,12 @@ First, predicted probabilities from the neural network were merged with each use
 - Low Risk: Low probabilities (< 0.3) across all three substances.
 - Other: Users who did not clearly meet any of the above thresholds.
 
-Using these profiles, we generated a radar plot to visualize the average psychological and demographic trait values associated with each group. The traits include the Big Five personality dimensions (Neuroticism, Conscientiousness, Openness, Agreeableness, Extraversion), impulsiveness, sensation seeking, age, gender, and education level.
+To visualize and compare the typical traits associated with each risk group, we constructed a radar plot summarizing the average values of key psychological and demographic dimensions:
+
+To compare user types, a radar plot was generated showing average values for key characteristics:
+- Big Five traits: Neuroticism, Conscientiousness, Openness, Agreeableness, Extraversion
+- Impulsiveness, Sensation Seeking
+- Age, Gender, Education level
 
 
 ```{r trait_visuals, echo=FALSE, results='asis', fig.show='hold', fig.width=6, fig.height=5}
