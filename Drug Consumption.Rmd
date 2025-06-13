@@ -2290,6 +2290,7 @@ The plot visualizes cannabis users grouped into four distinct clusters based on 
 
 This clustering structure reveals diverse drug-use trajectories among cannabis users and emphasizes the need for differentiated prevention strategies. For instance, Cluster 3 (Multi-Risk) may require broad-spectrum interventions targeting poly-substance risks, whereas Cluster 4 (Psychedelic-Inclined) could benefit from education focused on hallucinogen-specific effects and risks. Tailored responses based on cluster profiles can improve the efficacy of public health initiatives.
 
+
 **Rule-Based Risk Segmentation and Trait Visualization**
 
 To reinforce insights from clustering, a rule-based segmentation was performed using threshold logic applied to neural network probabilities. Each user was classified as:
@@ -2302,7 +2303,6 @@ To reinforce insights from clustering, a rule-based segmentation was performed u
 
 To visualize and compare the typical traits associated with each risk group, we constructed a radar plot summarizing the average values of key psychological and demographic dimensions:
 
-To compare user types, a radar plot was generated showing average values for key characteristics:
 - Big Five traits: Neuroticism, Conscientiousness, Openness, Agreeableness, Extraversion
 - Impulsiveness, Sensation Seeking
 - Age, Gender, Education level
